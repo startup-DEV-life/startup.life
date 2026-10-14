@@ -17,7 +17,7 @@ const places = JSON.parse(readFileSync(join(root, 'src/data/places.json'), 'utf8
 const homes = JSON.parse(readFileSync(join(root, 'src/data/homes.json'), 'utf8'));
 const jobs = JSON.parse(readFileSync(join(root, 'src/data/jobs.json'), 'utf8'));
 const lessons = JSON.parse(readFileSync(join(root, 'src/data/learning.json'), 'utf8'));
-const WORLD = { minX: -281, maxX: 1331, minY: -710, maxY: 2190 };
+const WORLD = { minX: -281, maxX: 1331, minY: -167, maxY: 1647 };
 const WORLD_CELL = 220;
 const worldCell=(x,y)=>`${Math.floor(x/WORLD_CELL)}:${Math.floor(y/WORLD_CELL)}`;
 const roomsAround=(x,y)=>{const cx=Math.floor(x/WORLD_CELL),cy=Math.floor(y/WORLD_CELL),rooms=[];for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)rooms.push(`world:${cx+dx}:${cy+dy}`);return rooms};
