@@ -1,4 +1,4 @@
-# Blank Life · Dev District
+# dev-life — Blank Life · Dev District
 
 An independent browser game prototype: a multiplayer Lagos-inspired city rebuilt as a stylized 3D developer district. It is not the proprietary source code for lagoslife.app.
 
