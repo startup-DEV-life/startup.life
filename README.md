@@ -25,7 +25,7 @@ Set `ADMIN_USERNAME` in `.env` to grant chat moderation access to a chosen accou
 ## Game features
 
 - A full stylized 3D island with rocky coast, mountain ridges, a street grid, marked avenues, a runway and hangar, homes, long apartment blocks, parks, piers, boats, and skyline landmarks. The supplied island screenshot guided the terrain and layout.
-- Human-proportioned, original low-poly 3D player avatars with profile-driven face, body shape, skin, hair, and streetwear, plus six ambient island residents.
+- Human-proportioned, original low-poly 3D player avatars with profile-driven face, body shape, skin, hair, and streetwear, with avatars for the local player and connected online users only; ambient human NPCs are removed.
 - All modeled buildings are clickable and open a shared interior activity panel: developer studios, named venues, the airport hangar, long apartment buildings, and individual homes. Unassigned buildings have generic explore/meet/rest activities so their final purpose can be supplied later.
 - Named venues retain their own activities. Guests can enter and explore; signed-in players can save named venue visits, earn pocket money, and improve mood.
 - A player phone with an island map, district navigation, career board, places, messages, and profile shortcuts.
@@ -33,6 +33,7 @@ Set `ADMIN_USERNAME` in `.env` to grant chat moderation access to a chosen accou
 - Original geometry uses the supplied island, alley, human topology, and low-poly environment images as broad visual references. The models and props are generated in code; no reference image or proprietary asset pack is copied into the game.
 - WASD, arrow keys, on-screen buttons, mouse/touch movement, and camera orbit.
 - Seven developer careers, including frontend, backend, and full-stack engineering. New accounts choose a career, and players can change careers later.
+- A laptop developer workspace with the full supplied Linux command guide, a persistent simulated file system, editable project files, and safe in-game command emulation. It never runs commands on the player’s device or a real server.
 - A Learn2Earn-inspired developer learning journey: original sequential problem-solving, debugging, web foundations, collaboration, AI-native engineering, project, and career-evidence challenges. Signed-in completion is validated and saved by the backend; each first correct completion awards virtual XP and game currency.
 - Server-validated developer job tasks, experience points, saved career choice, and a 30-second task cooldown.
 - Trust Protocol social-deduction rounds: private crew/saboteur role assignment, a sabotage/report meeting, and live voting. At least three signed-in developers must be online.

@@ -1,0 +1,825 @@
+[
+  {
+    "title": "Basic Linux commands",
+    "items": [
+      [
+        "pwd",
+        "Shows your current directory"
+      ],
+      [
+        "ls",
+        "Lists files and folders"
+      ],
+      [
+        "ls -la",
+        "Lists all files, including hidden ones"
+      ],
+      [
+        "cd folder",
+        "Enters a folder"
+      ],
+      [
+        "cd ..",
+        "Goes back one directory"
+      ],
+      [
+        "cd ~",
+        "Returns to your home directory"
+      ],
+      [
+        "clear",
+        "Clears the terminal display"
+      ],
+      [
+        "whoami",
+        "Shows your username"
+      ],
+      [
+        "hostname",
+        "Shows your computer's hostname"
+      ],
+      [
+        "date",
+        "Shows the current date and time"
+      ],
+      [
+        "history",
+        "Displays previously used commands"
+      ],
+      [
+        "man ls",
+        "Opens the manual for `ls`"
+      ],
+      [
+        "command --help",
+        "Shows help for a command"
+      ],
+      [
+        "exit",
+        "Closes the current shell session"
+      ]
+    ]
+  },
+  {
+    "title": "File and folder management",
+    "items": [
+      [
+        "mkdir projects",
+        "Creates a folder"
+      ],
+      [
+        "mkdir -p a/b/c",
+        "Creates nested folders"
+      ],
+      [
+        "touch file.txt",
+        "Creates an empty file, or updates its timestamp"
+      ],
+      [
+        "cp file.txt backup.txt",
+        "Copies a file"
+      ],
+      [
+        "cp -r folder backup",
+        "Copies a folder recursively"
+      ],
+      [
+        "mv old.txt new.txt",
+        "Renames or moves a file"
+      ],
+      [
+        "rm file.txt",
+        "Deletes a file"
+      ],
+      [
+        "rm -i file.txt",
+        "Asks before deleting a file"
+      ],
+      [
+        "rmdir folder",
+        "Deletes an empty folder"
+      ],
+      [
+        "find . -name \"*.go\"",
+        "Finds Go files below the current directory"
+      ],
+      [
+        "file filename",
+        "Identifies a file type"
+      ],
+      [
+        "du -sh folder",
+        "Shows a folder's total size"
+      ],
+      [
+        "df -h",
+        "Shows filesystem space usage"
+      ],
+      [
+        "tree",
+        "Displays folders as a tree (if installed)"
+      ]
+    ]
+  },
+  {
+    "title": "Reading and editing files",
+    "items": [
+      [
+        "cat file.txt",
+        "Prints a file's contents"
+      ],
+      [
+        "less file.txt",
+        "Reads a file page by page; press `q` to quit"
+      ],
+      [
+        "head file.txt",
+        "Shows the first 10 lines"
+      ],
+      [
+        "tail file.txt",
+        "Shows the last 10 lines"
+      ],
+      [
+        "tail -f app.log",
+        "Follows a log as it updates"
+      ],
+      [
+        "nano file.txt",
+        "Opens the Nano text editor"
+      ],
+      [
+        "grep \"error\" file.txt",
+        "Searches for text in a file"
+      ],
+      [
+        "grep -R \"TODO\" .",
+        "Searches recursively in the current directory"
+      ],
+      [
+        "wc -l file.txt",
+        "Counts lines"
+      ],
+      [
+        "sort file.txt",
+        "Sorts lines"
+      ],
+      [
+        "uniq file.txt",
+        "Removes adjacent duplicate lines"
+      ],
+      [
+        "diff file1.txt file2.txt",
+        "Compares two files"
+      ]
+    ]
+  },
+  {
+    "title": "Installing and removing applications on Ubuntu/Debian",
+    "items": [
+      [
+        "sudo apt update",
+        "Refreshes package information"
+      ],
+      [
+        "sudo apt upgrade",
+        "Upgrades installed packages"
+      ],
+      [
+        "sudo apt install vlc",
+        "Installs VLC"
+      ],
+      [
+        "sudo apt remove vlc",
+        "Removes VLC but generally keeps system configuration"
+      ],
+      [
+        "sudo apt purge vlc",
+        "Removes VLC and its system configuration files"
+      ],
+      [
+        "sudo apt autoremove",
+        "Removes dependencies that are no longer needed"
+      ],
+      [
+        "apt search firefox",
+        "Searches available packages"
+      ],
+      [
+        "apt show firefox",
+        "Displays package information"
+      ],
+      [
+        "dpkg -l",
+        "Lists installed Debian packages"
+      ],
+      [
+        "sudo apt install ./app.deb",
+        "Installs a local `.deb` package and resolves dependencies"
+      ],
+      [
+        "sudo dpkg -i app.deb",
+        "Installs a local `.deb` package; dependencies may need repair"
+      ],
+      [
+        "sudo apt --fix-broken install",
+        "Attempts to repair broken package dependencies"
+      ],
+      [
+        "flatpak list",
+        "Lists Flatpak apps, if Flatpak is installed"
+      ],
+      [
+        "snap list",
+        "Lists Snap apps, if Snap is installed"
+      ]
+    ]
+  },
+  {
+    "title": "System information and hardware",
+    "items": [
+      [
+        "uname -a",
+        "Shows kernel and system information"
+      ],
+      [
+        "cat /etc/os-release",
+        "Shows your Linux distribution"
+      ],
+      [
+        "lscpu",
+        "Displays CPU information"
+      ],
+      [
+        "free -h",
+        "Shows RAM and swap usage"
+      ],
+      [
+        "lsblk",
+        "Lists disks and partitions"
+      ],
+      [
+        "lsblk -f",
+        "Lists disks, filesystems, and labels"
+      ],
+      [
+        "lspci",
+        "Lists PCI devices"
+      ],
+      [
+        "lsusb",
+        "Lists USB devices"
+      ],
+      [
+        "lshw -short",
+        "Summarizes hardware (may require installation or `sudo`)"
+      ],
+      [
+        "uptime",
+        "Shows system uptime and load"
+      ],
+      [
+        "top",
+        "Displays running processes"
+      ],
+      [
+        "htop",
+        "Interactive process monitor (if installed)"
+      ],
+      [
+        "ps aux",
+        "Lists running processes"
+      ],
+      [
+        "who",
+        "Shows logged-in users"
+      ],
+      [
+        "id",
+        "Displays your user and group IDs"
+      ],
+      [
+        "timedatectl",
+        "Shows system time and time-zone information"
+      ]
+    ]
+  },
+  {
+    "title": "Services and system logs",
+    "items": [
+      [
+        "systemctl --failed",
+        "Lists failed systemd units"
+      ],
+      [
+        "systemctl status SERVICE",
+        "Checks a service's status"
+      ],
+      [
+        "sudo systemctl start SERVICE",
+        "Starts a service"
+      ],
+      [
+        "sudo systemctl stop SERVICE",
+        "Stops a service"
+      ],
+      [
+        "sudo systemctl restart SERVICE",
+        "Restarts a service"
+      ],
+      [
+        "sudo systemctl enable SERVICE",
+        "Enables a service at startup"
+      ],
+      [
+        "sudo systemctl disable SERVICE",
+        "Disables automatic startup for a service"
+      ],
+      [
+        "journalctl -b",
+        "Shows logs from the current boot"
+      ],
+      [
+        "journalctl -p err -b",
+        "Shows error-level logs from the current boot"
+      ],
+      [
+        "journalctl -u SERVICE",
+        "Shows logs for a specific service"
+      ],
+      [
+        "journalctl -b -1",
+        "Shows the previous boot's logs, if retained"
+      ],
+      [
+        "dmesg -T",
+        "Displays kernel messages with readable timestamps"
+      ]
+    ]
+  },
+  {
+    "title": "Internet and network commands",
+    "items": [
+      [
+        "ip addr",
+        "Displays network interfaces and IP addresses"
+      ],
+      [
+        "ip route",
+        "Displays routing information"
+      ],
+      [
+        "ping -c 4 google.com",
+        "Tests connectivity with four pings"
+      ],
+      [
+        "curl -I https://example.com",
+        "Checks HTTP response headers"
+      ],
+      [
+        "wget https://example.com/file.zip",
+        "Downloads a file"
+      ],
+      [
+        "ss -tulpn",
+        "Lists listening ports and sockets"
+      ],
+      [
+        "getent hosts example.com",
+        "Checks hostname resolution"
+      ],
+      [
+        "resolvectl status",
+        "Shows DNS configuration on systems using systemd-resolved"
+      ],
+      [
+        "nmcli device status",
+        "Shows NetworkManager device status"
+      ],
+      [
+        "ssh user@server",
+        "Connects to a remote computer"
+      ],
+      [
+        "scp file.txt user@server:/tmp/",
+        "Copies a file to a remote computer"
+      ]
+    ]
+  },
+  {
+    "title": "Users, permissions, and firewall",
+    "items": [
+      [
+        "sudo command",
+        "Runs a command with elevated privileges"
+      ],
+      [
+        "passwd",
+        "Changes your password"
+      ],
+      [
+        "chmod +x script.sh",
+        "Makes a script executable"
+      ],
+      [
+        "chmod 644 file.txt",
+        "Gives owner read/write and others read access"
+      ],
+      [
+        "chown user:user file.txt",
+        "Changes file ownership"
+      ],
+      [
+        "groups",
+        "Shows your group memberships"
+      ],
+      [
+        "sudo adduser username",
+        "Creates a user account"
+      ],
+      [
+        "sudo deluser username",
+        "Removes a user account (review consequences first)"
+      ],
+      [
+        "sudo ufw status",
+        "Checks UFW firewall status"
+      ],
+      [
+        "sudo ufw enable",
+        "Enables the UFW firewall"
+      ],
+      [
+        "sudo ufw allow 22/tcp",
+        "Allows incoming TCP traffic on port 22"
+      ]
+    ]
+  },
+  {
+    "title": "Git and GitHub",
+    "items": [
+      [
+        "git --version",
+        "Checks whether Git is installed"
+      ],
+      [
+        "git clone URL",
+        "Downloads a repository"
+      ],
+      [
+        "git status",
+        "Shows repository changes"
+      ],
+      [
+        "git add .",
+        "Stages changes in the current repository"
+      ],
+      [
+        "git commit -m \"message\"",
+        "Creates a commit"
+      ],
+      [
+        "git branch",
+        "Lists branches"
+      ],
+      [
+        "git switch -c feature-name",
+        "Creates and switches to a branch"
+      ],
+      [
+        "git switch main",
+        "Switches to the `main` branch"
+      ],
+      [
+        "git pull",
+        "Downloads and integrates remote changes"
+      ],
+      [
+        "git push",
+        "Pushes commits to a remote"
+      ],
+      [
+        "git log --oneline",
+        "Shows compact commit history"
+      ],
+      [
+        "git diff",
+        "Shows unstaged changes"
+      ],
+      [
+        "git remote -v",
+        "Displays remote repository URLs"
+      ],
+      [
+        "git stash",
+        "Temporarily shelves changes"
+      ],
+      [
+        "git restore file.txt",
+        "Discards unstaged changes to a file"
+      ]
+    ]
+  },
+  {
+    "title": "Developer commands",
+    "items": [
+      [
+        "code .",
+        "Opens the current folder in VS Code, if configured"
+      ],
+      [
+        "python3 --version",
+        "Checks Python"
+      ],
+      [
+        "python3 script.py",
+        "Runs a Python script"
+      ],
+      [
+        "python3 -m venv .venv",
+        "Creates a Python virtual environment"
+      ],
+      [
+        "source .venv/bin/activate",
+        "Activates that environment in Bash/Zsh"
+      ],
+      [
+        "deactivate",
+        "Deactivates the virtual environment"
+      ],
+      [
+        "python3 -m pip --version",
+        "Checks pip for the selected Python"
+      ],
+      [
+        "go version",
+        "Checks Go"
+      ],
+      [
+        "go run .",
+        "Runs the current Go module/package"
+      ],
+      [
+        "go build .",
+        "Builds the current Go package"
+      ],
+      [
+        "go test ./...",
+        "Tests all packages in the current Go module"
+      ],
+      [
+        "go mod init example.com/project",
+        "Initializes a Go module"
+      ],
+      [
+        "node --version",
+        "Checks Node.js"
+      ],
+      [
+        "npm --version",
+        "Checks npm"
+      ],
+      [
+        "npm install",
+        "Installs project dependencies"
+      ],
+      [
+        "npm run dev",
+        "Runs the project's `dev` script, if defined"
+      ],
+      [
+        "npm run build",
+        "Runs the project's `build` script, if defined"
+      ],
+      [
+        "docker ps",
+        "Lists running containers, if Docker is installed"
+      ],
+      [
+        "docker images",
+        "Lists local Docker images"
+      ]
+    ]
+  },
+  {
+    "title": "Archives and compression",
+    "items": [
+      [
+        "tar -czf backup.tar.gz folder/",
+        "Creates a compressed tar archive"
+      ],
+      [
+        "tar -xzf backup.tar.gz",
+        "Extracts a gzip-compressed tar archive"
+      ],
+      [
+        "unzip file.zip",
+        "Extracts a ZIP file"
+      ],
+      [
+        "zip -r archive.zip folder/",
+        "Creates a ZIP archive"
+      ],
+      [
+        "gzip file.txt",
+        "Compresses a file (normally replacing the original with `.gz`)"
+      ],
+      [
+        "gunzip file.txt.gz",
+        "Decompresses a gzip file"
+      ]
+    ]
+  },
+  {
+    "title": "Process management",
+    "items": [
+      [
+        "pgrep firefox",
+        "Finds processes by name"
+      ],
+      [
+        "kill PID",
+        "Requests a process to stop"
+      ],
+      [
+        "kill -9 PID",
+        "Forcefully terminates a process; use only if necessary"
+      ],
+      [
+        "pkill firefox",
+        "Stops processes matching a name"
+      ],
+      [
+        "jobs",
+        "Lists background jobs in the current shell"
+      ],
+      [
+        "command &",
+        "Runs a command in the background"
+      ],
+      [
+        "Ctrl + C",
+        "Interrupts the foreground command"
+      ],
+      [
+        "Ctrl + Z",
+        "Suspends the foreground job"
+      ],
+      [
+        "bg",
+        "Resumes a suspended job in the background"
+      ],
+      [
+        "fg",
+        "Brings a background job to the foreground"
+      ]
+    ]
+  },
+  {
+    "title": "Disk and troubleshooting commands",
+    "items": [
+      [
+        "df -h",
+        "Checks available filesystem space"
+      ],
+      [
+        "du -sh ~/Downloads",
+        "Checks the size of Downloads"
+      ],
+      [
+        "lsblk -f",
+        "Lists disks, filesystems, and mount points"
+      ],
+      [
+        "findmnt",
+        "Displays mounted filesystems"
+      ],
+      [
+        "sudo fsck /dev/DEVICE",
+        "Checks a filesystem; use only on an appropriate unmounted filesystem"
+      ],
+      [
+        "sudo journalctl -b -1",
+        "Shows logs from the previous boot, if retained"
+      ],
+      [
+        "sudo apt --fix-broken install",
+        "Attempts to repair package dependencies"
+      ],
+      [
+        "sudo dpkg --configure -a",
+        "Attempts to finish configuring interrupted packages"
+      ],
+      [
+        "sudo reboot",
+        "Restarts the computer"
+      ],
+      [
+        "sudo poweroff",
+        "Shuts down the computer"
+      ]
+    ]
+  },
+  {
+    "title": "Environment variables and shell commands",
+    "items": [
+      [
+        "echo \"$HOME\"",
+        "Shows your home directory"
+      ],
+      [
+        "echo \"$PATH\"",
+        "Shows directories searched for commands"
+      ],
+      [
+        "which python3",
+        "Shows the located executable, when available"
+      ],
+      [
+        "command -v git",
+        "Checks how the shell resolves a command"
+      ],
+      [
+        "export NAME=value",
+        "Sets an environment variable for the current shell and child processes"
+      ],
+      [
+        "source ~/.bashrc",
+        "Reloads Bash configuration"
+      ],
+      [
+        "source ~/.zshrc",
+        "Reloads Zsh configuration"
+      ],
+      [
+        "alias ll='ls -la'",
+        "Creates a shortcut for the current shell session"
+      ],
+      [
+        "env",
+        "Lists environment variables"
+      ],
+      [
+        "printenv PATH",
+        "Prints the `PATH` variable"
+      ]
+    ]
+  },
+  {
+    "title": "Essential keyboard shortcuts",
+    "items": [
+      [
+        "Ctrl + C",
+        "Stops a running foreground command"
+      ],
+      [
+        "Ctrl + D",
+        "Sends end-of-input or exits a shell"
+      ],
+      [
+        "Ctrl + L",
+        "Clears the terminal display"
+      ],
+      [
+        "Ctrl + R",
+        "Searches command history"
+      ],
+      [
+        "Tab",
+        "Completes a command or filename"
+      ],
+      [
+        "↑",
+        "Browses command history"
+      ],
+      [
+        "Home",
+        "Moves to the beginning/end of a line"
+      ],
+      [
+        "Ctrl + A",
+        "Moves to the beginning of the command line"
+      ],
+      [
+        "Ctrl + E",
+        "Moves to the end of the command line"
+      ],
+      [
+        "Ctrl + U",
+        "Clears text before the cursor"
+      ],
+      [
+        "Ctrl + W",
+        "Deletes the previous word"
+      ]
+    ]
+  },
+  {
+    "title": "Quick Linux diagnostic checklist",
+    "items": []
+  },
+  {
+    "title": "Recommended commands to learn first",
+    "items": []
+  }
+]
