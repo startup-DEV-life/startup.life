@@ -1,0 +1,5 @@
+[
+  {"id":"field-notebook","name":"Field Notebook","description":"A weather-stained notebook full of useful island notes.","emoji":"📓","x":14,"y":593,"reward":15,"xp":25},
+  {"id":"signal-crystal","name":"Signal Crystal","description":"A blue mineral that still hums with stored energy.","emoji":"💠","x":852,"y":246,"reward":15,"xp":25},
+  {"id":"salvage-circuit","name":"Salvaged Circuit","description":"A working circuit recovered from the old coast station.","emoji":"🔩","x":1005,"y":980,"reward":15,"xp":25}
+]
