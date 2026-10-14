@@ -157,3 +157,9 @@
   .three-city canvas, .dpad button { -webkit-tap-highlight-color: transparent; }
   .quick-actions button, .phone-apps button, .location-button, .interior-activities button { touch-action: manipulation; }
 }
+
+.vehicle-toggle{position:absolute;z-index:3;right:24px;bottom:137px;height:44px;padding:0 13px;display:flex;align-items:center;gap:7px;border:1px solid #9bc6e9;border-radius:13px;background:#101a2bee;color:#e9f4ff;box-shadow:0 5px 18px #0207139c;font-size:10px;font-weight:750;cursor:pointer;backdrop-filter:blur(12px)}
+.vehicle-toggle svg{color:#64d6ec}.vehicle-toggle kbd{border:1px solid #51647d;border-radius:5px;padding:2px 5px;color:#aebed1;font-size:8px}.vehicle-toggle.active{background:#176b62;border-color:#63e1bc}
+@media(max-width:650px){.location-rail{width:calc(100% - 170px);min-width:150px}.vehicle-toggle{right:max(8px,env(safe-area-inset-right));bottom:calc(155px + env(safe-area-inset-bottom));height:43px;width:108px;justify-content:center;padding:0 6px;font-size:9px;gap:5px}.vehicle-toggle kbd{display:none}}
+@media(max-width:390px){.location-rail{width:calc(100% - 166px);min-width:145px}.vehicle-toggle{width:103px}}
+@media(orientation:landscape) and (max-height:520px) and (pointer:coarse){.vehicle-toggle{right:max(8px,env(safe-area-inset-right));bottom:calc(146px + env(safe-area-inset-bottom))}}
