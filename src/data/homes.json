@@ -1,0 +1,42 @@
+[
+  {
+    "id": "lagoon-edge",
+    "name": "Lagoon Edge Plot",
+    "district": "Victoria Island",
+    "emoji": "🌊",
+    "x": 820,
+    "y": 610,
+    "price": 150,
+    "description": "A sunny plot close to the water."
+  },
+  {
+    "id": "yaba-loft",
+    "name": "Yaba Creative Loft",
+    "district": "Yaba",
+    "emoji": "🏙️",
+    "x": 380,
+    "y": 170,
+    "price": 220,
+    "description": "Room for big ideas on the mainland."
+  },
+  {
+    "id": "island-cottage",
+    "name": "Island Garden Cottage",
+    "district": "Lagos Island",
+    "emoji": "🪴",
+    "x": 350,
+    "y": 400,
+    "price": 300,
+    "description": "A quiet corner near the old city."
+  },
+  {
+    "id": "ikeja-home",
+    "name": "Ikeja Townhome",
+    "district": "Ikeja",
+    "emoji": "🏘️",
+    "x": 160,
+    "y": 180,
+    "price": 350,
+    "description": "A roomy home on the north side of the city."
+  }
+]

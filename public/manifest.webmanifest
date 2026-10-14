@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "Blank Life",
+  "short_name": "Blank Life",
+  "description": "Build your developer story in a 3D Lagos-inspired island city.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#102d35",
+  "theme_color": "#102d35",
+  "orientation": "any",
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

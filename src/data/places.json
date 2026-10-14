@@ -1,0 +1,962 @@
+[
+  {
+    "id": "afrika-shrine",
+    "name": "Afrika Shrine",
+    "emoji": "🎷",
+    "kind": "Music & culture",
+    "district": "Ikeja",
+    "x": 140,
+    "y": 180,
+    "color": "#e9a84c",
+    "description": "Afrika Shrine is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Afrika Shrine. Mood +1.",
+    "buildingRole": "Live music & culture venue",
+    "uses": "Catch live music, discover local culture, and socialise.",
+    "activities": [
+      {
+        "id": "afrika-shrine-1",
+        "label": "Listen to live music"
+      },
+      {
+        "id": "afrika-shrine-2",
+        "label": "Explore local culture"
+      },
+      {
+        "id": "afrika-shrine-3",
+        "label": "Meet the community"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Afrika Shrine.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "viewing-centre",
+    "name": "Viewing Centre",
+    "emoji": "⚽",
+    "kind": "Sports",
+    "district": "Yaba",
+    "x": 340,
+    "y": 180,
+    "color": "#3ba87e",
+    "description": "Viewing Centre is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Viewing Centre. Mood +1.",
+    "buildingRole": "Sports venue",
+    "uses": "Watch the match, join a friendly game, or meet the fans.",
+    "activities": [
+      {
+        "id": "viewing-centre-1",
+        "label": "Watch the match"
+      },
+      {
+        "id": "viewing-centre-2",
+        "label": "Join a friendly game"
+      },
+      {
+        "id": "viewing-centre-3",
+        "label": "Meet the fans"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Viewing Centre.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "amala-shitta",
+    "name": "Amala Shitta",
+    "emoji": "🍲",
+    "kind": "Food",
+    "district": "Surulere",
+    "x": 540,
+    "y": 180,
+    "color": "#e98b42",
+    "description": "Amala Shitta is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Amala Shitta. Mood +1.",
+    "buildingRole": "Restaurant & kitchen",
+    "uses": "Order a meal, share a table, and meet other players.",
+    "activities": [
+      {
+        "id": "amala-shitta-1",
+        "label": "Order jollof rice"
+      },
+      {
+        "id": "amala-shitta-2",
+        "label": "Try amala and ewedu"
+      },
+      {
+        "id": "amala-shitta-3",
+        "label": "Share a table"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Amala Shitta.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "cchub",
+    "name": "CcHub",
+    "emoji": "💡",
+    "kind": "Work & learn",
+    "district": "Yaba",
+    "x": 740,
+    "y": 180,
+    "color": "#e5c24e",
+    "description": "CcHub is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at CcHub. Mood +1.",
+    "buildingRole": "Developer workspace & learning hub",
+    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "activities": [
+      {
+        "id": "cchub-1",
+        "label": "Open the career board"
+      },
+      {
+        "id": "cchub-2",
+        "label": "Study a new skill"
+      },
+      {
+        "id": "cchub-3",
+        "label": "Pair with a developer"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to CcHub.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "market",
+    "name": "Market",
+    "emoji": "🧺",
+    "kind": "Shopping",
+    "district": "Lagos Island",
+    "x": 940,
+    "y": 180,
+    "color": "#dc7958",
+    "description": "Market is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Market. Mood +1.",
+    "buildingRole": "Market & shopping arcade",
+    "uses": "Browse local shops, discover finds, and meet vendors.",
+    "activities": [
+      {
+        "id": "market-1",
+        "label": "Browse the shops"
+      },
+      {
+        "id": "market-2",
+        "label": "Look for something special"
+      },
+      {
+        "id": "market-3",
+        "label": "Meet a local vendor"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Market.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "freedom-park",
+    "name": "Freedom Park",
+    "emoji": "🎭",
+    "kind": "Arts & culture",
+    "district": "Lagos Island",
+    "x": 140,
+    "y": 380,
+    "color": "#5e9d76",
+    "description": "Freedom Park is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Freedom Park. Mood +1.",
+    "buildingRole": "Arts & culture centre",
+    "uses": "Explore exhibitions, watch a performance, and create.",
+    "activities": [
+      {
+        "id": "freedom-park-1",
+        "label": "Explore an exhibition"
+      },
+      {
+        "id": "freedom-park-2",
+        "label": "Watch a performance"
+      },
+      {
+        "id": "freedom-park-3",
+        "label": "Make something"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Freedom Park.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "i-fitness",
+    "name": "i-Fitness",
+    "emoji": "🏋️",
+    "kind": "Fitness",
+    "district": "Lekki",
+    "x": 340,
+    "y": 380,
+    "color": "#6ba6c7",
+    "description": "i-Fitness is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at i-Fitness. Mood +1.",
+    "buildingRole": "Fitness & training centre",
+    "uses": "Train, join a class, and build your routine.",
+    "activities": [
+      {
+        "id": "i-fitness-1",
+        "label": "Start a workout"
+      },
+      {
+        "id": "i-fitness-2",
+        "label": "Join a class"
+      },
+      {
+        "id": "i-fitness-3",
+        "label": "Stretch and recover"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to i-Fitness.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "marina-towers",
+    "name": "Marina Towers",
+    "emoji": "🏢",
+    "kind": "Work & learn",
+    "district": "Lagos Island",
+    "x": 540,
+    "y": 380,
+    "color": "#8296aa",
+    "description": "Marina Towers is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Marina Towers. Mood +1.",
+    "buildingRole": "Developer workspace & learning hub",
+    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "activities": [
+      {
+        "id": "marina-towers-1",
+        "label": "Open the career board"
+      },
+      {
+        "id": "marina-towers-2",
+        "label": "Study a new skill"
+      },
+      {
+        "id": "marina-towers-3",
+        "label": "Pair with a developer"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Marina Towers.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "quilox",
+    "name": "Quilox",
+    "emoji": "🪩",
+    "kind": "Nightlife",
+    "district": "Victoria Island",
+    "x": 740,
+    "y": 380,
+    "color": "#aa75bd",
+    "description": "Quilox is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Quilox. Mood +1.",
+    "buildingRole": "Nightlife & social club",
+    "uses": "Listen to a DJ, dance, and meet players.",
+    "activities": [
+      {
+        "id": "quilox-1",
+        "label": "Listen to the DJ"
+      },
+      {
+        "id": "quilox-2",
+        "label": "Dance with friends"
+      },
+      {
+        "id": "quilox-3",
+        "label": "Meet the crowd"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Quilox.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "canopy-walk",
+    "name": "Canopy Walk",
+    "emoji": "🌉",
+    "kind": "Outdoors",
+    "district": "Lekki",
+    "x": 940,
+    "y": 380,
+    "color": "#81a858",
+    "description": "Canopy Walk is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Canopy Walk. Mood +1.",
+    "buildingRole": "Park, beach & outdoor space",
+    "uses": "Walk the island, relax, and enjoy the view.",
+    "activities": [
+      {
+        "id": "canopy-walk-1",
+        "label": "Take a walk"
+      },
+      {
+        "id": "canopy-walk-2",
+        "label": "Enjoy the view"
+      },
+      {
+        "id": "canopy-walk-3",
+        "label": "Meet a friend outside"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Canopy Walk.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "the-palms",
+    "name": "The Palms",
+    "emoji": "🛍️",
+    "kind": "Shopping",
+    "district": "Lekki",
+    "x": 140,
+    "y": 590,
+    "color": "#d89b64",
+    "description": "The Palms is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at The Palms. Mood +1.",
+    "buildingRole": "Market & shopping arcade",
+    "uses": "Browse local shops, discover finds, and meet vendors.",
+    "activities": [
+      {
+        "id": "the-palms-1",
+        "label": "Browse the shops"
+      },
+      {
+        "id": "the-palms-2",
+        "label": "Look for something special"
+      },
+      {
+        "id": "the-palms-3",
+        "label": "Meet a local vendor"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to The Palms.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "the-library",
+    "name": "The Library",
+    "emoji": "📚",
+    "kind": "Work & learn",
+    "district": "Ikoyi",
+    "x": 340,
+    "y": 590,
+    "color": "#c08a5b",
+    "description": "The Library is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at The Library. Mood +1.",
+    "buildingRole": "Developer workspace & learning hub",
+    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "activities": [
+      {
+        "id": "the-library-1",
+        "label": "Open the career board"
+      },
+      {
+        "id": "the-library-2",
+        "label": "Study a new skill"
+      },
+      {
+        "id": "the-library-3",
+        "label": "Pair with a developer"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to The Library.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "beach",
+    "name": "Beach",
+    "emoji": "🏖️",
+    "kind": "Outdoors",
+    "district": "Victoria Island",
+    "x": 540,
+    "y": 590,
+    "color": "#56aeb7",
+    "description": "Beach is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Beach. Mood +1.",
+    "buildingRole": "Park, beach & outdoor space",
+    "uses": "Walk the island, relax, and enjoy the view.",
+    "activities": [
+      {
+        "id": "beach-1",
+        "label": "Take a walk"
+      },
+      {
+        "id": "beach-2",
+        "label": "Enjoy the view"
+      },
+      {
+        "id": "beach-3",
+        "label": "Meet a friend outside"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Beach.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "general-hospital",
+    "name": "General Hospital",
+    "emoji": "🏥",
+    "kind": "Health",
+    "district": "Lagos Island",
+    "x": 740,
+    "y": 590,
+    "color": "#6fb9a7",
+    "description": "General Hospital is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at General Hospital. Mood +1.",
+    "buildingRole": "Community health centre",
+    "uses": "Rest, check in, and find community support.",
+    "activities": [
+      {
+        "id": "general-hospital-1",
+        "label": "Rest and recharge"
+      },
+      {
+        "id": "general-hospital-2",
+        "label": "Speak with the wellness desk"
+      },
+      {
+        "id": "general-hospital-3",
+        "label": "Meet a neighbour"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to General Hospital.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "mama-bisis-salon",
+    "name": "Mama Bisi's Salon",
+    "emoji": "💇🏾‍♀️",
+    "kind": "Style",
+    "district": "Surulere",
+    "x": 940,
+    "y": 590,
+    "color": "#d184a2",
+    "description": "Mama Bisi's Salon is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Mama Bisi's Salon. Mood +1.",
+    "buildingRole": "Hair & style salon",
+    "uses": "Choose a new look, relax, and chat with the stylists.",
+    "activities": [
+      {
+        "id": "mama-bisis-salon-1",
+        "label": "Choose a hairstyle"
+      },
+      {
+        "id": "mama-bisis-salon-2",
+        "label": "Refresh your look"
+      },
+      {
+        "id": "mama-bisis-salon-3",
+        "label": "Chat with the stylist"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Mama Bisi's Salon.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "ivory-rooftop",
+    "name": "Ivory Rooftop",
+    "emoji": "🕯️",
+    "kind": "Food & drink",
+    "district": "Ikoyi",
+    "x": 140,
+    "y": 760,
+    "color": "#ceae64",
+    "description": "Ivory Rooftop is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Ivory Rooftop. Mood +1.",
+    "buildingRole": "Restaurant & rooftop lounge",
+    "uses": "Order food and drinks, enjoy the view, and meet neighbours.",
+    "activities": [
+      {
+        "id": "ivory-rooftop-1",
+        "label": "Order a meal"
+      },
+      {
+        "id": "ivory-rooftop-2",
+        "label": "Get a rooftop drink"
+      },
+      {
+        "id": "ivory-rooftop-3",
+        "label": "Meet a friend"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Ivory Rooftop.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "naija-radio",
+    "name": "Naija Radio",
+    "emoji": "📻",
+    "kind": "Music & culture",
+    "district": "Ikeja",
+    "x": 340,
+    "y": 760,
+    "color": "#548caf",
+    "description": "Naija Radio is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Naija Radio. Mood +1.",
+    "buildingRole": "Live music & culture venue",
+    "uses": "Catch live music, discover local culture, and socialise.",
+    "activities": [
+      {
+        "id": "naija-radio-1",
+        "label": "Listen to live music"
+      },
+      {
+        "id": "naija-radio-2",
+        "label": "Explore local culture"
+      },
+      {
+        "id": "naija-radio-3",
+        "label": "Meet the community"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Naija Radio.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "eko-hotels",
+    "name": "Eko Hotels",
+    "emoji": "🏨",
+    "kind": "Stay",
+    "district": "Victoria Island",
+    "x": 540,
+    "y": 760,
+    "color": "#b99c7b",
+    "description": "Eko Hotels is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Eko Hotels. Mood +1.",
+    "buildingRole": "Hotel & guest house",
+    "uses": "Check in, rest, and meet visitors to Lagos.",
+    "activities": [
+      {
+        "id": "eko-hotels-1",
+        "label": "Check in"
+      },
+      {
+        "id": "eko-hotels-2",
+        "label": "Rest in the lounge"
+      },
+      {
+        "id": "eko-hotels-3",
+        "label": "Meet a visitor"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Eko Hotels.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "polanco-motors",
+    "name": "Polanco Motors",
+    "emoji": "🚘",
+    "kind": "Shopping",
+    "district": "Victoria Island",
+    "x": 740,
+    "y": 760,
+    "color": "#758b9e",
+    "description": "Polanco Motors is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Polanco Motors. Mood +1.",
+    "buildingRole": "Market & shopping arcade",
+    "uses": "Browse local shops, discover finds, and meet vendors.",
+    "activities": [
+      {
+        "id": "polanco-motors-1",
+        "label": "Browse the shops"
+      },
+      {
+        "id": "polanco-motors-2",
+        "label": "Look for something special"
+      },
+      {
+        "id": "polanco-motors-3",
+        "label": "Meet a local vendor"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Polanco Motors.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "boat-cruise",
+    "name": "Boat Cruise",
+    "emoji": "⛵",
+    "kind": "Outdoors",
+    "district": "Victoria Island",
+    "x": 940,
+    "y": 760,
+    "color": "#61aaba",
+    "description": "Boat Cruise is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Boat Cruise. Mood +1.",
+    "buildingRole": "Park, beach & outdoor space",
+    "uses": "Walk the island, relax, and enjoy the view.",
+    "activities": [
+      {
+        "id": "boat-cruise-1",
+        "label": "Take a walk"
+      },
+      {
+        "id": "boat-cruise-2",
+        "label": "Enjoy the view"
+      },
+      {
+        "id": "boat-cruise-3",
+        "label": "Meet a friend outside"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Boat Cruise.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "ikoyi-golf-club",
+    "name": "Ikoyi Golf Club",
+    "emoji": "⛳",
+    "kind": "Outdoors",
+    "district": "Ikoyi",
+    "x": 140,
+    "y": 950,
+    "color": "#6d9e59",
+    "description": "Ikoyi Golf Club is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Ikoyi Golf Club. Mood +1.",
+    "buildingRole": "Park, beach & outdoor space",
+    "uses": "Walk the island, relax, and enjoy the view.",
+    "activities": [
+      {
+        "id": "ikoyi-golf-club-1",
+        "label": "Take a walk"
+      },
+      {
+        "id": "ikoyi-golf-club-2",
+        "label": "Enjoy the view"
+      },
+      {
+        "id": "ikoyi-golf-club-3",
+        "label": "Meet a friend outside"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Ikoyi Golf Club.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "high-court",
+    "name": "High Court",
+    "emoji": "⚖️",
+    "kind": "City life",
+    "district": "Lagos Island",
+    "x": 340,
+    "y": 950,
+    "color": "#8f9294",
+    "description": "High Court is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at High Court. Mood +1.",
+    "buildingRole": "Civic services & community office",
+    "uses": "Find city services, get help, and meet your neighbours.",
+    "activities": [
+      {
+        "id": "high-court-1",
+        "label": "Find a city service"
+      },
+      {
+        "id": "high-court-2",
+        "label": "Ask for help"
+      },
+      {
+        "id": "high-court-3",
+        "label": "Meet the community"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to High Court.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "unilag",
+    "name": "UNILAG",
+    "emoji": "🎓",
+    "kind": "Work & learn",
+    "district": "Akoka",
+    "x": 540,
+    "y": 950,
+    "color": "#e4bb47",
+    "description": "UNILAG is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at UNILAG. Mood +1.",
+    "buildingRole": "Developer workspace & learning hub",
+    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "activities": [
+      {
+        "id": "unilag-1",
+        "label": "Open the career board"
+      },
+      {
+        "id": "unilag-2",
+        "label": "Study a new skill"
+      },
+      {
+        "id": "unilag-3",
+        "label": "Pair with a developer"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to UNILAG.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "eko-casino",
+    "name": "Eko Casino",
+    "emoji": "🎰",
+    "kind": "Nightlife",
+    "district": "Victoria Island",
+    "x": 740,
+    "y": 950,
+    "color": "#c76a63",
+    "description": "Eko Casino is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Eko Casino. Mood +1.",
+    "buildingRole": "Nightlife & social club",
+    "uses": "Listen to a DJ, dance, and meet players.",
+    "activities": [
+      {
+        "id": "eko-casino-1",
+        "label": "Listen to the DJ"
+      },
+      {
+        "id": "eko-casino-2",
+        "label": "Dance with friends"
+      },
+      {
+        "id": "eko-casino-3",
+        "label": "Meet the crowd"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Eko Casino.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "mindspace",
+    "name": "MindSpace",
+    "emoji": "🫶🏾",
+    "kind": "Community",
+    "district": "Lekki",
+    "x": 940,
+    "y": 950,
+    "color": "#8b9e75",
+    "description": "MindSpace is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at MindSpace. Mood +1.",
+    "buildingRole": "Community & wellbeing centre",
+    "uses": "Join a group, unwind, and connect with other players.",
+    "activities": [
+      {
+        "id": "mindspace-1",
+        "label": "Join a group"
+      },
+      {
+        "id": "mindspace-2",
+        "label": "Take a quiet break"
+      },
+      {
+        "id": "mindspace-3",
+        "label": "Meet someone new"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to MindSpace.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "stadium",
+    "name": "Stadium",
+    "emoji": "🏟️",
+    "kind": "Sports",
+    "district": "Surulere",
+    "x": 140,
+    "y": 1140,
+    "color": "#7792a8",
+    "description": "Stadium is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Stadium. Mood +1.",
+    "buildingRole": "Sports venue",
+    "uses": "Watch the match, join a friendly game, or meet the fans.",
+    "activities": [
+      {
+        "id": "stadium-1",
+        "label": "Watch the match"
+      },
+      {
+        "id": "stadium-2",
+        "label": "Join a friendly game"
+      },
+      {
+        "id": "stadium-3",
+        "label": "Meet the fans"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Stadium.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "snooker-spot",
+    "name": "Snooker Spot",
+    "emoji": "🎱",
+    "kind": "Games",
+    "district": "Yaba",
+    "x": 340,
+    "y": 1140,
+    "color": "#719767",
+    "description": "Snooker Spot is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Snooker Spot. Mood +1.",
+    "buildingRole": "Game lounge",
+    "uses": "Play quick games, challenge another player, or practise.",
+    "activities": [
+      {
+        "id": "snooker-spot-1",
+        "label": "Play a quick round"
+      },
+      {
+        "id": "snooker-spot-2",
+        "label": "Challenge a friend"
+      },
+      {
+        "id": "snooker-spot-3",
+        "label": "Practise a game"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Snooker Spot.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "handi-hq",
+    "name": "HANDI HQ",
+    "emoji": "🛠️",
+    "kind": "Work & learn",
+    "district": "Ikeja",
+    "x": 540,
+    "y": 1140,
+    "color": "#b4844c",
+    "description": "HANDI HQ is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at HANDI HQ. Mood +1.",
+    "buildingRole": "Developer workspace & learning hub",
+    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "activities": [
+      {
+        "id": "handi-hq-1",
+        "label": "Open the career board"
+      },
+      {
+        "id": "handi-hq-2",
+        "label": "Study a new skill"
+      },
+      {
+        "id": "handi-hq-3",
+        "label": "Pair with a developer"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to HANDI HQ.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "mako",
+    "name": "Mako",
+    "emoji": "🍕",
+    "kind": "Food",
+    "district": "Victoria Island",
+    "x": 740,
+    "y": 1140,
+    "color": "#d17a54",
+    "description": "Mako is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Mako. Mood +1.",
+    "buildingRole": "Restaurant & kitchen",
+    "uses": "Order a meal, share a table, and meet other players.",
+    "activities": [
+      {
+        "id": "mako-1",
+        "label": "Order jollof rice"
+      },
+      {
+        "id": "mako-2",
+        "label": "Try amala and ewedu"
+      },
+      {
+        "id": "mako-3",
+        "label": "Share a table"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Mako.",
+      "room": "Main hall"
+    }
+  },
+  {
+    "id": "jibowu-park",
+    "name": "Jibowu Park",
+    "emoji": "🚌",
+    "kind": "Transport",
+    "district": "Yaba",
+    "x": 940,
+    "y": 1140,
+    "color": "#6fa5a6",
+    "description": "Jibowu Park is a place to meet people and make a little Lagos story.",
+    "activity": "You spent time at Jibowu Park. Mood +1.",
+    "buildingRole": "Transit hub & bus station",
+    "uses": "Plan a route, catch a bus, and meet travellers.",
+    "activities": [
+      {
+        "id": "jibowu-park-1",
+        "label": "Plan a route"
+      },
+      {
+        "id": "jibowu-park-2",
+        "label": "Catch the next bus"
+      },
+      {
+        "id": "jibowu-park-3",
+        "label": "Meet a traveller"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Jibowu Park.",
+      "room": "Main hall"
+    }
+  }
+]

@@ -1,0 +1,79 @@
+[
+  {
+    "id": "frontend-engineer",
+    "title": "Frontend Engineer",
+    "emoji": "🧑🏾‍💻",
+    "studio": "Pixel District",
+    "task": "Ship a responsive product dashboard",
+    "reward": 90,
+    "color": "#51c7a2",
+    "x": 450,
+    "y": 655
+  },
+  {
+    "id": "product-designer",
+    "title": "Product Designer",
+    "emoji": "🎨",
+    "studio": "Good Form Studio",
+    "task": "Polish the onboarding flow",
+    "reward": 80,
+    "color": "#f0a36c",
+    "x": 545,
+    "y": 655
+  },
+  {
+    "id": "security-engineer",
+    "title": "Security Engineer",
+    "emoji": "🛡️",
+    "studio": "Packet House",
+    "task": "Patch a suspicious login route",
+    "reward": 110,
+    "color": "#7ca2fa",
+    "x": 450,
+    "y": 755
+  },
+  {
+    "id": "game-developer",
+    "title": "Game Developer",
+    "emoji": "🎮",
+    "studio": "Lagoon Arcade",
+    "task": "Fix the city-map collision bug",
+    "reward": 100,
+    "color": "#c38af1",
+    "x": 545,
+    "y": 755
+  },
+  {
+    "id": "ai-researcher",
+    "title": "AI Researcher",
+    "emoji": "🧠",
+    "studio": "Pattern Lab",
+    "task": "Label the next batch of local data",
+    "reward": 95,
+    "color": "#e58cb3",
+    "x": 500,
+    "y": 825
+  },
+  {
+    "id": "backend-engineer",
+    "title": "Backend Engineer",
+    "emoji": "🧑🏽‍💻",
+    "studio": "API Wharf",
+    "task": "Build a reliable API endpoint",
+    "reward": 100,
+    "color": "#668fd3",
+    "x": 405,
+    "y": 855
+  },
+  {
+    "id": "fullstack-engineer",
+    "title": "Full-Stack Engineer",
+    "emoji": "🧑🏿‍💻",
+    "studio": "Full Stack House",
+    "task": "Connect a new screen to its API",
+    "reward": 115,
+    "color": "#34a884",
+    "x": 595,
+    "y": 855
+  }
+]
