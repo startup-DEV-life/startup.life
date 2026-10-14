@@ -78,3 +78,82 @@
 .three-city{background:radial-gradient(ellipse at 50% 40%,#192944,#0c1324 72%)}.three-city canvas{filter:brightness(1.32) saturate(1.02) contrast(1.04)}.three-city:after{position:absolute;z-index:1;inset:0;content:'';pointer-events:none;background:radial-gradient(ellipse at 50% 48%,transparent 20%,#060b1c0d 72%,#09071924 120%),linear-gradient(180deg,#0a12260a,#160b1e0a)}.city-label{z-index:2;border-color:#8ebae857;background:#0b1526d9;box-shadow:0 0 22px #4a9bd433;color:#a9c6e6}.city-label-dot{background:#82dfff;box-shadow:0 0 8px #82dfff}.city-label i{color:#8595b2}.three-error{border:1px solid #834156;background:#2a1524;color:#ffbac6}
 .dpad button{border-color:#86a4ca99;background:#111b2ddd;box-shadow:0 3px 12px #020610ad;color:#b4eaff}.dpad button:active{background:#274268}
 @media(max-width:650px){.city-status button{background:#101827ed}.announcement{background:linear-gradient(100deg,#162d4a,#252044 64%,#402033)}.location-rail,.right-stack .player-card,.right-stack .stat-card,.right-stack .spot-card{background:#0d1524f2}.bottom-left .speech-bubble,.quick-actions{background:#0d1524f2}.bottom-banner{background:#0d1524f2}.player-phone{border-color:#263146}}
+
+/* Phone-first play: thumb-sized controls, safe-area spacing, and a compact HUD. */
+@media (max-width: 650px) {
+  .game-shell { min-height: 100dvh; height: 100vh; height: 100dvh; }
+  .game-header { height: 52px; }
+  .game-brand { min-width: 0; }
+  .game-brand > span:nth-child(2) { max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0; }
+  .game-brand > span:nth-child(2)::after { content: 'Blank Life'; font-size: 13px; }
+  .game-brand .online-dot, .game-brand .online-count { display: none; }
+  .header-actions .icon-button { width: 40px; height: 40px; }
+  .location-rail { bottom: calc(156px + env(safe-area-inset-bottom)); height: 90px; }
+  .rail-heading { min-height: 36px; }
+  .location-button { width: 108px; min-width: 108px; height: 48px; }
+  .right-stack { width: 154px; }
+  .stat-row small, .player-id small { font-size: 7px; }
+  .stat-row b, .player-id b { font-size: 11px; }
+  .bottom-left { bottom: max(10px, env(safe-area-inset-bottom)); }
+  .quick-actions { height: 42px; }
+  .quick-actions button { min-width: 42px; min-height: 38px; }
+  .dpad { width: 148px; height: 142px; grid-template: repeat(3, 46px) / repeat(3, 46px); gap: 2px; }
+  .dpad button { min-width: 46px; min-height: 46px; border-radius: 12px; }
+  .dpad button svg { width: 21px; height: 21px; }
+  .control-hint { display: flex; position: absolute; right: 4px; bottom: 146px; color: #d4e7ff; font-size: 9px; }
+  .control-hint > span { color: inherit; text-shadow: 0 1px 4px #000; }
+  .control-hint kbd { display: none; }
+  .control-hint > span::after { content: ' · HOLD TO WALK'; }
+  .control-hint > span { font-size: 0; }
+  .control-hint > span::after { font-size: 9px; }
+  .player-phone { bottom: calc(76px + env(safe-area-inset-bottom)); height: min(520px, calc(100dvh - 170px - env(safe-area-inset-bottom))); }
+  .phone-apps button { min-height: 74px; }
+  .phone-back, .phone-districts button, .phone-service-list button, .phone-web-links button { min-height: 44px; }
+  .phone-search-form input { min-height: 44px; font-size: 16px; }
+  .phone-search-form button { min-width: 44px; min-height: 44px; }
+  .interior-activities button { min-height: 48px; font-size: 12px; }
+  .visit-button, .learn-submit, .create-button { min-height: 46px; }
+  .signup-modal form > label input:not([type=radio]):not([type=checkbox]) { min-height: 44px; font-size: 16px; }
+  .city-label { max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
+}
+
+@media (max-width: 390px) {
+  .game-header { left: 6px; right: 6px; padding: 0 7px; }
+  .game-brand { gap: 5px; }
+  .game-brand > span:nth-child(2)::after { font-size: 12px; }
+  .header-actions { gap: 3px; }
+  .header-actions .icon-button { width: 36px; height: 40px; }
+  .signup-pill, .login-pill { min-height: 36px; padding: 0 8px; }
+  .right-stack { width: 140px; }
+  .location-rail { height: 86px; }
+  .dpad { width: 140px; grid-template-columns: repeat(3, 44px); }
+  .dpad button { min-width: 44px; }
+  .bottom-left { width: calc(100% - 178px); }
+}
+
+/* Landscape phones need the scene and movement controls to stay clear of side panels. */
+@media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .game-header { top: max(4px, env(safe-area-inset-top)); height: 44px; }
+  .city-status { top: 54px; }
+  .announcement { top: 91px; height: 23px; }
+  .location-rail { display: none; }
+  .right-stack { top: 56px; right: 8px; width: 170px; max-height: 38vh; overflow: auto; }
+  .player-card { height: 44px; }
+  .stat-card { padding: 5px 8px; }
+  .spot-card { padding: 7px 9px; }
+  .spot-card p { display: none; }
+  .bottom-left { left: 8px; bottom: max(5px, env(safe-area-inset-bottom)); width: min(300px, 40vw); }
+  .speech-bubble { display: none; }
+  .bottom-right { right: max(7px, env(safe-area-inset-right)); bottom: max(4px, env(safe-area-inset-bottom)); }
+  .dpad { width: 136px; height: 136px; grid-template: repeat(3, 44px) / repeat(3, 44px); }
+  .dpad button { min-width: 44px; min-height: 44px; }
+  .control-hint { right: 2px; bottom: 139px; }
+  .city-label { display: none; }
+  .career-board, .crew-panel { top: 56px; max-height: calc(100dvh - 66px); }
+  .player-phone { left: 8px; bottom: 8px; height: calc(100dvh - 60px); max-height: 440px; }
+}
+
+@media (pointer: coarse) {
+  .three-city canvas, .dpad button { -webkit-tap-highlight-color: transparent; }
+  .quick-actions button, .phone-apps button, .location-button, .interior-activities button { touch-action: manipulation; }
+}
