@@ -1,10 +1,392 @@
 [
-  {"id":"learn-how-to-learn","stage":"Selection game","title":"Think in steps","duration":"5 min","summary":"Practise breaking a new problem into smaller questions before reaching for a solution.","brief":"A client reports that a page is slow. You have not seen the code yet. What is the best first move?","choices":["Rewrite the whole page immediately","Ask when it feels slow, reproduce it, and inspect measurements","Add a bigger server without checking anything"],"answer":1,"explanation":"Good engineers make a problem observable first. Reproduce it, gather evidence, then choose a focused fix."},
-  {"id":"trial-debugging","stage":"Trials","title":"Debug with evidence","duration":"8 min","summary":"Use a failing example, one hypothesis at a time, and a small verified change.","brief":"A function returns 12 when you expect 10. Which next step gives you the clearest signal?","choices":["Change several lines at once and try again","Write down the input, expected output, actual output, then inspect the relevant step","Delete the test because it is blocking you"],"answer":1,"explanation":"A small reproducible case and one hypothesis at a time help isolate the cause and prove the fix."},
-  {"id":"web-foundations","stage":"Full-stack foundations","title":"How a web request works","duration":"7 min","summary":"Connect browser UI, an HTTP request, server logic, and a database response.","brief":"A user presses Save in a web form. Which sequence is the most typical?","choices":["Browser sends a request → server validates and saves → server responds → UI shows the result","Database updates itself → browser guesses the result","Browser sends HTML directly to another user's screen"],"answer":0,"explanation":"The client sends a request; the server validates and performs authorized changes, then returns a response the interface can render."},
-  {"id":"git-collaboration","stage":"Build with a cohort","title":"Make a safe team change","duration":"6 min","summary":"Practise small commits, readable diffs, and clear handoffs with collaborators.","brief":"You are changing a shared codebase. Which habit makes review and rollback easiest?","choices":["Bundle unrelated changes into one enormous commit","Make a focused change, inspect the diff, and describe why it is needed","Edit directly on the production server"],"answer":1,"explanation":"Focused changes with an understandable diff are easier to review, discuss, and safely revert."},
-  {"id":"ai-native-review","stage":"AI-native engineering","title":"Use AI, verify the work","duration":"8 min","summary":"Treat an AI coding assistant as a collaborator whose output still needs evidence and review.","brief":"An AI assistant proposes a database migration. What should you do before shipping it?","choices":["Apply it directly because the assistant is confident","Review the schema impact, test it on representative data, and inspect the resulting diff","Ask the assistant to remove the checks"],"answer":1,"explanation":"AI can speed up exploration, but the engineer remains responsible for correctness, security, and the final change."},
-  {"id":"portfolio-project","stage":"Project and internship readiness","title":"Ship a useful slice","duration":"10 min","summary":"Turn a broad idea into a small, testable feature with a clear user outcome.","brief":"Your team has one day to improve a learning app. What is the strongest first delivery?","choices":["A complete redesign with no time to validate","One learner-requested feature with a clear acceptance check and a working end-to-end path","A slide deck describing features for a later team"],"answer":1,"explanation":"A narrow feature that works from user action through saved result creates useful evidence and invites feedback."}
-,
-  {"id":"career-evidence","stage":"Career launch","title":"Show your work clearly","duration":"6 min","summary":"Practise describing the problem, your contribution, and the evidence that a project works.","brief":"You are presenting a project to a potential teammate. What makes your explanation most useful?","choices":["List every technology name without context","Explain the user problem, your specific decisions, trade-offs, and how you verified the result","Say that AI wrote everything so you do not need to understand it"],"answer":1,"explanation":"Strong project evidence connects a real problem to your contribution and shows how you checked the outcome."}
+  {
+    "id": "orientation-trial",
+    "stage": "Welcome trial",
+    "title": "Clear the gate: how learning quests work",
+    "duration": "3 min",
+    "summary": "Show how you break a small coding problem into a testable first step.",
+    "brief": "A beginner Python program should greet a player by name. What is the best first quest step?",
+    "choices": [
+      "Write the smallest function, try one example name, and check the exact output",
+      "Install every Python package first",
+      "Copy a large application before deciding what the greeting should do"
+    ],
+    "answer": 0,
+    "explanation": "A small, testable first slice gives you a clear success condition. Clearing this trial unlocks the learning rooms."
+  },
+  {
+    "id": "learn-how-to-learn",
+    "stage": "Selection game",
+    "title": "Think in steps",
+    "duration": "5 min",
+    "summary": "Practise breaking a new problem into smaller questions before reaching for a solution.",
+    "brief": "A client reports that a page is slow. You have not seen the code yet. What is the best first move?",
+    "choices": [
+      "Rewrite the whole page immediately",
+      "Ask when it feels slow, reproduce it, and inspect measurements",
+      "Add a bigger server without checking anything"
+    ],
+    "answer": 1,
+    "explanation": "Good engineers make a problem observable first. Reproduce it, gather evidence, then choose a focused fix."
+  },
+  {
+    "id": "trial-debugging",
+    "stage": "Trials",
+    "title": "Debug with evidence",
+    "duration": "8 min",
+    "summary": "Use a failing example, one hypothesis at a time, and a small verified change.",
+    "brief": "A function returns 12 when you expect 10. Which next step gives you the clearest signal?",
+    "choices": [
+      "Change several lines at once and try again",
+      "Write down the input, expected output, actual output, then inspect the relevant step",
+      "Delete the test because it is blocking you"
+    ],
+    "answer": 1,
+    "explanation": "A small reproducible case and one hypothesis at a time help isolate the cause and prove the fix."
+  },
+  {
+    "id": "web-foundations",
+    "stage": "Full-stack foundations",
+    "title": "How a web request works",
+    "duration": "7 min",
+    "summary": "Connect browser UI, an HTTP request, server logic, and a database response.",
+    "brief": "A user presses Save in a web form. Which sequence is the most typical?",
+    "choices": [
+      "Browser sends a request → server validates and saves → server responds → UI shows the result",
+      "Database updates itself → browser guesses the result",
+      "Browser sends HTML directly to another user's screen"
+    ],
+    "answer": 0,
+    "explanation": "The client sends a request; the server validates and performs authorized changes, then returns a response the interface can render."
+  },
+  {
+    "id": "git-collaboration",
+    "stage": "Build with a cohort",
+    "title": "Make a safe team change",
+    "duration": "6 min",
+    "summary": "Practise small commits, readable diffs, and clear handoffs with collaborators.",
+    "brief": "You are changing a shared codebase. Which habit makes review and rollback easiest?",
+    "choices": [
+      "Bundle unrelated changes into one enormous commit",
+      "Make a focused change, inspect the diff, and describe why it is needed",
+      "Edit directly on the production server"
+    ],
+    "answer": 1,
+    "explanation": "Focused changes with an understandable diff are easier to review, discuss, and safely revert."
+  },
+  {
+    "id": "ai-native-review",
+    "stage": "AI-native engineering",
+    "title": "Use AI, verify the work",
+    "duration": "8 min",
+    "summary": "Treat an AI coding assistant as a collaborator whose output still needs evidence and review.",
+    "brief": "An AI assistant proposes a database migration. What should you do before shipping it?",
+    "choices": [
+      "Apply it directly because the assistant is confident",
+      "Review the schema impact, test it on representative data, and inspect the resulting diff",
+      "Ask the assistant to remove the checks"
+    ],
+    "answer": 1,
+    "explanation": "AI can speed up exploration, but the engineer remains responsible for correctness, security, and the final change."
+  },
+  {
+    "id": "portfolio-project",
+    "stage": "Project and internship readiness",
+    "title": "Ship a useful slice",
+    "duration": "10 min",
+    "summary": "Turn a broad idea into a small, testable feature with a clear user outcome.",
+    "brief": "Your team has one day to improve a learning app. What is the strongest first delivery?",
+    "choices": [
+      "A complete redesign with no time to validate",
+      "One learner-requested feature with a clear acceptance check and a working end-to-end path",
+      "A slide deck describing features for a later team"
+    ],
+    "answer": 1,
+    "explanation": "A narrow feature that works from user action through saved result creates useful evidence and invites feedback."
+  },
+  {
+    "id": "career-evidence",
+    "stage": "Career launch",
+    "title": "Show your work clearly",
+    "duration": "6 min",
+    "summary": "Practise describing the problem, your contribution, and the evidence that a project works.",
+    "brief": "You are presenting a project to a potential teammate. What makes your explanation most useful?",
+    "choices": [
+      "List every technology name without context",
+      "Explain the user problem, your specific decisions, trade-offs, and how you verified the result",
+      "Say that AI wrote everything so you do not need to understand it"
+    ],
+    "answer": 1,
+    "explanation": "Strong project evidence connects a real problem to your contribution and shows how you checked the outcome."
+  },
+  {
+    "id": "html-css-foundations",
+    "stage": "Web foundations",
+    "title": "Build a semantic page",
+    "duration": "6 min",
+    "summary": "Use structure, labels, and layout to make a clear, accessible interface.",
+    "brief": "A form has three unlabeled inputs. What is the strongest first fix?",
+    "choices": [
+      "Add visible, programmatically associated labels",
+      "Make every input wider",
+      "Hide field names in placeholder text"
+    ],
+    "answer": 0,
+    "explanation": "Labels help everyone understand a field and work with assistive technology."
+  },
+  {
+    "id": "javascript-data",
+    "stage": "JavaScript & TypeScript",
+    "title": "Model state clearly",
+    "duration": "7 min",
+    "summary": "Use predictable values and types to describe a small feature.",
+    "brief": "A quantity can be missing or a positive integer. Which TypeScript type fits?",
+    "choices": [
+      "string",
+      "number | undefined",
+      "any"
+    ],
+    "answer": 1,
+    "explanation": "A narrow union expresses the real states and lets the compiler help."
+  },
+  {
+    "id": "react-components",
+    "stage": "Frontend engineering",
+    "title": "Build a reusable React component",
+    "duration": "8 min",
+    "summary": "Separate data from rendering and keep UI updates predictable.",
+    "brief": "A saved-jobs list changes after a user clicks Save. What should drive the update?",
+    "choices": [
+      "A React state update",
+      "Directly editing a DOM node",
+      "Reloading the browser"
+    ],
+    "answer": 0,
+    "explanation": "State updates let React render the new data consistently."
+  },
+  {
+    "id": "python-basics",
+    "stage": "Python full-stack · foundations",
+    "title": "Write a small Python function",
+    "duration": "7 min",
+    "summary": "Practise parameters, return values, collections, and clear names.",
+    "brief": "A function averages a list and must handle empty input. What is a useful first step?",
+    "choices": [
+      "Define the empty-input behavior and test both cases",
+      "Divide by list length without checking it",
+      "Print a number instead of returning it"
+    ],
+    "answer": 0,
+    "explanation": "Make the edge case explicit and verify ordinary and empty inputs."
+  },
+  {
+    "id": "python-api",
+    "stage": "Python full-stack · backend",
+    "title": "Design a Python API endpoint",
+    "duration": "9 min",
+    "summary": "Connect Python business logic to a request and a validated response.",
+    "brief": "A FastAPI endpoint receives a new profile. Where should constraints be checked?",
+    "choices": [
+      "At the API boundary with a validated request model",
+      "Only in the browser",
+      "After the database has saved it"
+    ],
+    "answer": 0,
+    "explanation": "Validation at the boundary prevents malformed data from moving deeper."
+  },
+  {
+    "id": "python-database",
+    "stage": "Python full-stack · data",
+    "title": "Persist data safely",
+    "duration": "8 min",
+    "summary": "Use database transactions and parameterized queries for persistent changes.",
+    "brief": "A submitted value will be used in SQL. What is the safe approach?",
+    "choices": [
+      "Use parameterized queries or an ORM and validate input",
+      "Concatenate raw text into SQL",
+      "Trust the browser to block malicious input"
+    ],
+    "answer": 0,
+    "explanation": "Parameterization prevents user text from becoming executable SQL."
+  },
+  {
+    "id": "node-api",
+    "stage": "JavaScript/TypeScript · backend",
+    "title": "Build a Node API route",
+    "duration": "8 min",
+    "summary": "Handle HTTP methods, status codes, request validation, and useful errors.",
+    "brief": "A client creates a resource successfully. Which response is clearest?",
+    "choices": [
+      "Return 201 with the created resource or its location",
+      "Return 500 with no body",
+      "Return 200 before the save"
+    ],
+    "answer": 0,
+    "explanation": "201 communicates successful resource creation."
+  },
+  {
+    "id": "sql-relations",
+    "stage": "Data engineering",
+    "title": "Connect relational records",
+    "duration": "8 min",
+    "summary": "Model tables, keys, constraints, and joins for application data.",
+    "brief": "A booking belongs to one account. How should the relationship be represented?",
+    "choices": [
+      "A booking row with a foreign key to its account",
+      "Copy account details into every booking",
+      "Store both IDs in free-text notes"
+    ],
+    "answer": 0,
+    "explanation": "A foreign key keeps the relationship explicit and enforces integrity."
+  },
+  {
+    "id": "api-contracts",
+    "stage": "Full-stack integration",
+    "title": "Agree on an API contract",
+    "duration": "7 min",
+    "summary": "Make frontend and backend agree on routes, payloads, and error states.",
+    "brief": "Teams are building in parallel. What helps them integrate early?",
+    "choices": [
+      "Document an example request, response, and error contract",
+      "Wait until both sides are finished",
+      "Use different field names on each side"
+    ],
+    "answer": 0,
+    "explanation": "A shared contract makes parallel work testable early."
+  },
+  {
+    "id": "testing-pyramid",
+    "stage": "Quality engineering",
+    "title": "Test behavior at the right level",
+    "duration": "8 min",
+    "summary": "Choose unit, integration, and end-to-end checks that catch real failures.",
+    "brief": "A bug appears when a form calls the API and refreshes its list. Which test is direct evidence?",
+    "choices": [
+      "An integration test for that form-to-API flow",
+      "A snapshot of an unrelated heading",
+      "No test; click it manually"
+    ],
+    "answer": 0,
+    "explanation": "Test the boundary where the observed failure happens."
+  },
+  {
+    "id": "web-security",
+    "stage": "Application security",
+    "title": "Protect a user-owned record",
+    "duration": "8 min",
+    "summary": "Check authentication, authorization, validation, and safe error handling.",
+    "brief": "A user changes an invoice ID in a request. What must the server check?",
+    "choices": [
+      "Whether the authenticated user may access that invoice",
+      "Only that the ID is a number",
+      "Whether the UI hid the button"
+    ],
+    "answer": 0,
+    "explanation": "Authorization belongs on the server for every protected object."
+  },
+  {
+    "id": "git-branches",
+    "stage": "Team engineering",
+    "title": "Make a reviewable Git change",
+    "duration": "6 min",
+    "summary": "Use branches, commits, and pull requests to collaborate safely.",
+    "brief": "A feature includes unrelated formatting across many files. What next?",
+    "choices": [
+      "Split or revert unrelated changes and submit a focused diff",
+      "Commit everything without checking it",
+      "Rewrite shared main history"
+    ],
+    "answer": 0,
+    "explanation": "Focused changes are easier to review, discuss, and roll back."
+  },
+  {
+    "id": "deploy-observe",
+    "stage": "Cloud & operations",
+    "title": "Ship and observe a service",
+    "duration": "8 min",
+    "summary": "Deploy with configuration, health checks, logs, and a rollback path.",
+    "brief": "A deployment succeeds but users get errors. What should you inspect?",
+    "choices": [
+      "Health checks, logs, and recent changes; roll back if needed",
+      "Assume deploy success means healthy behavior",
+      "Delete logs to clear errors"
+    ],
+    "answer": 0,
+    "explanation": "Observe the running service; deployment completion is not enough."
+  },
+  {
+    "id": "java-spring-path",
+    "stage": "Java full-stack pathway",
+    "title": "Trace a Spring request",
+    "duration": "7 min",
+    "summary": "Apply the same full-stack ideas with Java and Spring.",
+    "brief": "Where is a typical Spring REST endpoint exposed?",
+    "choices": [
+      "A controller method mapped to an HTTP route",
+      "A CSS selector",
+      "A database backup file"
+    ],
+    "answer": 0,
+    "explanation": "Controllers map HTTP requests into logic and responses."
+  },
+  {
+    "id": "csharp-dotnet-path",
+    "stage": "C# full-stack pathway",
+    "title": "Trace an ASP.NET request",
+    "duration": "7 min",
+    "summary": "Transfer API, data, and testing concepts to C# and .NET.",
+    "brief": "An ASP.NET endpoint receives an invalid create request. Where is the check useful?",
+    "choices": [
+      "At the request boundary, with domain rules in the service",
+      "Only after writing the record",
+      "In a comment beside the form"
+    ],
+    "answer": 0,
+    "explanation": "Validate external input at the boundary and preserve domain rules."
+  },
+  {
+    "id": "go-services-path",
+    "stage": "Go services pathway",
+    "title": "Handle an error in Go",
+    "duration": "6 min",
+    "summary": "Build explicit error handling into a small Go service.",
+    "brief": "A Go function returns a value and an error. What should the caller do?",
+    "choices": [
+      "Check the error and choose an intentional response",
+      "Ignore it if the value is non-zero",
+      "Panic for every expected validation error"
+    ],
+    "answer": 0,
+    "explanation": "Go makes errors explicit so callers can recover or report them."
+  },
+  {
+    "id": "php-laravel-path",
+    "stage": "PHP full-stack pathway",
+    "title": "Validate a Laravel request",
+    "duration": "7 min",
+    "summary": "Use framework validation and routes to build a safe PHP feature.",
+    "brief": "Where should Laravel validate an incoming profile update?",
+    "choices": [
+      "With request validation before persistence",
+      "Only in the browser",
+      "After sending the success response"
+    ],
+    "answer": 0,
+    "explanation": "Request validation creates a clear boundary before data changes."
+  },
+  {
+    "id": "portfolio-capstone",
+    "stage": "Full-stack capstone",
+    "title": "Ship an end-to-end feature",
+    "duration": "12 min",
+    "summary": "Plan, implement, test, and explain a feature from screen to storage.",
+    "brief": "Which portfolio slice best proves full-stack ability?",
+    "choices": [
+      "A working accessible UI, validated API, saved data, tests, and a trade-off note",
+      "A screenshot of a blank dashboard",
+      "A list of languages without a project"
+    ],
+    "answer": 0,
+    "explanation": "A complete vertical slice demonstrates decisions across the stack."
+  }
 ]

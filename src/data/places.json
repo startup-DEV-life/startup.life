@@ -1,67 +1,105 @@
 [
   {
+    "id": "developer-commons",
+    "name": "Developer Commons",
+    "emoji": "✦",
+    "kind": "Community & quests",
+    "district": "Yaba Innovation District",
+    "x": 430,
+    "y": 650,
+    "color": "#38b890",
+    "description": "The island’s shared front door: meet developers, discover career paths, and pick a practical quest.",
+    "activity": "You joined the Developer Commons. Community +1.",
+    "buildingRole": "Developer welcome hub & quest exchange",
+    "uses": "Choose a developer path, find your next coding quest, meet the community, and get oriented in the district.",
+    "activities": [
+      {
+        "id": "developer-commons-1",
+        "label": "Explore developer career paths"
+      },
+      {
+        "id": "developer-commons-2",
+        "label": "Find a coding quest"
+      },
+      {
+        "id": "developer-commons-3",
+        "label": "Meet the developer community"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to Developer Commons.",
+      "room": "Career & community hall"
+    },
+    "companyName": "Blank Life Developer Network",
+    "industry": "Developer community & career services"
+  },
+  {
     "id": "afrika-shrine",
-    "name": "Afrika Shrine",
+    "name": "Code & Culture House",
     "emoji": "🎷",
-    "kind": "Music & culture",
-    "district": "Ikeja",
-    "x": 140,
-    "y": 180,
+    "kind": "Community",
+    "district": "Yaba Innovation District",
+    "x": 25,
+    "y": 113,
     "color": "#e9a84c",
-    "description": "Afrika Shrine is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Afrika Shrine. Mood +1.",
-    "buildingRole": "Live music & culture venue",
-    "uses": "Catch live music, discover local culture, and socialise.",
+    "description": "An open hall for demo nights, code reviews, music, and meeting other builders.",
+    "activity": "You visited Code & Culture House. Developer community +1.",
+    "buildingRole": "Community & culture",
+    "uses": "An open hall for demo nights, code reviews, music, and meeting other builders.",
     "activities": [
       {
         "id": "afrika-shrine-1",
-        "label": "Listen to live music"
+        "label": "Join a demo night"
       },
       {
         "id": "afrika-shrine-2",
-        "label": "Explore local culture"
+        "label": "Share a project"
       },
       {
         "id": "afrika-shrine-3",
-        "label": "Meet the community"
+        "label": "Meet local developers"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Afrika Shrine.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Code & Culture House.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Dev Jam Collective",
+    "industry": "Developer culture & events"
   },
   {
     "id": "viewing-centre",
-    "name": "Viewing Centre",
+    "name": "Prototype Arena",
     "emoji": "⚽",
-    "kind": "Sports",
-    "district": "Yaba",
-    "x": 340,
-    "y": 180,
+    "kind": "Events",
+    "district": "Yaba Innovation District",
+    "x": 389,
+    "y": 113,
     "color": "#3ba87e",
-    "description": "Viewing Centre is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Viewing Centre. Mood +1.",
-    "buildingRole": "Sports venue",
-    "uses": "Watch the match, join a friendly game, or meet the fans.",
+    "description": "Play new builds, run a multiplayer playtest, or present a prototype to the community.",
+    "activity": "You visited Prototype Arena. Developer community +1.",
+    "buildingRole": "Games & live demos",
+    "uses": "Play new builds, run a multiplayer playtest, or present a prototype to the community.",
     "activities": [
       {
         "id": "viewing-centre-1",
-        "label": "Watch the match"
+        "label": "Playtest a game"
       },
       {
         "id": "viewing-centre-2",
-        "label": "Join a friendly game"
+        "label": "Show a prototype"
       },
       {
         "id": "viewing-centre-3",
-        "label": "Meet the fans"
+        "label": "Meet the playtest crew"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Viewing Centre.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Prototype Arena.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Playtest Lagos",
+    "industry": "Game development & media"
   },
   {
     "id": "amala-shitta",
@@ -69,45 +107,47 @@
     "emoji": "🍲",
     "kind": "Food",
     "district": "Surulere",
-    "x": 540,
-    "y": 180,
+    "x": 753,
+    "y": 113,
     "color": "#e98b42",
-    "description": "Amala Shitta is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Amala Shitta. Mood +1.",
-    "buildingRole": "Restaurant & kitchen",
-    "uses": "Order a meal, share a table, and meet other players.",
+    "description": "A lively canteen where developers stop for a meal and trade ideas between work sessions.",
+    "activity": "You visited Amala Shitta. Developer community +1.",
+    "buildingRole": "Food & community",
+    "uses": "A lively canteen where developers stop for a meal and trade ideas between work sessions.",
     "activities": [
       {
         "id": "amala-shitta-1",
-        "label": "Order jollof rice"
+        "label": "Order a meal"
       },
       {
         "id": "amala-shitta-2",
-        "label": "Try amala and ewedu"
+        "label": "Share a table"
       },
       {
         "id": "amala-shitta-3",
-        "label": "Share a table"
+        "label": "Catch up with a teammate"
       }
     ],
     "interior": {
       "welcome": "Welcome to Amala Shitta.",
-      "room": "Main hall"
-    }
+      "room": "Developer district venue"
+    },
+    "companyName": "Shitta Table Company",
+    "industry": "Food & hospitality"
   },
   {
     "id": "cchub",
-    "name": "CcHub",
+    "name": "CcHub Innovation Centre",
     "emoji": "💡",
     "kind": "Work & learn",
-    "district": "Yaba",
-    "x": 740,
-    "y": 180,
+    "district": "Yaba Innovation District",
+    "x": 1117,
+    "y": 113,
     "color": "#e5c24e",
-    "description": "CcHub is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at CcHub. Mood +1.",
-    "buildingRole": "Developer workspace & learning hub",
-    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "description": "A shared startup workspace with mentor hours, coworking tables, and practical build challenges.",
+    "activity": "You visited CcHub Innovation Centre. Developer community +1.",
+    "buildingRole": "Co-working & startups",
+    "uses": "A shared startup workspace with mentor hours, coworking tables, and practical build challenges.",
     "activities": [
       {
         "id": "cchub-1",
@@ -115,7 +155,7 @@
       },
       {
         "id": "cchub-2",
-        "label": "Study a new skill"
+        "label": "Join a coworking session"
       },
       {
         "id": "cchub-3",
@@ -123,73 +163,79 @@
       }
     ],
     "interior": {
-      "welcome": "Welcome to CcHub.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to CcHub Innovation Centre.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Civic Code Labs",
+    "industry": "Software & innovation"
   },
   {
     "id": "market",
-    "name": "Market",
+    "name": "Code & Creator Market",
     "emoji": "🧺",
     "kind": "Shopping",
     "district": "Lagos Island",
-    "x": 940,
-    "y": 180,
+    "x": 1481,
+    "y": 113,
     "color": "#dc7958",
-    "description": "Market is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Market. Mood +1.",
-    "buildingRole": "Market & shopping arcade",
-    "uses": "Browse local shops, discover finds, and meet vendors.",
+    "description": "Browse community-made components, design resources, and tools from local creators.",
+    "activity": "You visited Code & Creator Market. Developer community +1.",
+    "buildingRole": "Marketplace",
+    "uses": "Browse community-made components, design resources, and tools from local creators.",
     "activities": [
       {
         "id": "market-1",
-        "label": "Browse the shops"
+        "label": "Browse developer tools"
       },
       {
         "id": "market-2",
-        "label": "Look for something special"
+        "label": "List a community project"
       },
       {
         "id": "market-3",
-        "label": "Meet a local vendor"
+        "label": "Meet a creator"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Market.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Code & Creator Market.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Island Market Company",
+    "industry": "Developer tools & commerce"
   },
   {
     "id": "freedom-park",
-    "name": "Freedom Park",
+    "name": "Founders Commons",
     "emoji": "🎭",
     "kind": "Arts & culture",
     "district": "Lagos Island",
-    "x": 140,
-    "y": 380,
+    "x": 25,
+    "y": 382,
     "color": "#5e9d76",
-    "description": "Freedom Park is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Freedom Park. Mood +1.",
-    "buildingRole": "Arts & culture centre",
-    "uses": "Explore exhibitions, watch a performance, and create.",
+    "description": "An open-air meetup park for project showcases, founder talks, and relaxed coworking.",
+    "activity": "You visited Founders Commons. Developer community +1.",
+    "buildingRole": "Community park",
+    "uses": "An open-air meetup park for project showcases, founder talks, and relaxed coworking.",
     "activities": [
       {
         "id": "freedom-park-1",
-        "label": "Explore an exhibition"
+        "label": "Find a meetup"
       },
       {
         "id": "freedom-park-2",
-        "label": "Watch a performance"
+        "label": "Share a project idea"
       },
       {
         "id": "freedom-park-3",
-        "label": "Make something"
+        "label": "Take a break outdoors"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Freedom Park.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Founders Commons.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Freedom Arts Foundation",
+    "industry": "Community & events"
   },
   {
     "id": "i-fitness",
@@ -197,13 +243,13 @@
     "emoji": "🏋️",
     "kind": "Fitness",
     "district": "Lekki",
-    "x": 340,
-    "y": 380,
+    "x": 389,
+    "y": 382,
     "color": "#6ba6c7",
-    "description": "i-Fitness is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at i-Fitness. Mood +1.",
-    "buildingRole": "Fitness & training centre",
-    "uses": "Train, join a class, and build your routine.",
+    "description": "Take a break from the screen with a workout, class, or recovery session.",
+    "activity": "You visited i-Fitness. Developer community +1.",
+    "buildingRole": "Fitness & wellbeing",
+    "uses": "Take a break from the screen with a workout, class, or recovery session.",
     "activities": [
       {
         "id": "i-fitness-1",
@@ -220,104 +266,112 @@
     ],
     "interior": {
       "welcome": "Welcome to i-Fitness.",
-      "room": "Main hall"
-    }
+      "room": "Developer district venue"
+    },
+    "companyName": "Pulse Fitness Group",
+    "industry": "Fitness & wellness"
   },
   {
     "id": "marina-towers",
-    "name": "Marina Towers",
+    "name": "Marina Tech Towers",
     "emoji": "🏢",
     "kind": "Work & learn",
     "district": "Lagos Island",
-    "x": 540,
-    "y": 380,
+    "x": 753,
+    "y": 382,
     "color": "#8296aa",
-    "description": "Marina Towers is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Marina Towers. Mood +1.",
-    "buildingRole": "Developer workspace & learning hub",
-    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "description": "A landmark office tower for product teams, engineering studios, and client meetings.",
+    "activity": "You visited Marina Tech Towers. Developer community +1.",
+    "buildingRole": "Technology offices",
+    "uses": "A landmark office tower for product teams, engineering studios, and client meetings.",
     "activities": [
       {
         "id": "marina-towers-1",
-        "label": "Open the career board"
+        "label": "Visit a team floor"
       },
       {
         "id": "marina-towers-2",
-        "label": "Study a new skill"
+        "label": "Review a product demo"
       },
       {
         "id": "marina-towers-3",
-        "label": "Pair with a developer"
+        "label": "Meet a hiring team"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Marina Towers.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Marina Tech Towers.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Marina Works",
+    "industry": "Software & technology"
   },
   {
     "id": "quilox",
-    "name": "Quilox",
+    "name": "Ship It Social Club",
     "emoji": "🪩",
     "kind": "Nightlife",
     "district": "Victoria Island",
-    "x": 740,
-    "y": 380,
+    "x": 1117,
+    "y": 382,
     "color": "#aa75bd",
-    "description": "Quilox is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Quilox. Mood +1.",
-    "buildingRole": "Nightlife & social club",
-    "uses": "Listen to a DJ, dance, and meet players.",
+    "description": "An evening hangout for release celebrations, music, and making new friends.",
+    "activity": "You visited Ship It Social Club. Developer community +1.",
+    "buildingRole": "Social club",
+    "uses": "An evening hangout for release celebrations, music, and making new friends.",
     "activities": [
       {
         "id": "quilox-1",
-        "label": "Listen to the DJ"
+        "label": "Celebrate a release"
       },
       {
         "id": "quilox-2",
-        "label": "Dance with friends"
+        "label": "Join the social hour"
       },
       {
         "id": "quilox-3",
-        "label": "Meet the crowd"
+        "label": "Meet the community"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Quilox.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Ship It Social Club.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Ship It Social",
+    "industry": "Developer community & events"
   },
   {
     "id": "canopy-walk",
-    "name": "Canopy Walk",
+    "name": "Open Source Canopy Walk",
     "emoji": "🌉",
     "kind": "Outdoors",
     "district": "Lekki",
-    "x": 940,
-    "y": 380,
+    "x": 1481,
+    "y": 382,
     "color": "#81a858",
-    "description": "Canopy Walk is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Canopy Walk. Mood +1.",
-    "buildingRole": "Park, beach & outdoor space",
-    "uses": "Walk the island, relax, and enjoy the view.",
+    "description": "A shaded trail with project boards that point toward open-source meetups and contribution quests.",
+    "activity": "You visited Open Source Canopy Walk. Developer community +1.",
+    "buildingRole": "Nature trail",
+    "uses": "A shaded trail with project boards that point toward open-source meetups and contribution quests.",
     "activities": [
       {
         "id": "canopy-walk-1",
-        "label": "Take a walk"
+        "label": "Find an open-source quest"
       },
       {
         "id": "canopy-walk-2",
-        "label": "Enjoy the view"
+        "label": "Walk the canopy"
       },
       {
         "id": "canopy-walk-3",
-        "label": "Meet a friend outside"
+        "label": "Meet a maintainer"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Canopy Walk.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Open Source Canopy Walk.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Open Source Lagos",
+    "industry": "Open-source community"
   },
   {
     "id": "the-palms",
@@ -325,13 +379,13 @@
     "emoji": "🛍️",
     "kind": "Shopping",
     "district": "Lekki",
-    "x": 140,
-    "y": 590,
+    "x": 25,
+    "y": 650,
     "color": "#d89b64",
-    "description": "The Palms is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at The Palms. Mood +1.",
-    "buildingRole": "Market & shopping arcade",
-    "uses": "Browse local shops, discover finds, and meet vendors.",
+    "description": "A walkable shopping stop for everyday essentials and a change of scene.",
+    "activity": "You visited The Palms. Developer community +1.",
+    "buildingRole": "Shopping & services",
+    "uses": "A walkable shopping stop for everyday essentials and a change of scene.",
     "activities": [
       {
         "id": "the-palms-1",
@@ -339,7 +393,7 @@
       },
       {
         "id": "the-palms-2",
-        "label": "Look for something special"
+        "label": "Find a useful service"
       },
       {
         "id": "the-palms-3",
@@ -348,615 +402,689 @@
     ],
     "interior": {
       "welcome": "Welcome to The Palms.",
-      "room": "Main hall"
-    }
+      "room": "Developer district venue"
+    },
+    "companyName": "Palmline Retail",
+    "industry": "Retail & services"
   },
   {
     "id": "the-library",
-    "name": "The Library",
+    "name": "The Code Library",
     "emoji": "📚",
     "kind": "Work & learn",
     "district": "Ikoyi",
-    "x": 340,
-    "y": 590,
+    "x": 389,
+    "y": 650,
     "color": "#c08a5b",
-    "description": "The Library is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at The Library. Mood +1.",
-    "buildingRole": "Developer workspace & learning hub",
-    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "description": "A quiet place to study programming books, follow guided lessons, and focus on a learning quest.",
+    "activity": "You visited The Code Library. Developer community +1.",
+    "buildingRole": "Library & study",
+    "uses": "A quiet place to study programming books, follow guided lessons, and focus on a learning quest.",
     "activities": [
       {
         "id": "the-library-1",
-        "label": "Open the career board"
+        "label": "Pick a learning path"
       },
       {
         "id": "the-library-2",
-        "label": "Study a new skill"
+        "label": "Study a lesson"
       },
       {
         "id": "the-library-3",
-        "label": "Pair with a developer"
+        "label": "Join a quiet focus session"
       }
     ],
     "interior": {
-      "welcome": "Welcome to The Library.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to The Code Library.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Island Learning Archive",
+    "industry": "Software education"
   },
   {
     "id": "beach",
-    "name": "Beach",
+    "name": "Developer Beach",
     "emoji": "🏖️",
     "kind": "Outdoors",
     "district": "Victoria Island",
-    "x": 540,
-    "y": 590,
+    "x": 1481,
+    "y": 1854,
     "color": "#56aeb7",
-    "description": "Beach is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Beach. Mood +1.",
-    "buildingRole": "Park, beach & outdoor space",
-    "uses": "Walk the island, relax, and enjoy the view.",
+    "description": "A quiet stretch of coast for unwinding after a long build session and meeting other players.",
+    "activity": "You visited Developer Beach. Developer community +1.",
+    "buildingRole": "Beach & recreation",
+    "uses": "A quiet stretch of coast for unwinding after a long build session and meeting other players.",
     "activities": [
       {
         "id": "beach-1",
-        "label": "Take a walk"
+        "label": "Walk the shoreline"
       },
       {
         "id": "beach-2",
-        "label": "Enjoy the view"
+        "label": "Join a beach meetup"
       },
       {
         "id": "beach-3",
-        "label": "Meet a friend outside"
+        "label": "Take a break"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Beach.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Developer Beach.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Lagoon Coast Leisure",
+    "industry": "Recreation & community"
   },
   {
     "id": "general-hospital",
-    "name": "General Hospital",
+    "name": "Developer Wellness Clinic",
     "emoji": "🏥",
     "kind": "Health",
     "district": "Lagos Island",
-    "x": 740,
-    "y": 590,
+    "x": 1117,
+    "y": 650,
     "color": "#6fb9a7",
-    "description": "General Hospital is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at General Hospital. Mood +1.",
-    "buildingRole": "Community health centre",
-    "uses": "Rest, check in, and find community support.",
+    "description": "A calm support space with wellbeing activities and practical advice for healthy work routines.",
+    "activity": "You visited Developer Wellness Clinic. Developer community +1.",
+    "buildingRole": "Health & wellbeing",
+    "uses": "A calm support space with wellbeing activities and practical advice for healthy work routines.",
     "activities": [
       {
         "id": "general-hospital-1",
-        "label": "Rest and recharge"
+        "label": "Check your wellbeing"
       },
       {
         "id": "general-hospital-2",
-        "label": "Speak with the wellness desk"
+        "label": "Join a reset session"
       },
       {
         "id": "general-hospital-3",
-        "label": "Meet a neighbour"
+        "label": "Learn a healthy work habit"
       }
     ],
     "interior": {
-      "welcome": "Welcome to General Hospital.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Developer Wellness Clinic.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Island Wellness Network",
+    "industry": "Health & wellness"
   },
   {
     "id": "mama-bisis-salon",
-    "name": "Mama Bisi's Salon",
+    "name": "Bisi's Style Studio",
     "emoji": "💇🏾‍♀️",
-    "kind": "Style",
+    "kind": "Services",
     "district": "Surulere",
-    "x": 940,
-    "y": 590,
+    "x": 1481,
+    "y": 650,
     "color": "#d184a2",
-    "description": "Mama Bisi's Salon is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Mama Bisi's Salon. Mood +1.",
-    "buildingRole": "Hair & style salon",
-    "uses": "Choose a new look, relax, and chat with the stylists.",
+    "description": "A friendly salon where players can refresh their look and take a break from work.",
+    "activity": "You visited Bisi's Style Studio. Developer community +1.",
+    "buildingRole": "Personal services",
+    "uses": "A friendly salon where players can refresh their look and take a break from work.",
     "activities": [
       {
         "id": "mama-bisis-salon-1",
-        "label": "Choose a hairstyle"
-      },
-      {
-        "id": "mama-bisis-salon-2",
         "label": "Refresh your look"
       },
       {
+        "id": "mama-bisis-salon-2",
+        "label": "Try a new style"
+      },
+      {
         "id": "mama-bisis-salon-3",
-        "label": "Chat with the stylist"
+        "label": "Meet the studio crew"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Mama Bisi's Salon.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Bisi's Style Studio.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Mama Bisi's Studio",
+    "industry": "Personal care & style"
   },
   {
     "id": "ivory-rooftop",
-    "name": "Ivory Rooftop",
+    "name": "Launchpad Rooftop",
     "emoji": "🕯️",
-    "kind": "Food & drink",
+    "kind": "Events",
     "district": "Ikoyi",
-    "x": 140,
-    "y": 760,
+    "x": 25,
+    "y": 919,
     "color": "#ceae64",
-    "description": "Ivory Rooftop is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Ivory Rooftop. Mood +1.",
-    "buildingRole": "Restaurant & rooftop lounge",
-    "uses": "Order food and drinks, enjoy the view, and meet neighbours.",
+    "description": "An evening rooftop for startup pitches, peer feedback, and informal networking.",
+    "activity": "You visited Launchpad Rooftop. Developer community +1.",
+    "buildingRole": "Rooftop meetup",
+    "uses": "An evening rooftop for startup pitches, peer feedback, and informal networking.",
     "activities": [
       {
         "id": "ivory-rooftop-1",
-        "label": "Order a meal"
+        "label": "Pitch an idea"
       },
       {
         "id": "ivory-rooftop-2",
-        "label": "Get a rooftop drink"
+        "label": "Join a feedback circle"
       },
       {
         "id": "ivory-rooftop-3",
-        "label": "Meet a friend"
+        "label": "Meet a founder"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Ivory Rooftop.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Launchpad Rooftop.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Launchpad Lagos",
+    "industry": "Startup community"
   },
   {
     "id": "naija-radio",
-    "name": "Naija Radio",
+    "name": "Lagos Dev Radio",
     "emoji": "📻",
-    "kind": "Music & culture",
+    "kind": "Media",
     "district": "Ikeja",
-    "x": 340,
-    "y": 760,
+    "x": 389,
+    "y": 919,
     "color": "#548caf",
-    "description": "Naija Radio is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Naija Radio. Mood +1.",
-    "buildingRole": "Live music & culture venue",
-    "uses": "Catch live music, discover local culture, and socialise.",
+    "description": "A creator studio for developer interviews, build stories, podcasts, and community broadcasts.",
+    "activity": "You visited Lagos Dev Radio. Developer community +1.",
+    "buildingRole": "Broadcast studio",
+    "uses": "A creator studio for developer interviews, build stories, podcasts, and community broadcasts.",
     "activities": [
       {
         "id": "naija-radio-1",
-        "label": "Listen to live music"
+        "label": "Record a developer story"
       },
       {
         "id": "naija-radio-2",
-        "label": "Explore local culture"
+        "label": "Join a podcast"
       },
       {
         "id": "naija-radio-3",
-        "label": "Meet the community"
+        "label": "Share a community update"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Naija Radio.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Lagos Dev Radio.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Dev Radio Lagos",
+    "industry": "Developer media"
   },
   {
     "id": "eko-hotels",
-    "name": "Eko Hotels",
+    "name": "Eko Conference Centre",
     "emoji": "🏨",
-    "kind": "Stay",
+    "kind": "Events",
     "district": "Victoria Island",
-    "x": 540,
-    "y": 760,
+    "x": 753,
+    "y": 919,
     "color": "#b99c7b",
-    "description": "Eko Hotels is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Eko Hotels. Mood +1.",
-    "buildingRole": "Hotel & guest house",
-    "uses": "Check in, rest, and meet visitors to Lagos.",
+    "description": "A large venue for developer conferences, career fairs, workshops, and product launches.",
+    "activity": "You visited Eko Conference Centre. Developer community +1.",
+    "buildingRole": "Conference venue",
+    "uses": "A large venue for developer conferences, career fairs, workshops, and product launches.",
     "activities": [
       {
         "id": "eko-hotels-1",
-        "label": "Check in"
+        "label": "Find a developer event"
       },
       {
         "id": "eko-hotels-2",
-        "label": "Rest in the lounge"
+        "label": "Attend a workshop"
       },
       {
         "id": "eko-hotels-3",
-        "label": "Meet a visitor"
+        "label": "Meet a recruiter"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Eko Hotels.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Eko Conference Centre.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Eko Events Group",
+    "industry": "Technology conferences"
   },
   {
     "id": "polanco-motors",
-    "name": "Polanco Motors",
+    "name": "Polanco Mobility Lab",
     "emoji": "🚘",
-    "kind": "Shopping",
+    "kind": "Automotive",
     "district": "Victoria Island",
-    "x": 740,
-    "y": 760,
+    "x": 1117,
+    "y": 919,
     "color": "#758b9e",
-    "description": "Polanco Motors is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Polanco Motors. Mood +1.",
-    "buildingRole": "Market & shopping arcade",
-    "uses": "Browse local shops, discover finds, and meet vendors.",
+    "description": "A mobility studio exploring maps, transport apps, route planning, and connected vehicles.",
+    "activity": "You visited Polanco Mobility Lab. Developer community +1.",
+    "buildingRole": "Mobility & services",
+    "uses": "A mobility studio exploring maps, transport apps, route planning, and connected vehicles.",
     "activities": [
       {
         "id": "polanco-motors-1",
-        "label": "Browse the shops"
+        "label": "Explore a mobility demo"
       },
       {
         "id": "polanco-motors-2",
-        "label": "Look for something special"
+        "label": "Plan a route"
       },
       {
         "id": "polanco-motors-3",
-        "label": "Meet a local vendor"
+        "label": "Meet the product team"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Polanco Motors.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Polanco Mobility Lab.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Polanco Mobility",
+    "industry": "Transport technology"
   },
   {
     "id": "boat-cruise",
-    "name": "Boat Cruise",
+    "name": "Lagoon Ferry Pier",
     "emoji": "⛵",
-    "kind": "Outdoors",
+    "kind": "Transport",
     "district": "Victoria Island",
-    "x": 940,
-    "y": 760,
+    "x": 1481,
+    "y": 919,
     "color": "#61aaba",
-    "description": "Boat Cruise is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Boat Cruise. Mood +1.",
-    "buildingRole": "Park, beach & outdoor space",
-    "uses": "Walk the island, relax, and enjoy the view.",
+    "description": "A waterfront ferry stop connecting neighborhoods and offering a scenic route across the lagoon.",
+    "activity": "You visited Lagoon Ferry Pier. Developer community +1.",
+    "buildingRole": "Ferry & transport",
+    "uses": "A waterfront ferry stop connecting neighborhoods and offering a scenic route across the lagoon.",
     "activities": [
       {
         "id": "boat-cruise-1",
-        "label": "Take a walk"
+        "label": "Board a ferry"
       },
       {
         "id": "boat-cruise-2",
-        "label": "Enjoy the view"
+        "label": "Explore the waterfront"
       },
       {
         "id": "boat-cruise-3",
-        "label": "Meet a friend outside"
+        "label": "Meet other travelers"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Boat Cruise.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Lagoon Ferry Pier.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Lagoon Transit",
+    "industry": "Transport & mobility"
   },
   {
     "id": "ikoyi-golf-club",
-    "name": "Ikoyi Golf Club",
+    "name": "Ikoyi Recreation Club",
     "emoji": "⛳",
-    "kind": "Outdoors",
+    "kind": "Sports",
     "district": "Ikoyi",
-    "x": 140,
-    "y": 950,
+    "x": 25,
+    "y": 1188,
     "color": "#6d9e59",
-    "description": "Ikoyi Golf Club is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Ikoyi Golf Club. Mood +1.",
-    "buildingRole": "Park, beach & outdoor space",
-    "uses": "Walk the island, relax, and enjoy the view.",
+    "description": "A green retreat for social games, fresh air, and conversations away from a desk.",
+    "activity": "You visited Ikoyi Recreation Club. Developer community +1.",
+    "buildingRole": "Recreation",
+    "uses": "A green retreat for social games, fresh air, and conversations away from a desk.",
     "activities": [
       {
         "id": "ikoyi-golf-club-1",
-        "label": "Take a walk"
+        "label": "Play a short round"
       },
       {
         "id": "ikoyi-golf-club-2",
-        "label": "Enjoy the view"
+        "label": "Meet the club"
       },
       {
         "id": "ikoyi-golf-club-3",
-        "label": "Meet a friend outside"
+        "label": "Take a walking break"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Ikoyi Golf Club.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Ikoyi Recreation Club.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Ikoyi Recreation",
+    "industry": "Sports & wellbeing"
   },
   {
     "id": "high-court",
-    "name": "High Court",
+    "name": "Digital Trust Office",
     "emoji": "⚖️",
-    "kind": "City life",
+    "kind": "Services",
     "district": "Lagos Island",
-    "x": 340,
-    "y": 950,
+    "x": 389,
+    "y": 1188,
     "color": "#8f9294",
-    "description": "High Court is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at High Court. Mood +1.",
-    "buildingRole": "Civic services & community office",
-    "uses": "Find city services, get help, and meet your neighbours.",
+    "description": "A civic learning center for privacy, accessible design, responsible software, and online safety quests.",
+    "activity": "You visited Digital Trust Office. Developer community +1.",
+    "buildingRole": "Civic services",
+    "uses": "A civic learning center for privacy, accessible design, responsible software, and online safety quests.",
     "activities": [
       {
         "id": "high-court-1",
-        "label": "Find a city service"
+        "label": "Start a privacy quest"
       },
       {
         "id": "high-court-2",
-        "label": "Ask for help"
+        "label": "Explore digital safety"
       },
       {
         "id": "high-court-3",
-        "label": "Meet the community"
+        "label": "Review a trust challenge"
       }
     ],
     "interior": {
-      "welcome": "Welcome to High Court.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Digital Trust Office.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Civic Trust Office",
+    "industry": "Digital trust & privacy"
   },
   {
     "id": "unilag",
-    "name": "UNILAG",
+    "name": "UNILAG Innovation Campus",
     "emoji": "🎓",
-    "kind": "Work & learn",
+    "kind": "Education",
     "district": "Akoka",
-    "x": 540,
-    "y": 950,
+    "x": 753,
+    "y": 1188,
     "color": "#e4bb47",
-    "description": "UNILAG is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at UNILAG. Mood +1.",
-    "buildingRole": "Developer workspace & learning hub",
-    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "description": "A lively university campus with coding labs, student teams, workshops, and early-career pathways.",
+    "activity": "You visited UNILAG Innovation Campus. Developer community +1.",
+    "buildingRole": "University & labs",
+    "uses": "A lively university campus with coding labs, student teams, workshops, and early-career pathways.",
     "activities": [
       {
         "id": "unilag-1",
-        "label": "Open the career board"
+        "label": "Join a coding lab"
       },
       {
         "id": "unilag-2",
-        "label": "Study a new skill"
+        "label": "Attend a workshop"
       },
       {
         "id": "unilag-3",
-        "label": "Pair with a developer"
+        "label": "Meet a student team"
       }
     ],
     "interior": {
-      "welcome": "Welcome to UNILAG.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to UNILAG Innovation Campus.",
+      "room": "Developer district venue"
+    },
+    "companyName": "UNILAG Innovation Campus",
+    "industry": "Computer science & research"
   },
   {
     "id": "eko-casino",
-    "name": "Eko Casino",
+    "name": "Pixel Arcade",
     "emoji": "🎰",
-    "kind": "Nightlife",
+    "kind": "Games",
     "district": "Victoria Island",
-    "x": 740,
-    "y": 950,
+    "x": 1117,
+    "y": 1188,
     "color": "#c76a63",
-    "description": "Eko Casino is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Eko Casino. Mood +1.",
-    "buildingRole": "Nightlife & social club",
-    "uses": "Listen to a DJ, dance, and meet players.",
+    "description": "A playful arcade for testing game prototypes, studying game systems, and joining coding drills.",
+    "activity": "You visited Pixel Arcade. Developer community +1.",
+    "buildingRole": "Game testing arcade",
+    "uses": "A playful arcade for testing game prototypes, studying game systems, and joining coding drills.",
     "activities": [
       {
         "id": "eko-casino-1",
-        "label": "Listen to the DJ"
+        "label": "Try a game prototype"
       },
       {
         "id": "eko-casino-2",
-        "label": "Dance with friends"
+        "label": "Join a game jam"
       },
       {
         "id": "eko-casino-3",
-        "label": "Meet the crowd"
+        "label": "Open a coding drill"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Eko Casino.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Pixel Arcade.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Pixel District",
+    "industry": "Game development"
   },
   {
     "id": "mindspace",
     "name": "MindSpace",
     "emoji": "🫶🏾",
-    "kind": "Community",
+    "kind": "Wellbeing",
     "district": "Lekki",
-    "x": 940,
-    "y": 950,
+    "x": 1481,
+    "y": 1188,
     "color": "#8b9e75",
-    "description": "MindSpace is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at MindSpace. Mood +1.",
-    "buildingRole": "Community & wellbeing centre",
-    "uses": "Join a group, unwind, and connect with other players.",
+    "description": "A supportive coworking lounge with quiet seats, peer check-ins, and screen breaks.",
+    "activity": "You visited MindSpace. Developer community +1.",
+    "buildingRole": "Wellbeing & coworking",
+    "uses": "A supportive coworking lounge with quiet seats, peer check-ins, and screen breaks.",
     "activities": [
       {
         "id": "mindspace-1",
-        "label": "Join a group"
+        "label": "Book a focus session"
       },
       {
         "id": "mindspace-2",
-        "label": "Take a quiet break"
+        "label": "Join a peer check-in"
       },
       {
         "id": "mindspace-3",
-        "label": "Meet someone new"
+        "label": "Take a screen break"
       }
     ],
     "interior": {
       "welcome": "Welcome to MindSpace.",
-      "room": "Main hall"
-    }
+      "room": "Developer district venue"
+    },
+    "companyName": "MindSpace Lagos",
+    "industry": "Developer wellbeing"
   },
   {
     "id": "stadium",
-    "name": "Stadium",
+    "name": "BuildFest Stadium",
     "emoji": "🏟️",
     "kind": "Sports",
     "district": "Surulere",
-    "x": 140,
-    "y": 1140,
+    "x": 1117,
+    "y": 1726,
     "color": "#7792a8",
-    "description": "Stadium is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Stadium. Mood +1.",
-    "buildingRole": "Sports venue",
-    "uses": "Watch the match, join a friendly game, or meet the fans.",
+    "description": "A big open venue for hackathons, esports, launch events, and team challenges.",
+    "activity": "You visited BuildFest Stadium. Developer community +1.",
+    "buildingRole": "Events & esports",
+    "uses": "A big open venue for hackathons, esports, launch events, and team challenges.",
     "activities": [
       {
         "id": "stadium-1",
-        "label": "Watch the match"
+        "label": "Join a hackathon"
       },
       {
         "id": "stadium-2",
-        "label": "Join a friendly game"
+        "label": "Watch a tournament"
       },
       {
         "id": "stadium-3",
-        "label": "Meet the fans"
+        "label": "Meet a project team"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Stadium.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to BuildFest Stadium.",
+      "room": "Developer district venue"
+    },
+    "companyName": "BuildFest Lagos",
+    "industry": "Developer events & esports"
   },
   {
     "id": "snooker-spot",
-    "name": "Snooker Spot",
+    "name": "The Debug Lounge",
     "emoji": "🎱",
-    "kind": "Games",
+    "kind": "Food",
     "district": "Yaba",
-    "x": 340,
-    "y": 1140,
+    "x": 389,
+    "y": 1457,
     "color": "#719767",
-    "description": "Snooker Spot is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Snooker Spot. Mood +1.",
-    "buildingRole": "Game lounge",
-    "uses": "Play quick games, challenge another player, or practise.",
+    "description": "A relaxed cafe for pairing, talking through a tricky bug, or taking a quick game break.",
+    "activity": "You visited The Debug Lounge. Developer community +1.",
+    "buildingRole": "Cafe & games",
+    "uses": "A relaxed cafe for pairing, talking through a tricky bug, or taking a quick game break.",
     "activities": [
       {
         "id": "snooker-spot-1",
-        "label": "Play a quick round"
+        "label": "Pair on a bug"
       },
       {
         "id": "snooker-spot-2",
-        "label": "Challenge a friend"
+        "label": "Play a quick game"
       },
       {
         "id": "snooker-spot-3",
-        "label": "Practise a game"
+        "label": "Order a coffee"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Snooker Spot.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to The Debug Lounge.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Debug Lounge",
+    "industry": "Developer community"
   },
   {
     "id": "handi-hq",
-    "name": "HANDI HQ",
+    "name": "HANDI Developer Hub",
     "emoji": "🛠️",
     "kind": "Work & learn",
     "district": "Ikeja",
-    "x": 540,
-    "y": 1140,
+    "x": 753,
+    "y": 1457,
     "color": "#b4844c",
-    "description": "HANDI HQ is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at HANDI HQ. Mood +1.",
-    "buildingRole": "Developer workspace & learning hub",
-    "uses": "Meet developers, learn a new skill, and work on your career tasks.",
+    "description": "Your home base for career paths, practical tasks, mentors, and developer learning programs.",
+    "activity": "You visited HANDI Developer Hub. Developer community +1.",
+    "buildingRole": "Career & skills hub",
+    "uses": "Your home base for career paths, practical tasks, mentors, and developer learning programs.",
     "activities": [
       {
         "id": "handi-hq-1",
-        "label": "Open the career board"
+        "label": "Choose a career path"
       },
       {
         "id": "handi-hq-2",
-        "label": "Study a new skill"
+        "label": "Start a practical task"
       },
       {
         "id": "handi-hq-3",
-        "label": "Pair with a developer"
+        "label": "Find a mentor"
       }
     ],
     "interior": {
-      "welcome": "Welcome to HANDI HQ.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to HANDI Developer Hub.",
+      "room": "Developer district venue"
+    },
+    "companyName": "HANDI HQ",
+    "industry": "Developer careers & learning"
   },
   {
     "id": "mako",
-    "name": "Mako",
+    "name": "Mako Kitchen",
     "emoji": "🍕",
     "kind": "Food",
     "district": "Victoria Island",
-    "x": 740,
-    "y": 1140,
+    "x": 1117,
+    "y": 1457,
     "color": "#d17a54",
-    "description": "Mako is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Mako. Mood +1.",
-    "buildingRole": "Restaurant & kitchen",
-    "uses": "Order a meal, share a table, and meet other players.",
+    "description": "A friendly neighborhood kitchen with shared tables and quick meals between quests.",
+    "activity": "You visited Mako Kitchen. Developer community +1.",
+    "buildingRole": "Restaurant & community",
+    "uses": "A friendly neighborhood kitchen with shared tables and quick meals between quests.",
     "activities": [
       {
         "id": "mako-1",
-        "label": "Order jollof rice"
+        "label": "Order a meal"
       },
       {
         "id": "mako-2",
-        "label": "Try amala and ewedu"
+        "label": "Share a table"
       },
       {
         "id": "mako-3",
-        "label": "Share a table"
+        "label": "Meet another player"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Mako.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Mako Kitchen.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Mako Kitchen",
+    "industry": "Food & hospitality"
   },
   {
     "id": "jibowu-park",
-    "name": "Jibowu Park",
+    "name": "Jibowu Mobility Exchange",
     "emoji": "🚌",
     "kind": "Transport",
     "district": "Yaba",
-    "x": 940,
-    "y": 1140,
+    "x": 1481,
+    "y": 1457,
     "color": "#6fa5a6",
-    "description": "Jibowu Park is a place to meet people and make a little Lagos story.",
-    "activity": "You spent time at Jibowu Park. Mood +1.",
-    "buildingRole": "Transit hub & bus station",
-    "uses": "Plan a route, catch a bus, and meet travellers.",
+    "description": "A busy transport square connecting the island’s work, study, and community districts.",
+    "activity": "You visited Jibowu Mobility Exchange. Developer community +1.",
+    "buildingRole": "Transit hub",
+    "uses": "A busy transport square connecting the island’s work, study, and community districts.",
     "activities": [
       {
         "id": "jibowu-park-1",
-        "label": "Plan a route"
+        "label": "Explore transit routes"
       },
       {
         "id": "jibowu-park-2",
-        "label": "Catch the next bus"
+        "label": "Plan your commute"
       },
       {
         "id": "jibowu-park-3",
-        "label": "Meet a traveller"
+        "label": "Meet local commuters"
       }
     ],
     "interior": {
-      "welcome": "Welcome to Jibowu Park.",
-      "room": "Main hall"
-    }
+      "welcome": "Welcome to Jibowu Mobility Exchange.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Jibowu Mobility",
+    "industry": "Transit & city services"
+  },
+  {
+    "id": "shadow-gate",
+    "name": "The Debug Rift",
+    "emoji": "🜂",
+    "kind": "Developer quests",
+    "district": "The Shatterline",
+    "x": 1728,
+    "y": 953,
+    "color": "#8d6ad5",
+    "description": "A separate high-difficulty challenge instance for players ready to test their skills.",
+    "activity": "You visited The Debug Rift. Developer community +1.",
+    "buildingRole": "Challenge instance",
+    "uses": "A separate high-difficulty challenge instance for players ready to test their skills.",
+    "activities": [
+      {
+        "id": "shadow-gate-1",
+        "label": "Enter the challenge instance"
+      },
+      {
+        "id": "shadow-gate-2",
+        "label": "Review the challenge"
+      },
+      {
+        "id": "shadow-gate-3",
+        "label": "Prepare your build"
+      }
+    ],
+    "interior": {
+      "welcome": "Welcome to The Debug Rift.",
+      "room": "Developer district venue"
+    },
+    "companyName": "Blank Life Quest Network",
+    "industry": "Advanced coding challenges"
   }
 ]

@@ -7,8 +7,10 @@
     "task": "Ship a responsive product dashboard",
     "reward": 90,
     "color": "#51c7a2",
-    "x": 450,
-    "y": 655
+    "x": 25,
+    "y": 1726,
+    "companyName": "Pixel District",
+    "industry": "Software development"
   },
   {
     "id": "product-designer",
@@ -18,8 +20,10 @@
     "task": "Polish the onboarding flow",
     "reward": 80,
     "color": "#f0a36c",
-    "x": 545,
-    "y": 655
+    "x": 389,
+    "y": 1726,
+    "companyName": "Good Form Studio",
+    "industry": "Product design"
   },
   {
     "id": "security-engineer",
@@ -29,8 +33,10 @@
     "task": "Patch a suspicious login route",
     "reward": 110,
     "color": "#7ca2fa",
-    "x": 450,
-    "y": 755
+    "x": 753,
+    "y": 1726,
+    "companyName": "Packet House",
+    "industry": "Cybersecurity"
   },
   {
     "id": "game-developer",
@@ -40,8 +46,10 @@
     "task": "Fix the city-map collision bug",
     "reward": 100,
     "color": "#c38af1",
-    "x": 545,
-    "y": 755
+    "x": 1117,
+    "y": 1726,
+    "companyName": "Lagoon Arcade",
+    "industry": "Game development"
   },
   {
     "id": "ai-researcher",
@@ -51,8 +59,10 @@
     "task": "Label the next batch of local data",
     "reward": 95,
     "color": "#e58cb3",
-    "x": 500,
-    "y": 825
+    "x": 25,
+    "y": 1972,
+    "companyName": "Pattern Lab",
+    "industry": "Artificial intelligence"
   },
   {
     "id": "backend-engineer",
@@ -62,8 +72,10 @@
     "task": "Build a reliable API endpoint",
     "reward": 100,
     "color": "#668fd3",
-    "x": 405,
-    "y": 855
+    "x": 389,
+    "y": 1972,
+    "companyName": "API Wharf",
+    "industry": "Backend software"
   },
   {
     "id": "fullstack-engineer",
@@ -73,7 +85,87 @@
     "task": "Connect a new screen to its API",
     "reward": 115,
     "color": "#34a884",
-    "x": 595,
-    "y": 855
+    "x": 753,
+    "y": 1972,
+    "companyName": "Full Stack House",
+    "industry": "Software development"
+  },
+  {
+    "id": "refinery-software-engineer",
+    "title": "Industrial Software Engineer",
+    "emoji": "🏭",
+    "studio": "CrudeTech Refinery Lab",
+    "task": "Design an equipment monitoring API with safe alert thresholds",
+    "reward": 125,
+    "color": "#e79558",
+    "x": 1117,
+    "y": 1726,
+    "companyName": "CrudeTech Refinery Lab",
+    "industry": "Energy & refinery technology"
+  },
+  {
+    "id": "healthtech-developer",
+    "title": "HealthTech Developer",
+    "emoji": "🩺",
+    "studio": "Pulse Health Systems",
+    "task": "Build a patient appointment flow with privacy-aware validation",
+    "reward": 120,
+    "color": "#53aaa0",
+    "x": 753,
+    "y": 1726,
+    "companyName": "Pulse Health Systems",
+    "industry": "Health technology"
+  },
+  {
+    "id": "edtech-engineer",
+    "title": "Education Technology Engineer",
+    "emoji": "📚",
+    "studio": "BrightClass Learning",
+    "task": "Create a lesson progress endpoint for a classroom app",
+    "reward": 105,
+    "color": "#d8a94b",
+    "x": 1117,
+    "y": 1972,
+    "companyName": "BrightClass Learning",
+    "industry": "Education technology"
+  },
+  {
+    "id": "fintech-engineer",
+    "title": "FinTech Backend Engineer",
+    "emoji": "💳",
+    "studio": "HarbourPay Labs",
+    "task": "Model a transaction workflow with idempotency and audit history",
+    "reward": 130,
+    "color": "#6489d4",
+    "x": 389,
+    "y": 1972,
+    "companyName": "HarbourPay Labs",
+    "industry": "Financial technology"
+  },
+  {
+    "id": "agritech-developer",
+    "title": "AgriTech Developer",
+    "emoji": "🌱",
+    "studio": "GreenGrid Cooperative",
+    "task": "Build a produce inventory screen connected to a validated API",
+    "reward": 100,
+    "color": "#62a56e",
+    "x": 25,
+    "y": 1972,
+    "companyName": "GreenGrid Cooperative",
+    "industry": "Agricultural technology"
+  },
+  {
+    "id": "cloud-engineer",
+    "title": "Cloud & DevOps Engineer",
+    "emoji": "☁️",
+    "studio": "Cloudline Platform Team",
+    "task": "Write a deployment health check and incident runbook",
+    "reward": 120,
+    "color": "#598fb7",
+    "x": 753,
+    "y": 1972,
+    "companyName": "Cloudline Platform Team",
+    "industry": "Cloud infrastructure"
   }
 ]

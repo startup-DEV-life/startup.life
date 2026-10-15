@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-10-15T10:44:15.571Z",
+  "repositories": {
+    "catalog": {
+      "url": "https://github.com/EbookFoundation/free-programming-books",
+      "commit": "4c301cce10db10026d632606b5167a9d1b8cd4ec",
+      "license": "CC BY 4.0"
+    },
+    "search": {
+      "url": "https://github.com/EbookFoundation/free-programming-books-search",
+      "commit": "7a8990c85c4315bf524c47a391b2f75b7a3f5f88",
+      "license": "BSD-2-Clause; no search-application code is copied"
+    }
+  },
+  "scannedMarkdownFiles": 120,
+  "markdownRowsParsed": 10745,
+  "searchIndexRows": 8486,
+  "resourcesProcessed": 11425,
+  "added": 0,
+  "updated": 350,
+  "unchanged": 11075,
+  "staleRecordsRetainedInDatabase": 364,
+  "recoveredFromSearchIndex": 813,
+  "invalidIndexRows": 9,
+  "importErrors": [],
+  "additionalErrorCount": 0
+}

@@ -2,6 +2,10 @@
 
 An independent browser game prototype: a multiplayer Lagos-inspired city rebuilt as a stylized 3D developer district. It is not the proprietary source code for lagoslife.app.
 
+## GDevelop edition
+
+A GDevelop-native third-person island starter is available in [`gdevelop/BlankLife/BlankLife.json`](gdevelop/BlankLife/BlankLife.json), with a portable project archive at [`gdevelop/BlankLife-GDevelop.zip`](gdevelop/BlankLife-GDevelop.zip). Open the JSON file in GDevelop to work on the engine version. It uses the supplied Lagos Shadow Frontier GLB and includes a generated placeholder avatar, desktop movement, touch controls, and a third-person camera. See [`gdevelop/README.md`](gdevelop/README.md) for setup and the current migration boundary. The existing TypeScript browser game and Node server are preserved alongside it.
+
 ## Run it locally
 
 Requires Node.js 20.19+ or 22.12+ and npm.
@@ -16,9 +20,12 @@ Open `http://localhost:5173`. The Vite server proxies API and Socket.IO traffic 
 For a production build:
 
 ```bash
+npm run typecheck
 npm run build
 NODE_ENV=production npm start
 ```
+
+The browser game, Node.js backend, and Vite config use TypeScript. React components use `.tsx`, while `index.html` remains the browser entry document and loads `src/main.tsx`. `npm run build` runs the project-wide type check before producing the production frontend.
 
 Set `ADMIN_USERNAME` in `.env` to grant chat moderation access to a chosen account.
 
@@ -41,11 +48,11 @@ Set `ADMIN_USERNAME` in `.env` to grant chat moderation access to a chosen accou
 
 ## Project layout
 
-- `src/ThreeCity.jsx` — generated Three.js world, controls, buildings, and avatars.
-- `src/App.jsx` — game UI and client state.
+- `src/ThreeCity.tsx` — generated Three.js world, controls, buildings, and avatars.
+- `src/App.tsx` — game UI and client state.
 - `src/data/jobs.json` — editable career tasks and studio positions.
 - `src/data/learning.json` — original challenge prompts and answer keys; backend validates answers and persists completion.
-- `server/index.js` — Express API, SQLite data, authentication, Socket.IO multiplayer, jobs, and social-deduction round logic.
+- `server/index.ts` — Express API, SQLite data, authentication, Socket.IO multiplayer, jobs, and social-deduction round logic.
 - `data/` — local SQLite database, created on first run.
 
 This project uses original demo city geometry, character shapes, job descriptions, venues, and game economy. The social-deduction mode draws on the general hidden-role genre and uses original names and art. Your new site can be wired into the city once you send its address and explain whether it should appear as a link, a venue, or an in-game activity.
@@ -55,7 +62,7 @@ For public deployment, configure HTTPS, database backups, account recovery, comm
 
 ## Map asset handoff
 
-The current island is procedurally built in `src/ThreeCity.jsx`; there is no in-game or backend upload form. To replace or extend it with a complete external map, provide a `.glb` (preferred, with textures/materials embedded). For a `.gltf`, include every referenced texture and buffer in a single ZIP. Include approximate file size, model scale/orientation notes, and the asset's source/license. The asset can then be integrated into the scene and served as a static game asset (or moved to object storage/CDN for larger production files).
+The current island is procedurally built in `src/ThreeCity.tsx`; there is no in-game or backend upload form. To replace or extend it with a complete external map, provide a `.glb` (preferred, with textures/materials embedded). For a `.gltf`, include every referenced texture and buffer in a single ZIP. Include approximate file size, model scale/orientation notes, and the asset's source/license. The asset can then be integrated into the scene and served as a static game asset (or moved to object storage/CDN for larger production files).
 
 ## Multiplayer capacity
 

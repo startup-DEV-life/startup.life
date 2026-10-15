@@ -1,0 +1,291 @@
+[
+  {
+    "id": "py-hello",
+    "track": "Python starter",
+    "language": "Python",
+    "level": "Beginner",
+    "title": "Quest 01 · The greeting beacon",
+    "story": "The island help desk needs a first Python program. Make it print a greeting so a new developer knows the terminal is alive.",
+    "objective": "Write a print statement that outputs exactly: Hello, developer!",
+    "starter": "# Your first Python quest\n",
+    "hint": "Python's print(...) function displays text. Put the exact message inside quotes.",
+    "checks": [
+      "print(",
+      "Hello, developer!"
+    ],
+    "reward": 30,
+    "next": "py-variables"
+  },
+  {
+    "id": "py-variables",
+    "track": "Python starter",
+    "language": "Python",
+    "level": "Beginner",
+    "title": "Quest 02 · Name tag",
+    "story": "A teammate arrives at the studio. Store their name, then introduce them.",
+    "objective": "Create a variable named name with the value 'Ada' and print it.",
+    "starter": "# Store Ada's name, then greet her\n",
+    "hint": "Use name = 'Ada' and print(name).",
+    "checks": [
+      "name",
+      "Ada",
+      "print("
+    ],
+    "reward": 35,
+    "next": "py-conditions"
+  },
+  {
+    "id": "py-conditions",
+    "track": "Python starter",
+    "language": "Python",
+    "level": "Beginner",
+    "title": "Quest 03 · Access badge",
+    "story": "Only developers with an active badge may enter the lab. Write the decision clearly.",
+    "objective": "Use an if statement to check active and print 'Access granted' when it is true.",
+    "starter": "active = True\n# Add the access check\n",
+    "hint": "Start with if active: then indent a print(...) line below it.",
+    "checks": [
+      "if active",
+      "print(",
+      "Access granted"
+    ],
+    "reward": 40,
+    "next": "py-loops"
+  },
+  {
+    "id": "py-loops",
+    "track": "Python starter",
+    "language": "Python",
+    "level": "Beginner",
+    "title": "Quest 04 · Three supply crates",
+    "story": "A workshop needs a count of three supply crates. Let a loop do the repeated work.",
+    "objective": "Use a for loop with range(3) and print the word 'crate'.",
+    "starter": "# Print one crate label on each line\n",
+    "hint": "for crate in range(3): followed by an indented print('crate') works.",
+    "checks": [
+      "for ",
+      "range(3)",
+      "print(",
+      "crate"
+    ],
+    "reward": 45,
+    "next": "go-hello"
+  },
+  {
+    "id": "go-hello",
+    "track": "Go starter",
+    "language": "Go",
+    "level": "Beginner",
+    "title": "Quest 01 · Go signal",
+    "story": "The platform crew is starting a tiny Go command-line tool. Bring the first signal online.",
+    "objective": "Write a Go program that prints exactly: Hello, developer!",
+    "starter": "package main\n\nimport \"fmt\"\n\nfunc main() {\n\t// Your code here\n}\n",
+    "hint": "Inside main, call fmt.Println(\"Hello, developer!\").",
+    "checks": [
+      "package main",
+      "func main()",
+      "fmt.Println(",
+      "Hello, developer!"
+    ],
+    "reward": 35,
+    "next": "go-variable"
+  },
+  {
+    "id": "go-variable",
+    "track": "Go starter",
+    "language": "Go",
+    "level": "Beginner",
+    "title": "Quest 02 · Crew manifest",
+    "story": "Save a teammate's name in a Go variable, then send it to the terminal.",
+    "objective": "Declare name as 'Ada' and print it with fmt.Println.",
+    "starter": "package main\n\nimport \"fmt\"\n\nfunc main() {\n\t// Add the crew name and print it\n}\n",
+    "hint": "Inside main: name := \"Ada\" then fmt.Println(name).",
+    "checks": [
+      "name :=",
+      "Ada",
+      "fmt.Println(name)"
+    ],
+    "reward": 40,
+    "next": "js-hello"
+  },
+  {
+    "id": "js-hello",
+    "track": "JavaScript starter",
+    "language": "JavaScript",
+    "level": "Beginner",
+    "title": "Quest 01 · Browser beacon",
+    "story": "Send a first message from the island's web console.",
+    "objective": "Use console.log to output exactly: Hello, developer!",
+    "starter": "// Your first JavaScript quest\n",
+    "hint": "Use console.log('Hello, developer!').",
+    "checks": [
+      "console.log(",
+      "Hello, developer!"
+    ],
+    "reward": 30,
+    "next": "ts-hello"
+  },
+  {
+    "id": "ts-hello",
+    "track": "TypeScript starter",
+    "language": "TypeScript",
+    "level": "Beginner",
+    "title": "Quest 01 · Typed welcome",
+    "story": "Give the greeting a clear type so the next engineer knows what data it expects.",
+    "objective": "Declare a string variable named message and log it.",
+    "starter": "// Add a typed welcome message\n",
+    "hint": "Try const message: string = 'Hello, developer!'; then console.log(message).",
+    "checks": [
+      "message: string",
+      "Hello, developer!",
+      "console.log(message)"
+    ],
+    "reward": 40,
+    "next": "python-api"
+  },
+  {
+    "id": "python-api",
+    "track": "Python full-stack",
+    "language": "Python",
+    "level": "Starter",
+    "title": "Quest 05 · Validate the request",
+    "story": "The help desk API must reject an empty task title before it saves anything.",
+    "objective": "Write a function that checks title.strip() and returns a clear validation result.",
+    "starter": "def validate_title(title):\n    # Add an empty-title check\n    pass\n",
+    "hint": "Use if not title.strip(): and return a message for invalid input.",
+    "checks": [
+      "def validate_title",
+      "title.strip()",
+      "if ",
+      "return"
+    ],
+    "reward": 55,
+    "next": "go-hello"
+  },
+  {
+    "id": "py-function-points",
+    "track": "Python starter",
+    "language": "Python",
+    "level": "Beginner",
+    "title": "Quest 05 · Bonus calculator",
+    "story": "The campus rewards learners with a function that combines their base points and bonus.",
+    "objective": "Fill the blank so add_points(10, 5) returns 15.",
+    "starter": "def add_points(score, bonus):\n    return ___\n\nprint(add_points(10, 5))\n",
+    "hint": "A function can return an expression. Add the two parameters together.",
+    "checks": [
+      "def add_points(score, bonus)",
+      "return score + bonus"
+    ],
+    "reward": 50,
+    "next": "py-conditions-2"
+  },
+  {
+    "id": "py-conditions-2",
+    "track": "Python starter",
+    "language": "Python",
+    "level": "Beginner",
+    "title": "Quest 06 · Lab access rules",
+    "story": "Use an if / elif / else chain to route a learner to the right practice room.",
+    "objective": "Fill the two blanks with if score >= 80: and elif score >= 50:.",
+    "starter": "score = 72\n___\n    room = 'advanced'\n___\n    room = 'practice'\nelse:\n    room = 'starter'\nprint(room)\n",
+    "hint": "Python branches use if first, then elif for another condition. Keep the colon at each line end.",
+    "checks": [
+      "if score >= 80:",
+      "elif score >= 50:",
+      "else:",
+      "print(room)"
+    ],
+    "reward": 55,
+    "next": "js-switch-route"
+  },
+  {
+    "id": "js-switch-route",
+    "track": "JavaScript starter",
+    "language": "JavaScript",
+    "level": "Beginner",
+    "title": "Quest 03 · Route the language crew",
+    "story": "A switch statement sends each language team to its room.",
+    "objective": "Fill the assignment blank so the Go team is routed to backend.",
+    "starter": "const language = 'Go';\nlet room;\nswitch (language) {\n  case 'Go':\n    room = ___;\n    break;\n  default:\n    room = 'general';\n}\nconsole.log(room);\n",
+    "hint": "Use the string 'backend' for the Go team.",
+    "checks": [
+      "switch (language)",
+      "case 'Go':",
+      "room = 'backend'",
+      "break;"
+    ],
+    "reward": 45,
+    "next": "js-branch-rank"
+  },
+  {
+    "id": "js-branch-rank",
+    "track": "JavaScript starter",
+    "language": "JavaScript",
+    "level": "Beginner",
+    "title": "Quest 04 · Rank the pitch",
+    "story": "Give a startup pitch a clear status using else if.",
+    "objective": "Fill the blank with 'ready' when the score is 50 or higher.",
+    "starter": "const score = 64;\nlet status;\nif (score >= 80) {\n  status = 'featured';\n} else if (score >= 50) {\n  status = ___;\n} else {\n  status = 'keep building';\n}\nconsole.log(status);\n",
+    "hint": "Put a quoted string in the blank: 'ready'.",
+    "checks": [
+      "else if (score >= 50)",
+      "status = 'ready'",
+      "console.log(status)"
+    ],
+    "reward": 50,
+    "next": "go-branch-health"
+  },
+  {
+    "id": "go-branch-health",
+    "track": "Go starter",
+    "language": "Go",
+    "level": "Beginner",
+    "title": "Quest 03 · Health check",
+    "story": "A small service should report whether its worker is healthy.",
+    "objective": "Fill the blank with an if/else condition that checks whether workers are online.",
+    "starter": "package main\n\nimport \"fmt\"\n\nfunc main() {\n    workers := 3\n    ___\n        fmt.Println(\"online\")\n    } else {\n        fmt.Println(\"offline\")\n    }\n}\n",
+    "hint": "Use if workers > 0 { before the first fmt.Println call.",
+    "checks": [
+      "if workers > 0 {",
+      "else {",
+      "fmt.Println(\"online\")"
+    ],
+    "reward": 50,
+    "next": "go-function-sum"
+  },
+  {
+    "id": "go-function-sum",
+    "track": "Go starter",
+    "language": "Go",
+    "level": "Beginner",
+    "title": "Quest 04 · Sum the sprint points",
+    "story": "Put repeated work in a small Go function and return the combined score.",
+    "objective": "Fill the return blank so the function adds its two inputs.",
+    "starter": "package main\n\nfunc addPoints(a int, b int) int {\n    return ___\n}\n",
+    "hint": "Return the sum of the two integer parameters.",
+    "checks": [
+      "func addPoints(a int, b int) int",
+      "return a + b"
+    ],
+    "reward": 55,
+    "next": "ts-render-label"
+  },
+  {
+    "id": "ts-render-label",
+    "track": "TypeScript starter",
+    "language": "TypeScript",
+    "level": "Beginner",
+    "title": "Quest 03 · Safe display label",
+    "story": "Keep a profile label useful when the user has not entered a display name.",
+    "objective": "Fill the blank with the fallback string 'Developer'.",
+    "starter": "type Profile = { displayName?: string };\nconst profile: Profile = {};\nconst label = profile.displayName ?? ___;\nconsole.log(label);\n",
+    "hint": "Use a string literal as the right side of the nullish coalescing operator.",
+    "checks": [
+      "displayName ??",
+      "?? 'Developer'",
+      "console.log(label)"
+    ],
+    "reward": 50,
+    "next": null
+  }
+]
