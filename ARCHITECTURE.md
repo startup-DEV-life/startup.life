@@ -47,7 +47,7 @@ Production URL: <https://blank-life.onrender.com>
 
 ## 5. World and 3D rendering
 
-The map is generated in code as a broad low-rise Lagos-inspired island city. It uses shallow green terrain, a central lagoon, a wide orthogonal street grid, modular instanced neighborhood buildings, distinctive landmark buildings, and visible emoji map pins. Code also creates doors, interiors, effects, beaches, and the stadium. The older GLB source file remains in the repository but is not loaded into this city map.
+The map is generated in code as a broad low-rise Lagos-inspired island city. It uses shallow green terrain, a central lagoon, a wide orthogonal street grid, colorful residential and mixed-use blocks, distinctive landmark buildings, and visible emoji map pins. Map buildings can be selected; named homes and neighborhood instances expose their purpose on selection and open an interior. Interior layouts are themed for homes, cafés, clinics, shops, community venues, and developer workspaces. Tech Place keeps its separate six-level floor plan. Code also creates doors, effects, beaches, and the stadium. The Lagos Life reference informed the compact, colorful district composition; map geometry and game assets remain original. The older GLB source file remains in the repository but is not loaded into this city map.
 
 The renderer uses WebGL through Three.js. A scene graph holds meshes and groups. The camera follows the local player in walk mode; other camera modes use OrbitControls. Pointer/touch taps raycast into the scene to select a building or place, while taps on the ground request movement. Movement is interpolated in the render loop. Server-side movement is sent over Socket.IO for signed-in players.
 

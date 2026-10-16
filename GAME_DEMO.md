@@ -15,7 +15,7 @@ This is a working game prototype. It is not a finished commercial MMO: some scre
 
 ### 1. Start in Lagos
 
-The game opens over a bright low-rise city map: gridded streets, a broad lagoon, small neighborhood blocks, and landmark pins. You can begin as a guest; create an account only if you want to demonstrate saved account progress and live multiplayer.
+The game opens over a bright low-rise city map: gridded streets, a broad lagoon, colorful homes and mixed-use blocks, and landmark pins. Tap a neighborhood building to see its name and use, then walk to its entrance to go inside. You can begin as a guest; create an account only if you want to demonstrate saved account progress and live multiplayer.
 
 - **Desktop:** move with `W`, `A`, `S`, `D` or the arrow keys. Hold `Shift` to move faster. Press `1`, `2`, or `3` to switch camera modes. Click the ground to walk to a point and click a building to select/enter it.
 - **Phone/tablet:** use the on-screen joystick and touch controls. The renderer automatically uses a lighter quality profile on touch devices and phones.
