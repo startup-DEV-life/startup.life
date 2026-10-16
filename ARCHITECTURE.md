@@ -4,14 +4,14 @@ This document describes the current implementation in this repository. It separa
 
 ## 1. What the app is
 
-Blank Life is a browser game with a third-person 3D island, developer-learning activities, social features, and a phone/laptop interface inside the game. It is also installable as a Progressive Web App (PWA) on compatible phones. The current version is a web game; it is not a native Android or iOS package.
+Blank Life is a browser game with a third-person Lagos-inspired 3D island city, developer-learning activities, social features, and a phone/laptop interface inside the game. It is also installable as a Progressive Web App (PWA) on compatible phones. The current version is a web game; it is not a native Android or iOS package.
 
 Production URL: <https://blank-life.onrender.com>
 
 ## 2. Technology stack
 
 - **Frontend:** React, TypeScript, Vite, CSS.
-- **3D:** Three.js, custom procedural geometry/materials, a loaded GLB island asset, and OrbitControls.
+- **3D:** Three.js, custom procedural geometry/materials and OrbitControls.
 - **API/server:** Node.js, TypeScript, Express 5.
 - **Live multiplayer:** Socket.IO over the same HTTP server.
 - **Current database:** SQLite through `better-sqlite3`.
@@ -23,7 +23,7 @@ Production URL: <https://blank-life.onrender.com>
 | Path | Responsibility |
 | --- | --- |
 | `src/App.tsx` | Main React application state, game controls, UI panels, API calls, account/learning/game flows, and Socket.IO client. |
-| `src/ThreeCity.tsx` | Three.js scene, island and town generation, imported model, player/avatar rendering, interiors, camera, effects, picking, and collision-obstacle data. |
+| `src/ThreeCity.tsx` | Three.js scene, Lagos-style island-city and neighborhood generation, player/avatar rendering, interiors, camera, effects, picking, and collision-obstacle data. |
 | `src/game/combat.ts` | Rift encounter state and combat rules. |
 | `src/data/places.json` | Place and building records used by the island UI/world. |
 | `src/data/jobs.json` | Job/task records. |
@@ -31,7 +31,7 @@ Production URL: <https://blank-life.onrender.com>
 | `src/data/homes.json`, `src/data/items.json` | Home and collectible definitions. |
 | `data/programming-resources.json` | Programming-resource catalogue imported into the app database. |
 | `server/index.ts` | Express API, authentication, SQLite schema/queries, GitHub OAuth, admin endpoints, and live Socket.IO events. |
-| `public/models/lagos-shadow-frontier.glb` | Imported island/environment model. |
+| `public/models/lagos-shadow-frontier.glb` | Source model retained in the repository; the current Lagos city map is generated procedurally and does not load this asset. |
 | `public/manifest.webmanifest`, `public/sw.js` | PWA metadata and service-worker install/cache behavior. |
 | `supabase/` | Supabase schema/migration work retained in the repository; it is not the live server database adapter today. |
 | `render.yaml` | Render service/build configuration. |
@@ -47,7 +47,7 @@ Production URL: <https://blank-life.onrender.com>
 
 ## 5. World and 3D rendering
 
-The island is partly generated in code and partly loaded from the GLB asset. Code creates terrain, water, roads, buildings, doors, labels, interiors, props, effects, and some landmarks. The GLB is loaded asynchronously and stylized with the project’s toon material to fit the drawn/anime direction.
+The map is generated in code as a broad low-rise Lagos-inspired island city. It uses shallow green terrain, a central lagoon, a wide orthogonal street grid, modular instanced neighborhood buildings, distinctive landmark buildings, and visible emoji map pins. Code also creates doors, interiors, effects, beaches, and the stadium. The older GLB source file remains in the repository but is not loaded into this city map.
 
 The renderer uses WebGL through Three.js. A scene graph holds meshes and groups. The camera follows the local player in walk mode; other camera modes use OrbitControls. Pointer/touch taps raycast into the scene to select a building or place, while taps on the ground request movement. Movement is interpolated in the render loop. Server-side movement is sent over Socket.IO for signed-in players.
 

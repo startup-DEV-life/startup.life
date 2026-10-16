@@ -7,15 +7,15 @@
 
 ## What you are demoing
 
-Blank Life is a browser-based 3D developer-life game set on Lian Yu. You explore an island, enter a multi-floor coding campus, practice beginner programming drills, visit the phone and laptop apps, and optionally sign in for account-backed progress and live multiplayer features.
+Blank Life is a browser-based 3D developer-life game set in a Lagos-inspired island city. You explore its districts, enter a multi-floor coding campus, practice beginner programming drills, visit the phone and laptop apps, and optionally sign in for account-backed progress and live multiplayer features.
 
 This is a working game prototype. It is not a finished commercial MMO: some screens are local simulations, GitHub needs OAuth configuration, and the production database is currently SQLite rather than Supabase. The feature guide below calls these limits out instead of presenting them as finished services.
 
 ## Quick guided demo (about 8–12 minutes)
 
-### 1. Start at the island
+### 1. Start in Lagos
 
-The game opens on the island in the 3D scene. You can begin as a guest; create an account only if you want to demonstrate saved account progress and live multiplayer.
+The game opens over a bright low-rise city map: gridded streets, a broad lagoon, small neighborhood blocks, and landmark pins. You can begin as a guest; create an account only if you want to demonstrate saved account progress and live multiplayer.
 
 - **Desktop:** move with `W`, `A`, `S`, `D` or the arrow keys. Hold `Shift` to move faster. Press `1`, `2`, or `3` to switch camera modes. Click the ground to walk to a point and click a building to select/enter it.
 - **Phone/tablet:** use the on-screen joystick and touch controls. The renderer automatically uses a lighter quality profile on touch devices and phones.
@@ -47,7 +47,7 @@ The laptop’s terminal is a safe in-game command simulation. It does not run co
 
 ### 4. Try the phone
 
-Open the phone and browse its apps, such as the map, learning, inventory, search, and dispatch. The island map shows places and player markers; selecting a destination can move the game toward that location.
+Open the phone and browse its apps, such as the map, learning, inventory, search, and dispatch. The Lagos city map shows places and player markers; selecting a destination can move the game toward that location.
 
 Dispatch is a game simulation. It displays a pretend ride, food, or roadside request and a simulated assignment; it does not contact a real driver or provider. Web search links open public sites in a new browser tab.
 
@@ -64,7 +64,7 @@ Explore **Legend House**, **The Commons**, **Tech Noodle**, the beach, and the s
 ## How the game works under the hood
 
 1. **React UI (`src/App.tsx`)** holds the current player, movement input, account state, selected destination, interior/floor, phone/laptop screens, quest progress, and notices.
-2. **Three.js scene (`src/ThreeCity.tsx`)** builds the island, loads the GLB asset, creates buildings and rooms, draws avatars and effects, follows the player, and detects clicks with raycasting.
+2. **Three.js scene (`src/ThreeCity.tsx`)** builds the Lagos-style city, roads, lagoon, map pins, buildings, and rooms, draws avatars and effects, follows the player, and detects clicks with raycasting.
 3. **Movement loop** reads keyboard, gamepad, or joystick input; updates player coordinates; tests collisions while the player is moving; and interpolates camera/avatar motion for smoother visuals.
 4. **Content files (`src/data/`)** define island places, jobs, learning content, homes, and collectables. Combat rules are in `src/game/combat.ts`.
 5. **Express API (`server/index.ts`)** serves account, progress, learning, resource, chat, and GitHub routes. The same Node process serves the compiled frontend in production.
