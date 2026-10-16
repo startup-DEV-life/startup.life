@@ -55,6 +55,10 @@ Set `ADMIN_USERNAME` in `.env` to grant chat moderation access to a chosen accou
 - `server/index.ts` — Express API, SQLite data, authentication, Socket.IO multiplayer, jobs, and social-deduction round logic.
 - `data/` — local SQLite database, created on first run.
 
+## Documentation
+
+Start at [`docs/README.md`](docs/README.md) for the documentation index. The [demo guide](GAME_DEMO.md) explains how to play, while [`ARCHITECTURE.md`](ARCHITECTURE.md) explains the implementation and [`BUILD.md`](BUILD.md) covers building and hosting.
+
 This project uses original demo city geometry, character shapes, job descriptions, venues, and game economy. The social-deduction mode draws on the general hidden-role genre and uses original names and art. Your new site can be wired into the city once you send its address and explain whether it should appear as a link, a venue, or an in-game activity.
 
 For public deployment, configure HTTPS, database backups, account recovery, community policies and moderation staffing. The current online presence and mystery-round state live in one server process; horizontal scaling needs shared Socket.IO and game state.
