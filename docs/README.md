@@ -1,10 +1,10 @@
-# Blank Life documentation
+# Startup.life documentation
 
 Use this page to find the right guide for the task at hand. These documents describe the code that is in the repository today; planned features and demo-only behavior are labeled as such.
 
 ## Start here
 
-- [Project overview and local quick start](../README.md) — what Blank Life is, requirements, commands, and the main feature list.
+- [Project overview and local quick start](../README.md) — what Startup.life is, requirements, commands, and the main feature list.
 - [Playable demo walkthrough](../GAME_DEMO.md) — controls, a suggested tour, and a feature-by-feature status guide.
 - [How the game works](../ARCHITECTURE.md) — frontend, 3D scene, server, realtime events, storage, GitHub integration, and deployment flow.
 - [Build and hosting notes](../BUILD.md) — stack, environment setup, Render configuration, and current database limitations.

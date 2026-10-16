@@ -1,4 +1,4 @@
-# Blank Life — playable demo and game guide
+# Startup.life — playable demo and game guide
 
 **Demo:** http://localhost:5173/  
 **Production:** https://blank-life.onrender.com/  
@@ -7,7 +7,7 @@
 
 ## What you are demoing
 
-Blank Life is a browser-based 3D developer-life game set in a Lagos-inspired island city. You explore its districts, enter a multi-floor coding campus, practice beginner programming drills, visit the phone and laptop apps, and optionally sign in for account-backed progress and live multiplayer features.
+Startup.life is a browser-based 3D developer-life game set in a Lagos-inspired island city. You explore its districts, enter a multi-floor coding campus, practice beginner programming drills, visit the phone and laptop apps, and optionally sign in for account-backed progress and live multiplayer features.
 
 This is a working game prototype. It is not a finished commercial MMO: some screens are local simulations, GitHub needs OAuth configuration, and the production database is currently SQLite rather than Supabase. The feature guide below calls these limits out instead of presenting them as finished services.
 

@@ -1,16 +1,16 @@
-# Blank Life — Product Requirements Document
+# Startup.life — Product Requirements Document
 
-**Product:** Blank Life (working title)  
-**Current experience:** Blank Life · North Coast Outpost / Dev District  
-**Document status:** Product baseline and forward plan  
-**Updated:** 14 October 2026  
+**Product:** Startup.life
+**Current experience:** Startup.life · North Coast Outpost / Dev District
+**Document status:** Product baseline and forward plan
+**Updated:** 14 October 2026
 **Repository:** `dev-life-world/dev-life`
 
 ## 1. Product summary
 
-Blank Life is a multiplayer, mobile-friendly life-simulation game where players explore a large island, choose a software-development career, complete practical learning and work challenges, and build a shared life with other players. The island is the game world; a phone and an in-world developer laptop provide the player's maps, services, learning tools, quests, and career workspace.
+Startup.life is a multiplayer, mobile-friendly life-simulation game where players explore a large island, choose a software-development career, complete practical learning and work challenges, and build a shared life with other players. The island is the game world; a phone and an in-world developer laptop provide the player's maps, services, learning tools, quests, and career workspace.
 
-The current build is a browser game and installable Progressive Web App (PWA). It uses an original, procedurally generated 3D island inspired by the supplied coastal-island and low-poly environment references. Blank Life is an independent product. Its learning challenges are original and are not affiliated with Learn2Earn or Talent Nation.
+The current build is a browser game and installable Progressive Web App (PWA). It uses an original, procedurally generated 3D island inspired by the supplied coastal-island and low-poly environment references. Startup.life is an independent product. Its learning challenges are original and are not affiliated with Learn2Earn or Talent Nation.
 
 ## 2. Product vision
 
@@ -20,7 +20,7 @@ The experience should work on desktop and mobile, keep the world visually immers
 
 ## 3. Problem and opportunity
 
-New developers often need a low-pressure way to practice skills, understand career paths, and build a record of completed work. Conventional learning dashboards can feel disconnected from a motivating social experience. Blank Life combines game-world exploration with original developer drills, project briefs, career tasks, and multiplayer presence.
+New developers often need a low-pressure way to practice skills, understand career paths, and build a record of completed work. Conventional learning dashboards can feel disconnected from a motivating social experience. Startup.life combines game-world exploration with original developer drills, project briefs, career tasks, and multiplayer presence.
 
 ## 4. Target users
 
@@ -80,7 +80,7 @@ The current account creation flow requires the player to confirm they are 18 or 
 2. Player browses the original Overview, Drill room, and Projects content.
 3. Challenges are completed in order. The backend validates signed-in answers and persists progress.
 4. The player receives fictional XP and currency for a first correct completion.
-5. The app links to the official Learn2Earn website for programme information and clearly identifies Blank Life as independent.
+5. The app links to the official Learn2Earn website for programme information and clearly identifies Startup.life as independent.
 
 ### 6.5 Multiplayer and social play
 
@@ -133,7 +133,7 @@ The laptop is the developer workspace and must provide:
 
 - **Quest log:** all current objectives, completion state, progress, and links to the relevant action.
 - **Terminal:** an Ubuntu/Linux command reference based on the supplied cheat sheet, plus a saved virtual workspace with working navigation, file/folder operations, text search, an in-game editor, history, and selected developer-command simulations. Device administration, real package installation, hardware access, networking, remote Git, and other machine-level actions are simulation-only; the browser must never execute host operating-system commands or access the player's device.
-- **Learn2Earn:** the independent Blank Life learning journey, original drills, and project briefs.
+- **Learn2Earn:** the independent Startup.life learning journey, original drills, and project briefs.
 - **Career path:** list available roles, current selection, and a path to a role's studio and tasks.
 - Keyboard and touch navigation that works at desktop, portrait phone, and landscape phone sizes.
 
@@ -161,7 +161,7 @@ The laptop is the developer workspace and must provide:
 
 ### 7.9 Mobile distribution
 
-- Keep Blank Life installable as a PWA over HTTPS, with suitable app icons and standalone display.
+- Keep Startup.life installable as a PWA over HTTPS, with suitable app icons and standalone display.
 - Cache only the public application shell and static assets for offline launch.
 - Explain that login, live multiplayer, and saved actions require an active network connection.
 - Keep gameplay controls accessible with touch and respect device safe areas.
@@ -255,7 +255,7 @@ Instrumentation is not yet specified as a production analytics system. Once priv
 - **Career content:** define role-specific task rubrics, review/hint behavior, and player-authored project storage.
 - **Social policy:** establish community rules, moderation coverage, account recovery, retention, and reporting workflows for public launch.
 - **Mobile packaging:** the current deliverable is a PWA. Decide whether a native app wrapper is needed after validating installation and performance on target devices.
-- **Brand and name:** confirm the final product name, since “Blank Life,” “Dev District,” and “North Coast Outpost” currently appear in different parts of the experience.
+- **Brand and name:** Startup.life is the confirmed product name. “Dev District” and “North Coast Outpost” may remain as in-world location names.
 
 ## 14. Out of scope for the current prototype
 

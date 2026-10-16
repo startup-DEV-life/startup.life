@@ -8,11 +8,11 @@ web
 
 ## Users
 
-Blank Life is for aspiring and early-career software developers who enjoy social simulation and exploration, including mobile-first players who want short sessions.
+Startup.life is for aspiring and early-career software developers who enjoy social simulation and exploration, including mobile-first players who want short sessions.
 
 ## Product Purpose
 
-Blank Life combines island exploration and developer practice as equal parts of one multiplayer game. Players travel through a shared world, choose a software-development path, complete practical challenges, and grow their character and career progression.
+Startup.life combines island exploration and developer practice as equal parts of one multiplayer game. Players travel through a shared world, choose a software-development path, complete practical challenges, and grow their character and career progression.
 
 ## Positioning
 
@@ -28,7 +28,7 @@ The game has a procedurally generated island, on-foot and vehicle movement, ente
 
 ## Brand Commitments
 
-The product is named Blank Life. The user wants the game world to be 3D with a 2D anime look. Keep all game art original and avoid copying proprietary maps, characters, models, or logos.
+The product is named Startup.life. The user wants the game world to be 3D with a 2D anime look. Keep all game art original and avoid copying proprietary maps, characters, models, or logos.
 
 ## Evidence on Hand
 

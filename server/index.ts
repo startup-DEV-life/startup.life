@@ -202,6 +202,6 @@ io.on('connection',s=>{const me=publicPlayer(playerQuery.get((s as any).userId))
  s.on('disconnect',()=>{const q=online.get(me.id);if(!shuttingDown&&q){const saveX=q.inRift?RIFT_GATE.x:q.x,saveY=q.inRift?RIFT_GATE.y:q.y;db.prepare('UPDATE players SET x=?,y=?,updated_at=? WHERE user_id=?').run(saveX,saveY,stamp(),me.id)}online.delete(me.id);limits.delete(`m${me.id}`);limits.delete(`c${me.id}`);if(!shuttingDown){s.to(s.data.worldRooms||[]).emit('player:left',{id:me.id});io.emit('world:count',online.size);io.emit('crew:lobby',{online:online.size,active:!!crewRound?.active})}})
 });
 const dist=join(root,'dist');app.use(express.static(dist));app.get('/{*path}',(req,res,next)=>{if(req.path.startsWith('/api/'))return next();res.sendFile(join(dist,'index.html'),err=>err&&next())});
-const port=Number(process.env.PORT||4000);server.listen(port,'0.0.0.0',()=>console.log(`Blank Life server listening on http://localhost:${port}`));
+const port=Number(process.env.PORT||4000);server.listen(port,'0.0.0.0',()=>console.log(`Startup.life server listening on http://localhost:${port}`));
 function shutdown(){if(shuttingDown)return;shuttingDown=true;io.disconnectSockets(true);server.close(()=>{db.close();process.exit(0)});setTimeout(()=>{if(db.open)db.close();process.exit(0)},2000).unref()}
 process.on('SIGINT',shutdown);process.on('SIGTERM',shutdown);

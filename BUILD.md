@@ -1,4 +1,4 @@
-# Blank Life · build notes
+# Startup.life · build notes
 
 ## Stack
 

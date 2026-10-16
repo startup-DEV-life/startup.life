@@ -1,4 +1,4 @@
--- Blank Life server-owned schema. The game currently authenticates through its
+-- Startup.life server-owned schema. The game currently authenticates through its
 -- Node API; these tables are intentionally unavailable to public client roles.
 
 create table public.users (

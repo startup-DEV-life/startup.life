@@ -1,4 +1,4 @@
-# dev-life — Blank Life · Dev District
+# dev-life — Startup.life · Dev District
 
 An independent browser game prototype: a multiplayer Lagos-inspired city rebuilt as a stylized 3D developer district. It is not the proprietary source code for lagoslife.app.
 
@@ -75,11 +75,11 @@ The prototype uses spatial Socket.IO rooms so movement updates go to nearby play
 
 ## Mobile app
 
-Blank Life is packaged as an installable Progressive Web App (PWA). Deploy it behind HTTPS, then open the site on the phone. Android browsers can install it from the browser menu or the in-game settings menu. On iPhone/iPad, open the site in Safari and use Share → Add to Home Screen. Touch movement uses press-and-hold controls. The service worker caches the app shell and static assets; it does not cache private account/API data, and multiplayer still needs a network connection.
+Startup.life is packaged as an installable Progressive Web App (PWA). Deploy it behind HTTPS, then open the site on the phone. Android browsers can install it from the browser menu or the in-game settings menu. On iPhone/iPad, open the site in Safari and use Share → Add to Home Screen. Touch movement uses press-and-hold controls. The service worker caches the app shell and static assets; it does not cache private account/API data, and multiplayer still needs a network connection.
 
 ### Try it on a phone during development
 
 Connect the phone and development computer to the same Wi-Fi network, run `npm run dev`, then open `http://<computer-lan-ip>:5173` on the phone. The Vite development server listens on the local network and proxies game API and multiplayer traffic to the backend. Use the on-screen arrow pad to walk, drag the 3D scene to rotate the camera, pinch to zoom, and tap buildings or venues to interact. The development URL is for local play; installable PWA behavior on a deployed phone site requires HTTPS.
 
 
-The Learn2Earn learning journey in Blank Life is an independent educational game experience inspired by the broad public programme stages. It is not operated by or affiliated with Learn2Earn or Talent Nation. In-game XP and currency are fictional and do not represent wages, stipends, admissions, certificates, or access to paid work. Players can visit the [official Learn2Earn site](https://learn2earn.ng/) for the real programme and selection process.
+The Learn2Earn learning journey in Startup.life is an independent educational game experience inspired by the broad public programme stages. It is not operated by or affiliated with Learn2Earn or Talent Nation. In-game XP and currency are fictional and do not represent wages, stipends, admissions, certificates, or access to paid work. Players can visit the [official Learn2Earn site](https://learn2earn.ng/) for the real programme and selection process.

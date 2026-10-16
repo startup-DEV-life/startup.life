@@ -1,4 +1,4 @@
-# Blank Life learning campus setup
+# Startup.life learning campus setup
 
 ## Overview trial and coding quests
 
@@ -14,11 +14,11 @@ The Projects room needs a GitHub OAuth App. Create one in GitHub Developer Setti
 - `FRONTEND_URL` (for local development: `http://localhost:5173`)
 - `GITHUB_TOKEN_ENCRYPTION_KEY` (generate with `openssl rand -hex 32`)
 
-Restart the server after setting variables. The player must be signed in and approve the GitHub consent screen. Blank Life requests `read:user` and `repo` so GitHub can include private repositories the player authorizes. GitHub's `repo` OAuth scope is broader than read-only; the app only calls profile and repository-list endpoints, and stores the token encrypted with AES-256-GCM. Keep the encryption key stable and backed up securely. Players can disconnect from Projects and revoke the OAuth app in GitHub settings.
+Restart the server after setting variables. The player must be signed in and approve the GitHub consent screen. Startup.life requests `read:user` and `repo` so GitHub can include private repositories the player authorizes. GitHub's `repo` OAuth scope is broader than read-only; the app only calls profile and repository-list endpoints, and stores the token encrypted with AES-256-GCM. Keep the encryption key stable and backed up securely. Players can disconnect from Projects and revoke the OAuth app in GitHub settings.
 
 ## Admin-curated PDF and video rooms
 
-Set `ADMIN_USERNAME` to the exact Blank Life username of the library editor, then restart the server. That account gets the admin upload forms and the server enforces the same permission on every publishing endpoint.
+Set `ADMIN_USERNAME` to the exact Startup.life username of the library editor, then restart the server. That account gets the admin upload forms and the server enforces the same permission on every publishing endpoint.
 
 - PDF uploads are limited to 25 MB and must have a PDF signature. The original file is stored under `data/learning-library/`, outside the public web root. Admins set title, language, description, and a price in BL learning coins.
 - Signed-in players earn BL learning coins from cleared learning challenges and coding quests. A purchase is recorded per player. PDF downloads require ownership (or the configured admin account).

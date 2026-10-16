@@ -1,10 +1,10 @@
-# Blank Life — how the game works
+# Startup.life — how the game works
 
 This document describes the current implementation in this repository. It separates working features from demo behavior so the build and hosting setup are understandable.
 
 ## 1. What the app is
 
-Blank Life is a browser game with a third-person Lagos-inspired 3D island city, developer-learning activities, social features, and a phone/laptop interface inside the game. It is also installable as a Progressive Web App (PWA) on compatible phones. The current version is a web game; it is not a native Android or iOS package.
+Startup.life is a browser game with a third-person Lagos-inspired 3D island city, developer-learning activities, social features, and a phone/laptop interface inside the game. It is also installable as a Progressive Web App (PWA) on compatible phones. The current version is a web game; it is not a native Android or iOS package.
 
 Production URL: <https://blank-life.onrender.com>
 
@@ -23,6 +23,7 @@ Production URL: <https://blank-life.onrender.com>
 | Path | Responsibility |
 | --- | --- |
 | `src/App.tsx` | Main React application state, game controls, UI panels, API calls, account/learning/game flows, and Socket.IO client. |
+| `src/StartupWelcome.tsx` and `src/StartupWelcome.css` | Startup.life opening page, original logo mark, and interactive stack/build slideshow. |
 | `src/ThreeCity.tsx` | Three.js scene, Lagos-style island-city and neighborhood generation, player/avatar rendering, interiors, camera, effects, picking, and collision-obstacle data. |
 | `src/game/combat.ts` | Rift encounter state and combat rules. |
 | `src/data/places.json` | Place and building records used by the island UI/world. |
@@ -40,10 +41,11 @@ Production URL: <https://blank-life.onrender.com>
 ## 4. How the game starts
 
 1. Vite serves the React app in development (`npm run web:dev`).
-2. The React root in `src/App.tsx` loads the seed data and requests server data where a backend feature exists.
-3. `ThreeCity` creates a Three.js renderer, camera, lights, island scene, player model, effects, and input/picking handlers.
-4. A browser animation frame updates movement, camera easing, other online avatars, doors, water, ambient effects, pickups, and combat.
-5. In production, Render builds the static client into `dist/`; Express serves those files and handles `/api/*` plus Socket.IO from one Node process.
+2. The opening screen presents the playable world and a four-slide explanation of the client, backend, languages, and hosting. Players can enter the city or create an account.
+3. The React root in `src/App.tsx` loads the seed data and requests server data where a backend feature exists.
+4. `ThreeCity` creates a Three.js renderer, camera, lights, island scene, player model, effects, and input/picking handlers.
+5. A browser animation frame updates movement, camera easing, other online avatars, doors, water, ambient effects, pickups, and combat.
+6. In production, Render builds the static client into `dist/`; Express serves those files and handles `/api/*` plus Socket.IO from one Node process.
 
 ## 5. World and 3D rendering
 

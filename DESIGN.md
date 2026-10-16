@@ -1,4 +1,4 @@
-# Blank Life — Anime Field Adventure
+# Startup.life — Anime Field Adventure
 
 ## Direction
 
