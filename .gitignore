@@ -1,6 +1,7 @@
 node_modules/
 dist/
-data/*.sqlite*
+.impeccable/
+backend/data/*.sqlite*
 .env
 .DS_Store
-/data/learning-library/
+/backend/data/learning-library/

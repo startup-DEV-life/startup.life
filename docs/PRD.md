@@ -242,8 +242,8 @@ Instrumentation is not yet specified as a production analytics system. Once priv
 
 - Node.js and npm for local development.
 - Browser support for WebGL, WebSocket/Socket.IO, and PWA features.
-- Original career task data in `src/data/jobs.json` and lesson data in `src/data/learning.json`.
-- Original location, home, and collectible data in `src/data/places.json`, `src/data/homes.json`, and `src/data/items.json`.
+- Original career task data in `shared/data/jobs.json` and lesson data in `shared/data/learning.json`.
+- Original location, home, and collectible data in `shared/data/places.json`, `shared/data/homes.json`, and `shared/data/items.json`.
 - Future map or character assets must include source/license details, model scale/orientation notes, and embedded or packaged textures.
 
 ## 13. Risks and open decisions

@@ -2,7 +2,7 @@
 
 ## Overview trial and coding quests
 
-`src/data/learning.json` contains the Overview gate and short reasoning drills. `src/data/coding-quests.json` contains the beginner Python, Go, JavaScript, and TypeScript coding paths. Coding quests are checked for required starter constructs on the server; the current game does not execute submitted Python or Go programs. Quest completion and rewards are saved per signed-in player.
+`shared/data/learning.json` contains the Overview gate and short reasoning drills. `shared/data/coding-quests.json` contains the beginner Python, Go, JavaScript, and TypeScript coding paths. Coding quests are checked for required starter constructs on the server; the current game does not execute submitted Python or Go programs. Quest completion and rewards are saved per signed-in player.
 
 ## GitHub Projects room
 
@@ -20,7 +20,7 @@ Restart the server after setting variables. The player must be signed in and app
 
 Set `ADMIN_USERNAME` to the exact Startup.life username of the library editor, then restart the server. That account gets the admin upload forms and the server enforces the same permission on every publishing endpoint.
 
-- PDF uploads are limited to 25 MB and must have a PDF signature. The original file is stored under `data/learning-library/`, outside the public web root. Admins set title, language, description, and a price in BL learning coins.
+- PDF uploads are limited to 25 MB and must have a PDF signature. The original file is stored under `backend/data/learning-library/`, outside the public web root. Admins set title, language, description, and a price in BL learning coins.
 - Signed-in players earn BL learning coins from cleared learning challenges and coding quests. A purchase is recorded per player. PDF downloads require ownership (or the configured admin account).
 - Video entries accept HTTPS YouTube video or Shorts URLs. Only admins can add or remove them. Players can watch the lesson in the video room or open it on YouTube.
 

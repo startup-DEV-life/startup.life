@@ -63,11 +63,11 @@ Explore **Legend House**, **The Commons**, **Tech Noodle**, the beach, and the s
 
 ## How the game works under the hood
 
-1. **React UI (`src/App.tsx`)** holds the current player, movement input, account state, selected destination, interior/floor, phone/laptop screens, quest progress, and notices.
-2. **Three.js scene (`src/ThreeCity.tsx`)** builds the Lagos-style city, roads, lagoon, map pins, buildings, and rooms, draws avatars and effects, follows the player, and detects clicks with raycasting.
+1. **React UI (`frontend/src/App.tsx`)** holds the current player, movement input, account state, selected destination, interior/floor, phone/laptop screens, quest progress, and notices.
+2. **Three.js scene (`frontend/src/ThreeCity.tsx`)** builds the Lagos-style city, roads, lagoon, map pins, buildings, and rooms, draws avatars and effects, follows the player, and detects clicks with raycasting.
 3. **Movement loop** reads keyboard, gamepad, or joystick input; updates player coordinates; tests collisions while the player is moving; and interpolates camera/avatar motion for smoother visuals.
-4. **Content files (`src/data/`)** define island places, jobs, learning content, homes, and collectables. Combat rules are in `src/game/combat.ts`.
-5. **Express API (`server/index.ts`)** serves account, progress, learning, resource, chat, and GitHub routes. The same Node process serves the compiled frontend in production.
+4. **Content files (`shared/data/`)** define island places, jobs, learning content, homes, and collectables. Combat rules are in `frontend/src/game/combat.ts`.
+5. **Express API (`backend/server/index.ts`)** serves account, progress, learning, resource, chat, and GitHub routes. The same Node process serves the compiled frontend in production.
 6. **Socket.IO** authenticates a session cookie and broadcasts nearby player movement, presence, chat, and mystery-round events.
 7. **Persistence today:** signed-in account data uses a local SQLite database file. Some guest preferences/progress use browser local storage.
 8. **Hosting:** Render builds the React/Vite app and runs the Node server. The PWA manifest and service worker let supported browsers install the website to a phone home screen.

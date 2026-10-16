@@ -11,8 +11,8 @@ const args = new Map(process.argv.slice(2).reduce((pairs, value, i, all) => {
   if (value.startsWith('--')) pairs.push([value.slice(2), all[i + 1]?.startsWith('--') ? 'true' : all[i + 1] ?? 'true']);
   return pairs;
 }, []));
-const outputPath = resolve(args.get('output') || join(projectRoot, 'data/programming-resources.json'));
-const reportPath = resolve(args.get('report') || join(projectRoot, 'data/programming-resources-import-report.json'));
+const outputPath = resolve(args.get('output') || join(projectRoot, 'backend/data/programming-resources.json'));
+const reportPath = resolve(args.get('report') || join(projectRoot, 'backend/data/programming-resources-import-report.json'));
 const suppliedBooks = args.get('books-dir');
 const suppliedSearch = args.get('search-dir');
 const sourceRepos = {

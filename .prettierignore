@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+backend/data/programming-resources.json
+backend/data/programming-resources-import-report.json
+gdevelop/BlankLife-GDevelop.zip
+gdevelop/BlankLife/BlankLife.json
+frontend/public/models/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

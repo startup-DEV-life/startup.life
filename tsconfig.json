@@ -21,8 +21,8 @@
     ]
   },
   "include": [
-    "src",
-    "server/**/*.ts",
-    "vite.config.ts"
+    "frontend/src",
+    "backend/server/**/*.ts",
+    "frontend/vite.config.ts"
   ]
 }

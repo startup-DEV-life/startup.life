@@ -22,27 +22,31 @@ Production URL: <https://blank-life.onrender.com>
 
 | Path | Responsibility |
 | --- | --- |
-| `src/App.tsx` | Main React application state, game controls, UI panels, API calls, account/learning/game flows, and Socket.IO client. |
-| `src/StartupWelcome.tsx` and `src/StartupWelcome.css` | Startup.life opening page, original logo mark, and interactive stack/build slideshow. |
-| `src/ThreeCity.tsx` | Three.js scene, Lagos-style island-city and neighborhood generation, player/avatar rendering, interiors, camera, effects, picking, and collision-obstacle data. |
-| `src/game/combat.ts` | Rift encounter state and combat rules. |
-| `src/data/places.json` | Place and building records used by the island UI/world. |
-| `src/data/jobs.json` | Job/task records. |
-| `src/data/learning.json` and `src/data/coding-quests.json` | Learning content and coding quest definitions. |
-| `src/data/homes.json`, `src/data/items.json` | Home and collectible definitions. |
-| `data/programming-resources.json` | Programming-resource catalogue imported into the app database. |
-| `server/index.ts` | Express API, authentication, SQLite schema/queries, GitHub OAuth, admin endpoints, and live Socket.IO events. |
-| `public/models/lagos-shadow-frontier.glb` | Source model retained in the repository; the current Lagos city map is generated procedurally and does not load this asset. |
-| `public/manifest.webmanifest`, `public/sw.js` | PWA metadata and service-worker install/cache behavior. |
-| `supabase/` | Supabase schema/migration work retained in the repository; it is not the live server database adapter today. |
+| `frontend/src/App.tsx` | Main React application state, game controls, UI panels, API calls, account/learning/game flows, and Socket.IO client. |
+| `frontend/src/StartupWelcome.tsx` and `frontend/src/StartupWelcome.css` | Startup.life opening page, original logo mark, and interactive stack/build slideshow. |
+| `frontend/src/ThreeCity.tsx` | Three.js scene, Lagos-style island-city and neighborhood generation, player/avatar rendering, interiors, camera, effects, picking, and collision-obstacle data. |
+| `frontend/src/game/combat.ts` | Rift encounter state and combat rules. |
+| `shared/data/places.json` | Place and building records used by the island UI/world. |
+| `shared/data/jobs.json` | Job/task records. |
+| `shared/data/learning.json` and `shared/data/coding-quests.json` | Learning content and coding quest definitions. |
+| `shared/data/homes.json`, `shared/data/items.json` | Home and collectible definitions. |
+| `backend/data/programming-resources.json` | Programming-resource catalogue imported into the app database. |
+| `backend/server/index.ts` | Express API, authentication, SQLite schema/queries, GitHub OAuth, admin endpoints, and live Socket.IO events. |
+| `frontend/public/models/lagos-shadow-frontier.glb` | Source model retained in the repository; the current Lagos city map is generated procedurally and does not load this asset. |
+| `frontend/public/manifest.webmanifest`, `frontend/public/sw.js` | PWA metadata and service-worker install/cache behavior. |
+| `backend/supabase/` | Supabase schema/migration work retained in the repository; it is not the live server database adapter today. |
+| `shared/data/` | JSON content shared by the client and server. |
+| `backend/data/` | Runtime SQLite database, private learning uploads, and the imported programming catalog. |
+| `frontend/` | Browser client source, static assets, and Vite configuration. |
+| `docs/`, `scripts/`, `gdevelop/` | Documentation, developer tools, and the separate GDevelop project. |
 | `render.yaml` | Render service/build configuration. |
 | `BUILD.md` | Project build and hosting notes. |
 
 ## 4. How the game starts
 
-1. Vite serves the React app in development (`npm run web:dev`).
+1. Vite serves the React app in development from `frontend/` (`npm run web:dev`).
 2. The opening screen presents the playable world and a four-slide explanation of the client, backend, languages, and hosting. Players can enter the city or create an account.
-3. The React root in `src/App.tsx` loads the seed data and requests server data where a backend feature exists.
+3. The React root in `frontend/src/App.tsx` loads the seed data and requests server data where a backend feature exists.
 4. `ThreeCity` creates a Three.js renderer, camera, lights, island scene, player model, effects, and input/picking handlers.
 5. A browser animation frame updates movement, camera easing, other online avatars, doors, water, ambient effects, pickups, and combat.
 6. In production, Render builds the static client into `dist/`; Express serves those files and handles `/api/*` plus Socket.IO from one Node process.
@@ -77,13 +81,13 @@ This is a small prototype architecture. It is not yet a validated production des
 
 ## 8. Backend and data storage: important current limitation
 
-The running server opens a local SQLite file at `data/lagos-life.sqlite` by default (or the `DATABASE_PATH` environment variable). Accounts, player progress, chat, resource catalogue state, and GitHub-link metadata are stored there. The programming-resource JSON catalogue is loaded at server startup.
+The running server opens a local SQLite file at `backend/data/lagos-life.sqlite` by default (or the `DATABASE_PATH` environment variable). Accounts, player progress, chat, resource catalogue state, and GitHub-link metadata are stored there. The programming-resource JSON catalogue is loaded at server startup.
 
-**The live app is not currently connected to Supabase.** The repository has Supabase SQL/migration files, but `server/index.ts` uses SQLite and does not use a Supabase client. Render’s free service filesystem is ephemeral, so SQLite changes and uploaded PDFs can be lost when the service restarts or redeploys. Do not treat production account/progress data as durable until the app is migrated to a persistent database/storage service (for example, wiring this backend to the intended Supabase project and Supabase Storage, or using a persistent disk with appropriate backups).
+**The live app is not currently connected to Supabase.** The repository has Supabase SQL/migration files, but `backend/server/index.ts` uses SQLite and does not use a Supabase client. Render’s free service filesystem is ephemeral, so SQLite changes and uploaded PDFs can be lost when the service restarts or redeploys. Do not treat production account/progress data as durable until the app is migrated to a persistent database/storage service (for example, wiring this backend to the intended Supabase project and Supabase Storage, or using a persistent disk with appropriate backups).
 
 ## 9. Authentication and GitHub
 
-The app’s account/session endpoints live in `server/index.ts`. Session tokens are hashed before database storage and sent in an HTTP-only cookie. GitHub connection uses OAuth and encrypted token storage. Repository, organization, and profile data are fetched from GitHub’s API on request.
+The app’s account/session endpoints live in `backend/server/index.ts`. Session tokens are hashed before database storage and sent in an HTTP-only cookie. GitHub connection uses OAuth and encrypted token storage. Repository, organization, and profile data are fetched from GitHub’s API on request.
 
 GitHub linking requires the server environment variables listed in `.env.example` (OAuth client ID/secret, callback URL, frontend URL, and a 32-byte encryption key in hex). Without those configured in the deployed environment, the in-game GitHub panel cannot complete authorization. Never put OAuth secrets in frontend code or commit `.env` files.
 

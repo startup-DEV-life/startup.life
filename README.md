@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The Vite server proxies API and Socket.IO traffic to Express on port 4000. The Three.js scene is generated locally and does not require map credentials or external map tiles. The database creates itself at `data/lagos-life.sqlite`.
+Open `http://localhost:5173`. The Vite server proxies API and Socket.IO traffic to Express on port 4000. The Three.js scene is generated locally and does not require map credentials or external map tiles. The database creates itself at `backend/data/lagos-life.sqlite`.
 
 For a production build:
 
@@ -25,7 +25,16 @@ npm run build
 NODE_ENV=production npm start
 ```
 
-The browser game, Node.js backend, and Vite config use TypeScript. React components use `.tsx`, while `index.html` remains the browser entry document and loads `src/main.tsx`. `npm run build` runs the project-wide type check before producing the production frontend.
+## Code style
+
+The project uses Prettier to keep TypeScript, TSX, CSS, HTML, and package metadata consistently formatted.
+
+```bash
+npm run format       # format the application and server source
+npm run format:check # check formatting without changing files
+```
+
+The browser game, Node.js backend, and Vite config use TypeScript. React components use `.tsx`, while `frontend/index.html` remains the browser entry document and loads `frontend/src/main.tsx`. `npm run build` runs the project-wide type check before producing the production frontend.
 
 Set `ADMIN_USERNAME` in `.env` to grant chat moderation access to a chosen account.
 
@@ -48,12 +57,18 @@ Set `ADMIN_USERNAME` in `.env` to grant chat moderation access to a chosen accou
 
 ## Project layout
 
-- `src/ThreeCity.tsx` — generated Three.js world, controls, buildings, and avatars.
-- `src/App.tsx` — game UI and client state.
-- `src/data/jobs.json` — editable career tasks and studio positions.
-- `src/data/learning.json` — original challenge prompts and answer keys; backend validates answers and persists completion.
-- `server/index.ts` — Express API, SQLite data, authentication, Socket.IO multiplayer, jobs, and social-deduction round logic.
-- `data/` — local SQLite database, created on first run.
+The repository groups runtime code by responsibility so each part has a clear home:
+
+| Folder | What belongs there |
+| --- | --- |
+| `frontend/` | React/Three.js game client, Vite config, PWA files, icons, and public 3D assets. |
+| `backend/` | Express and Socket.IO server, SQLite runtime data, learning uploads, programming catalog, and Supabase schema/migrations. |
+| `shared/data/` | JSON game content used by both the browser client and backend: places, jobs, quests, homes, and items. |
+| `docs/` | Product, architecture, setup, and gameplay documentation. |
+| `scripts/` | One-off developer tools, including the programming-catalog importer. |
+| `gdevelop/` | The separate GDevelop starter project and its portable archive. |
+
+Root-level `package.json`, `package-lock.json`, `tsconfig.json`, and `render.yaml` coordinate development, type-checking, and deployment. SQLite files and uploaded PDFs stay under `backend/data/` and are excluded from Git.
 
 ## Documentation
 
@@ -66,7 +81,7 @@ For public deployment, configure HTTPS, database backups, account recovery, comm
 
 ## Map asset handoff
 
-The current island is procedurally built in `src/ThreeCity.tsx`; there is no in-game or backend upload form. To replace or extend it with a complete external map, provide a `.glb` (preferred, with textures/materials embedded). For a `.gltf`, include every referenced texture and buffer in a single ZIP. Include approximate file size, model scale/orientation notes, and the asset's source/license. The asset can then be integrated into the scene and served as a static game asset (or moved to object storage/CDN for larger production files).
+The current island is procedurally built in `frontend/src/ThreeCity.tsx`; there is no in-game or backend upload form. To replace or extend it with a complete external map, provide a `.glb` (preferred, with textures/materials embedded). For a `.gltf`, include every referenced texture and buffer in a single ZIP. Include approximate file size, model scale/orientation notes, and the asset's source/license. The asset can then be integrated into the scene and served as a static game asset (or moved to object storage/CDN for larger production files).
 
 ## Multiplayer capacity
 

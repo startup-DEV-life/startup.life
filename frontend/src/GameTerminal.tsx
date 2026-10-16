@@ -1,0 +1,995 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, BookOpen, Code2, TerminalSquare } from 'lucide-react';
+
+import commandGuide from '../../shared/data/linuxCommandReference.json';
+const GUIDE = commandGuide;
+const MANUAL = Object.fromEntries(
+  GUIDE.flatMap((group) =>
+    group.items.map(([command, description]) => [command.split(' ')[0], description]),
+  ),
+);
+const baseDirs = (home) => [
+  home,
+  `${home}/blank-life`,
+  `${home}/blank-life/projects`,
+  `${home}/blank-life/projects/hello-web`,
+  `${home}/blank-life/projects/api-drill`,
+  `${home}/blank-life/quests`,
+  `${home}/blank-life/island`,
+];
+function starterFiles(home) {
+  return {
+    [`${home}/blank-life/README.md`]:
+      '# Startup.life developer workspace\n\nThis is your private, simulated game workspace. Try `ls`, `cd projects/hello-web`, `cat index.html`, or `nano notes.txt`.\n',
+    [`${home}/blank-life/projects/hello-web/index.html`]:
+      '<!doctype html>\n<html lang="en">\n  <head><meta charset="utf-8"><title>Island profile</title></head>\n  <body><h1>Hello, Lian Yu</h1></body>\n</html>\n',
+    [`${home}/blank-life/projects/hello-web/style.css`]:
+      'body { font-family: sans-serif; color: #17344a; }\n',
+    [`${home}/blank-life/projects/api-drill/server.js`]:
+      '// TODO: validate the incoming task before saving it\nfunction createTask(title) {\n  return { title, completed: false };\n}\n',
+    [`${home}/blank-life/quests/README.md`]:
+      '# Quest workspace\n\nUse `quests` to inspect your current game objectives.\n',
+    [`${home}/blank-life/island/README.md`]:
+      '# Island notes\n\nKeep notes about places you discover around the island.\n',
+  };
+}
+function tokenize(line) {
+  const out = [];
+  let token = '',
+    quote = '',
+    escape = false;
+  for (const ch of line) {
+    if (escape) {
+      token += ch;
+      escape = false;
+      continue;
+    }
+    if (ch === '\\' && quote != "'") {
+      escape = true;
+      continue;
+    }
+    if (quote) {
+      if (ch === quote) quote = '';
+      else token += ch;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (/\s/.test(ch)) {
+      if (token) {
+        out.push(token);
+        token = '';
+      }
+      continue;
+    }
+    token += ch;
+  }
+  if (quote) throw new Error('Close the quote before running the command.');
+  if (escape) token += '\\';
+  if (token) out.push(token);
+  return out;
+}
+function normalizePath(raw, cwd, home) {
+  let input = raw || '.';
+  if (input === '~') input = home;
+  else if (input.startsWith('~/')) input = `${home}/${input.slice(2)}`;
+  const parts = (input.startsWith('/') ? input : `${cwd}/${input}`).split('/').filter(Boolean),
+    out = [];
+  for (const part of parts) {
+    if (part === '.' || !part) continue;
+    if (part === '..') out.pop();
+    else out.push(part);
+  }
+  return `/${out.join('/')}`;
+}
+function isWithin(path, home) {
+  return path === home || path.startsWith(`${home}/`);
+}
+const defaultPackages = ['bash', 'coreutils', 'git', 'nodejs', 'npm', 'python3'];
+
+export default function GameTerminal({ player, online = [], quests = [], onLearn = () => {} }) {
+  const username = player?.username || 'guest',
+    home = `/home/${username}`,
+    workspace = `${home}/blank-life`,
+    storageKey = `blank-life-terminal-${encodeURIComponent(username)}`;
+  const [tab, setTab] = useState('shell'),
+    [cwd, setCwd] = useState(workspace),
+    [input, setInput] = useState(''),
+    [lines, setLines] = useState([
+      'Startup.life developer terminal · Ubuntu-style command practice',
+      'Commands run in a saved virtual workspace inside the game. Try `help` or `guide`.',
+    ]),
+    [history, setHistory] = useState([]),
+    [historyIndex, setHistoryIndex] = useState(-1),
+    [editFile, setEditFile] = useState(null),
+    [editText, setEditText] = useState(''),
+    [confirm, setConfirm] = useState(null),
+    [installed, setInstalled] = useState(defaultPackages),
+    [aliases, setAliases] = useState({});
+  const [fs, setFs] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      return saved && saved.files && saved.dirs
+        ? saved
+        : { files: starterFiles(home), dirs: baseDirs(home) };
+    } catch {
+      return { files: starterFiles(home), dirs: baseDirs(home) };
+    }
+  });
+  const inputRef = useRef(null),
+    outputRef = useRef(null);
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(fs));
+    } catch {}
+  }, [fs, storageKey]);
+  useEffect(() => {
+    setCwd(workspace);
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      setFs(
+        saved?.files && saved?.dirs ? saved : { files: starterFiles(home), dirs: baseDirs(home) },
+      );
+    } catch {
+      setFs({ files: starterFiles(home), dirs: baseDirs(home) });
+    }
+  }, [username, workspace, storageKey, home]);
+  useEffect(() => {
+    if (tab === 'shell' && !editFile) inputRef.current?.focus();
+  }, [tab, editFile]);
+  useEffect(() => {
+    if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight;
+  }, [lines, tab]);
+  const pathExists = (path) => fs.dirs.includes(path) || Object.hasOwn(fs.files, path);
+  const output = (text) => String(text ?? '').split('\n');
+  const addOutput = (command, result) => {
+    setLines((prev) =>
+      [...prev, `$ ${command}`, ...(Array.isArray(result) ? result : output(result))].slice(-400),
+    );
+  };
+  const mutateFile = (path, value) =>
+    setFs((old) => ({ ...old, files: { ...old.files, [path]: value } }));
+  const listDirectory = (path, all = false) => {
+    const directDirs = fs.dirs
+      .filter(
+        (d) => d !== path && d.startsWith(`${path}/`) && !d.slice(path.length + 1).includes('/'),
+      )
+      .map((d) => ({ name: d.slice(path.length + 1), dir: true }));
+    const directFiles = Object.keys(fs.files)
+      .filter((f) => f.startsWith(`${path}/`) && !f.slice(path.length + 1).includes('/'))
+      .map((f) => ({ name: f.slice(path.length + 1), dir: false }));
+    return [...directDirs, ...directFiles]
+      .filter((item) => all || !item.name.startsWith('.'))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(
+        (item) =>
+          `${item.dir ? 'd' : '-'}rw-r--r--  ${item.dir ? 'developer' : 'developer'}  ${item.name}${item.dir ? '/' : ''}`,
+      );
+  };
+  const removePath = (path, recursive = false) => {
+    if (fs.dirs.includes(path)) {
+      const childDirs = fs.dirs.filter((d) => d.startsWith(`${path}/`)),
+        childFiles = Object.keys(fs.files).filter((f) => f.startsWith(`${path}/`));
+      if ((childDirs.length || childFiles.length) && !recursive)
+        return { error: `${path.split('/').at(-1)}: directory is not empty` };
+      setFs((old) => ({
+        dirs: old.dirs.filter((d) => d !== path && !d.startsWith(`${path}/`)),
+        files: Object.fromEntries(
+          Object.entries(old.files).filter(([f]) => f !== path && !f.startsWith(`${path}/`)),
+        ),
+      }));
+      return { ok: `removed virtual directory ${path.split('/').at(-1)}` };
+    }
+    if (Object.hasOwn(fs.files, path)) {
+      setFs((old) => ({
+        ...old,
+        files: Object.fromEntries(Object.entries(old.files).filter(([f]) => f !== path)),
+      }));
+      return { ok: `removed virtual file ${path.split('/').at(-1)}` };
+    }
+    return { error: `cannot remove '${path.split('/').at(-1)}': no such file or directory` };
+  };
+  const execute = (raw) => {
+    let args;
+    try {
+      args = tokenize(raw);
+    } catch (error) {
+      return error.message;
+    }
+    if (!args.length) return '';
+    let cmd = args.shift();
+    if (aliases[cmd]) {
+      const expanded = tokenize(aliases[cmd]);
+      args = [...expanded.slice(1), ...args];
+      cmd = expanded[0];
+    }
+    if (raw === 'clear' || cmd === 'clear' || cmd === 'Ctrl+L') {
+      setLines([]);
+      return null;
+    }
+    const resolve = (p) => normalizePath(p, cwd, home),
+      read = (p) => {
+        const q = resolve(p);
+        if (q === '/etc/os-release')
+          return 'NAME="Ubuntu (simulated)"\nPRETTY_NAME="Startup.life Linux Sandbox"\nVERSION_ID="24.04"';
+        if (!isWithin(q, home)) return null;
+        return fs.files[q] ?? null;
+      };
+    const requirePath = (p) => {
+      const q = resolve(p);
+      return isWithin(q, home) ? q : null;
+    };
+    if (cmd === 'help' || cmd === 'guide') {
+      setTab(cmd === 'guide' ? 'reference' : 'shell');
+      return cmd === 'help'
+        ? [
+            'Try: pwd, ls -la, cd projects/hello-web, cat index.html, nano notes.txt, mkdir, touch, cp, mv, rm -i, grep, find, tree, git status, npm run build, guide.',
+            'Type `man COMMAND` for a short manual. Commands operate only on your virtual game workspace.',
+          ]
+        : null;
+    }
+    if (cmd === 'exit' || cmd === 'logout') {
+      setLines((prev) => [
+        ...prev,
+        'Shell session closed. Type a command to start a new game session.',
+      ]);
+      return null;
+    }
+    if (cmd === 'pwd') return cwd;
+    if (cmd === 'whoami') return username;
+    if (cmd === 'hostname') return 'startup-life-devbox';
+    if (cmd === 'date') return new Date().toString();
+    if (cmd === 'history')
+      return history.length
+        ? history.map((item, i) => `${String(i + 1).padStart(3)}  ${item}`)
+        : 'No commands in this session.';
+    if (cmd === 'man') {
+      const topic = args[0];
+      if (!topic) return 'Usage: man COMMAND';
+      return (
+        MANUAL[topic] ||
+        {
+          cd: 'Change the current directory. Usage: cd [PATH].',
+          ls: 'List virtual files. Options: -a, -l, -la, -al.',
+          echo: 'Print text or redirect it into a virtual file with > or >>.',
+          rm: 'Remove files from the virtual workspace. Use -i to preview and confirm.',
+          nano: 'Open the in-game editor for a virtual file.',
+        }[topic] ||
+        `No short manual for ${topic}. Type guide to browse the command reference.`
+      );
+    }
+    if (args.at(-1) === '--help' || args[0] === '--help')
+      return `Usage: ${cmd} [OPTIONS] [PATH]\n${MANUAL[cmd] || 'Game terminal command reference.'}`;
+    if (cmd === 'cd') {
+      const target = resolve(args[0] || home);
+      if (!isWithin(target, home)) return 'cd: paths outside your virtual home are unavailable.';
+      if (!fs.dirs.includes(target)) return `cd: ${args[0] || home}: No such directory`;
+      setCwd(target);
+      return '';
+    }
+    if (cmd === 'ls') {
+      const all = args.some((x) => x.includes('a') && x.startsWith('-')),
+        targetArg = args.find((x) => !x.startsWith('-')),
+        target = resolve(targetArg || cwd);
+      if (!isWithin(target, home)) return 'ls: paths outside your virtual home are unavailable.';
+      if (Object.hasOwn(fs.files, target)) return target.split('/').at(-1);
+      if (!fs.dirs.includes(target))
+        return `ls: cannot access '${targetArg}': No such file or directory`;
+      return listDirectory(target, all).length ? listDirectory(target, all) : '(empty directory)';
+    }
+    if (cmd === 'mkdir') {
+      const opts = args.filter((a) => a.startsWith('-')).join(''),
+        targets = args.filter((a) => !a.startsWith('-'));
+      if (!targets.length) return 'Usage: mkdir [-p] DIRECTORY';
+      const results = [];
+      for (const name of targets) {
+        const target = resolve(name);
+        if (!isWithin(target, home))
+          return 'mkdir: cannot create folders outside your virtual home.';
+        if (fs.dirs.includes(target)) {
+          results.push(`mkdir: cannot create directory '${name}': File exists`);
+          continue;
+        }
+        const parent = target.slice(0, target.lastIndexOf('/')) || '/';
+        if (!opts.includes('p') && !fs.dirs.includes(parent)) {
+          results.push(`mkdir: cannot create directory '${name}': No such file or directory`);
+          continue;
+        }
+        const parts = target.slice(home.length).split('/').filter(Boolean);
+        let current = home;
+        const add = [];
+        for (const part of parts) {
+          current += `/${part}`;
+          if (!fs.dirs.includes(current)) add.push(current);
+          if (!opts.includes('p') && current !== target) break;
+        }
+        setFs((old) => ({ ...old, dirs: [...new Set([...old.dirs, ...add])] }));
+        results.push(`created ${name}`);
+      }
+      return results;
+    }
+    if (cmd === 'touch') {
+      if (!args.length) return 'Usage: touch FILE';
+      const added = [];
+      for (const name of args) {
+        const target = requirePath(name);
+        if (!target) return 'touch: cannot write outside your virtual home.';
+        if (!fs.dirs.includes(target.slice(0, target.lastIndexOf('/'))))
+          return `touch: ${name}: parent folder does not exist`;
+        if (!Object.hasOwn(fs.files, target)) added.push([target, '']);
+      }
+      if (added.length)
+        setFs((old) => ({ ...old, files: { ...old.files, ...Object.fromEntries(added) } }));
+      return added.map(([p]) => `created ${p.split('/').at(-1)}`);
+    }
+    if (
+      cmd === 'cat' ||
+      cmd === 'less' ||
+      cmd === 'head' ||
+      cmd === 'tail' ||
+      cmd === 'file' ||
+      cmd === 'wc' ||
+      cmd === 'sort' ||
+      cmd === 'uniq'
+    ) {
+      if (!args.length) return `${cmd}: provide a virtual file path`;
+      const path = args.find((x) => !x.startsWith('-')),
+        target = path ? resolve(path) : null;
+      if (!target) return `${cmd}: provide a virtual file path`;
+      if (target === '/etc/os-release' && cmd === 'cat')
+        return 'NAME=\"Ubuntu (simulated)\"\nPRETTY_NAME=\"Startup.life Linux Sandbox\"\nVERSION_ID=\"24.04\"';
+      if (!isWithin(target, home)) return `${cmd}: files outside your virtual home cannot be read.`;
+      const data = fs.files[target];
+      if (data === undefined) return `${cmd}: ${path}: No such file`;
+      const content = data.split('\n');
+      if (cmd === 'cat' || cmd === 'less') return data || '(empty file)';
+      if (cmd === 'head') return content.slice(0, 10).join('\n');
+      if (cmd === 'tail') return content.slice(-10).join('\n');
+      if (cmd === 'file') return `ASCII text (${new TextEncoder().encode(data).length} bytes)`;
+      if (cmd === 'wc') {
+        if (args.includes('-l')) return `${content.length - (!data ? 1 : 0)} ${path}`;
+        return `${content.length} lines  ${data.length} characters  ${path}`;
+      }
+      if (cmd === 'sort') return [...content].sort((a, b) => a.localeCompare(b));
+      if (cmd === 'uniq') return content.filter((line, i) => i === 0 || line !== content[i - 1]);
+    }
+    if (cmd === 'echo' || cmd === 'printf') {
+      const redirectAt = args.findIndex((a) => a === '>' || a === '>>');
+      const text = args.slice(0, redirectAt < 0 ? args.length : redirectAt).join(' ');
+      const value = cmd === 'printf' ? text.replace(/\\n/g, '\n').replace(/\\t/g, '\t') : text;
+      if (redirectAt >= 0) {
+        const path = args[redirectAt + 1];
+        if (!path) return `bash: syntax error near unexpected token '${args[redirectAt]}'`;
+        const target = requirePath(path);
+        if (!target) return 'Only files inside your virtual home can be changed.';
+        const parent = target.slice(0, target.lastIndexOf('/'));
+        if (!fs.dirs.includes(parent)) return `bash: ${path}: parent folder does not exist`;
+        mutateFile(
+          target,
+          args[redirectAt] === '>>' ? (fs.files[target] || '') + value + '\n' : value + '\n',
+        );
+        return '';
+      }
+      return value;
+    }
+    if (cmd === 'nano' || cmd === 'vi' || cmd === 'vim') {
+      const name = args[0];
+      if (!name) return `Usage: ${cmd} FILE`;
+      const target = requirePath(name);
+      if (!target) return 'Editors can only open files in your virtual home.';
+      if (!fs.dirs.includes(target.slice(0, target.lastIndexOf('/'))))
+        return `${cmd}: parent folder does not exist`;
+      setEditFile(target);
+      setEditText(fs.files[target] || '');
+      return null;
+    }
+    if (cmd === 'cp' || cmd === 'mv') {
+      if (args.length < 2) return `Usage: ${cmd} SOURCE DEST`;
+      const from = requirePath(args.at(-2)),
+        to = requirePath(args.at(-1));
+      if (!from || !to) return `${cmd}: files outside your virtual home cannot be changed.`;
+      const content = fs.files[from];
+      if (content === undefined) return `${cmd}: cannot stat '${args.at(-2)}': No such file`;
+      if (!fs.dirs.includes(to.slice(0, to.lastIndexOf('/'))))
+        return `${cmd}: destination folder does not exist`;
+      if (cmd === 'cp') mutateFile(to, content);
+      else
+        setFs((old) => ({
+          ...old,
+          files: {
+            ...Object.fromEntries(Object.entries(old.files).filter(([p]) => p !== from)),
+            [to]: content,
+          },
+        }));
+      return `${cmd === 'cp' ? 'copied' : 'moved'} ${args.at(-2)} ${cmd === 'cp' ? 'to' : '→'} ${args.at(-1)}`;
+    }
+    if (cmd === 'rm' || cmd === 'rmdir') {
+      const recursive = args.some((x) => x === '-r' || x === '-rf' || x === '-fr'),
+        interactive = args.includes('-i'),
+        targets = args.filter((x) => !x.startsWith('-'));
+      if (!targets.length) return `Usage: ${cmd} ${cmd === 'rm' ? '[-i] FILE' : 'EMPTY_DIRECTORY'}`;
+      const target = requirePath(targets[0]);
+      if (!target) return `${cmd}: path is outside your virtual home.`;
+      if (interactive) {
+        setConfirm({ target, recursive });
+        return `Remove ${targets[0]} from the virtual workspace? Type yes or no.`;
+      }
+      if (cmd === 'rmdir' && fs.dirs.includes(target) && listDirectory(target, true).length)
+        return `rmdir: failed to remove '${targets[0]}': Directory not empty`;
+      const result = removePath(target, recursive || cmd === 'rmdir');
+      return result.ok || result.error;
+    }
+    if (cmd === 'tree') {
+      const root = resolve(args.find((a) => !a.startsWith('-')) || cwd);
+      if (!isWithin(root, home) || !fs.dirs.includes(root))
+        return `tree: ${args[0] || '.'}: No such directory`;
+      const entries = [
+        ...fs.dirs
+          .filter((d) => d !== root && d.startsWith(`${root}/`))
+          .map((d) => `${d.split('/').at(-1)}/`),
+        ...Object.keys(fs.files)
+          .filter((f) => f.startsWith(`${root}/`))
+          .map((f) => f.slice(root.length + 1)),
+      ];
+      return [
+        root.split('/').at(-1) || '/',
+        ...entries.sort().map((x, i) => `${i === entries.length - 1 ? '└──' : '├──'} ${x}`),
+        `${entries.length} entries`,
+      ];
+    }
+    if (cmd === 'find') {
+      const pattern = args.find((x) => x !== '-name' && !x.startsWith('-')) || '.',
+        name = args[args.indexOf('-name') + 1],
+        root = resolve(pattern);
+      if (!isWithin(root, home)) return 'find: search outside your virtual home is unavailable';
+      const all = [...fs.dirs, ...Object.keys(fs.files)].filter(
+        (x) => x === root || x.startsWith(`${root}/`),
+      );
+      const matches = all.filter(
+        (x) =>
+          !name ||
+          name === '*' ||
+          name === '*.*' ||
+          x.split('/').at(-1).endsWith(name.replace(/^\*/, '')),
+      );
+      return matches.map((x) => x.slice(cwd.length + 1) || '.');
+    }
+    if (cmd === 'grep') {
+      const recursive = args.includes('-R') || args.includes('-r'),
+        tokens = args.filter((x) => !x.startsWith('-')),
+        pattern = tokens[0],
+        paths = tokens.slice(1);
+      if (!pattern || !paths.length) return 'Usage: grep [-R] PATTERN FILE...';
+      const targets = paths.flatMap((x) => {
+        const p = resolve(x);
+        return fs.dirs.includes(p) && recursive
+          ? Object.keys(fs.files).filter((f) => f.startsWith(`${p}/`))
+          : [p];
+      });
+      const hits = [];
+      for (const path of targets) {
+        if (!isWithin(path, home)) continue;
+        const data = fs.files[path];
+        if (data === undefined) continue;
+        data.split('\n').forEach((line, i) => {
+          if (line.toLowerCase().includes(pattern.toLowerCase()))
+            hits.push(`${path.split('/').at(-1)}:${i + 1}:${line}`);
+        });
+      }
+      return hits.length ? hits : `No matches for ${pattern}.`;
+    }
+    if (cmd === 'du') {
+      const target = resolve(args.at(-1) || '.');
+      if (!isWithin(target, home)) return 'du: virtual home only';
+      const size = Object.entries(fs.files)
+        .filter(([p]) => p === target || p.startsWith(`${target}/`))
+        .reduce((n, [, text]) => n + new TextEncoder().encode(String(text)).length, 0);
+      return `${size < 1024 ? size + 'B' : (size / 1024).toFixed(1) + 'K'}\t${args.at(-1) || '.'}`;
+    }
+    if (cmd === 'df')
+      return [
+        'Filesystem      Size  Used Avail Use% Mounted on',
+        'game-workspace   2.0G  128M 1.9G   7% /home',
+      ];
+    if (cmd === 'date') return new Date().toString();
+    if (cmd === 'echo') {
+      return args.join(' ');
+    }
+    if (cmd === 'env' || cmd === 'printenv')
+      return args[0]
+        ? `${args[0]}=${args[0] === 'HOME' ? home : args[0] === 'USER' ? username : '/usr/local/bin:/usr/bin:/bin'}`
+        : [
+            `HOME=${home}`,
+            `USER=${username}`,
+            'SHELL=/bin/bash',
+            'PATH=/usr/local/bin:/usr/bin:/bin',
+          ];
+    if (cmd === 'uname')
+      return 'Linux startup-life-devbox 6.8.0-game #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux';
+    if (cmd === 'free')
+      return [
+        '               total        used        free',
+        'Mem:           7.7Gi       2.1Gi       5.6Gi',
+        'Swap:          2.0Gi          0B       2.0Gi',
+      ];
+    if (cmd === 'uptime')
+      return `up ${Math.max(1, Math.floor(performance.now() / 60000))} minutes, 1 user, load average: 0.08, 0.06, 0.03`;
+    if (cmd === 'id')
+      return `uid=1000(${username}) gid=1000(${username}) groups=1000(${username}),27(sudo)`;
+    if (cmd === 'groups') return `${username} sudo developers`;
+    if (cmd === 'lscpu')
+      return [
+        'Architecture:                         x86_64',
+        'CPU(s):                               4',
+        'Model name:                           Startup.life virtual CPU',
+      ];
+    if (cmd === 'lsblk')
+      return ['NAME    SIZE TYPE MOUNTPOINTS', 'vda     32G  disk', '└─vda1  32G  part /'];
+    if (
+      cmd === 'top' ||
+      cmd === 'ps' ||
+      cmd === 'who' ||
+      cmd === 'pgrep' ||
+      cmd === 'jobs' ||
+      cmd === 'kill' ||
+      cmd === 'pkill'
+    )
+      return [
+        'PID USER      COMMAND',
+        '1   root      game-kernel',
+        '42  developer blank-life-terminal',
+        cmd === 'who'
+          ? `${username}  pts/0  ${new Date().toLocaleTimeString()}`
+          : 'Simulation only: no processes on this device are visible or affected.',
+      ];
+    if (cmd === 'timedatectl')
+      return [
+        `Local time: ${new Date().toString()}`,
+        'Time zone: game-session (simulated)',
+        'System clock synchronized: yes',
+      ];
+    if (cmd === 'hostname') return 'startup-life-devbox';
+    if (cmd === 'which' || cmd === 'command') {
+      const name = args.at(-1);
+      const known = [
+        'git',
+        'node',
+        'nodejs',
+        'npm',
+        'python',
+        'python3',
+        'go',
+        'bash',
+        'ls',
+        'grep',
+        'cat',
+        'curl',
+        'wget',
+        'docker',
+        'code',
+      ];
+      return known.includes(name)
+        ? `/usr/bin/${name}`
+        : `${name}: command not found in the game command catalog`;
+    }
+    if (
+      cmd === 'apt' ||
+      cmd === 'apt-get' ||
+      cmd === 'dpkg' ||
+      cmd === 'flatpak' ||
+      cmd === 'snap' ||
+      (cmd === 'sudo' &&
+        [
+          'apt',
+          'apt-get',
+          'dpkg',
+          'systemctl',
+          'ufw',
+          'adduser',
+          'deluser',
+          'reboot',
+          'poweroff',
+          'fsck',
+        ].includes(args[0]))
+    ) {
+      const parts = cmd === 'sudo' ? args : [cmd, ...args],
+        base = parts[0] === 'sudo' ? parts[1] : parts[0],
+        sub = parts[0] === 'sudo' ? parts[2] : parts[1],
+        pkg = parts.at(-1);
+      if ((base === 'apt' || base === 'apt-get') && ['install', 'remove', 'purge'].includes(sub)) {
+        if (sub === 'install') {
+          setInstalled((a) => [...new Set([...a, pkg])]);
+          return `Simulated: installed ${pkg} in the game workspace. Your device was not changed.`;
+        }
+        setInstalled((a) => a.filter((x) => x !== pkg));
+        return `Simulated: removed ${pkg} from the game workspace. Your device was not changed.`;
+      }
+      if (base === 'apt' && sub === 'search')
+        return [
+          'git - distributed version control system',
+          'nodejs - event-driven JavaScript runtime',
+          'python3 - interactive high-level language',
+          'npm - JavaScript package manager',
+        ].filter((x) => x.includes(pkg));
+      if (base === 'apt' && sub === 'show')
+        return `Package: ${pkg}\nVersion: game-demo\nDescription: Sample package information; no real package manager is connected.`;
+      if (base === 'dpkg' && sub === '-i') {
+        const name = pkg
+          .split('/')
+          .at(-1)
+          .replace(/\.deb$/, '');
+        setInstalled((a) => [...new Set([...a, name])]);
+        return `Simulated: installed ${name}. No real package or device was changed.`;
+      }
+      if (base === 'dpkg')
+        return installed.map((name) => `ii  ${name}  1.0-game  simulated package`);
+      if (base === 'flatpak' || base === 'snap') return 'No simulated packages installed.';
+      return `Simulated ${base} ${sub || ''}. System changes are disabled in the game terminal.`;
+    }
+    if (
+      cmd === 'systemctl' ||
+      cmd === 'journalctl' ||
+      cmd === 'dmesg' ||
+      cmd === 'ufw' ||
+      cmd === 'chmod' ||
+      cmd === 'chown' ||
+      cmd === 'passwd' ||
+      cmd === 'adduser' ||
+      cmd === 'deluser' ||
+      cmd === 'fsck' ||
+      cmd === 'reboot' ||
+      cmd === 'poweroff'
+    )
+      return [
+        'This command is simulated for learning; it cannot change the phone/computer, accounts, permissions, firewall, disks, or operating system.',
+        'No real system action was run.',
+      ];
+    if (
+      cmd === 'ip' ||
+      cmd === 'ss' ||
+      cmd === 'getent' ||
+      cmd === 'resolvectl' ||
+      cmd === 'nmcli' ||
+      cmd === 'ping' ||
+      cmd === 'curl' ||
+      cmd === 'wget' ||
+      cmd === 'ssh' ||
+      cmd === 'scp'
+    )
+      return [
+        `Simulated ${cmd} result for the game environment.`,
+        `The game terminal has no access to the device network or remote servers.`,
+      ];
+    if (cmd === 'git') {
+      const sub = args[0];
+      if (sub === '--version') return 'git version 2.43.0 (game simulation)';
+      if (sub === 'status')
+        return [
+          'On branch main',
+          'Changes not staged for commit:',
+          '  modified: projects/api-drill/server.js',
+          'nothing added to commit',
+        ];
+      if (sub === 'diff')
+        return [
+          'diff --git a/projects/api-drill/server.js b/projects/api-drill/server.js',
+          '-// TODO: validate the incoming task before saving it',
+          '+// Start editing this project with nano projects/api-drill/server.js',
+        ];
+      if (sub === 'log') return '* a1b2c3d (HEAD -> main) Start developer workspace';
+      if (sub === 'branch') return '* main';
+      if (sub === 'remote')
+        return 'origin  https://example.invalid/blank-life-demo (simulated, no network access)';
+      if (sub === 'add') return `Staged ${args[1] || '.'} in the virtual repository.`;
+      if (sub === 'commit')
+        return `[main 4c91d72] ${args.slice(2).join(' ').replace(/^"|"$/g, '') || 'Practice commit'}\n1 file changed (simulated)`;
+      if (sub === 'switch' || sub === 'checkout')
+        return `Switched to virtual branch ${args.at(-1)}.`;
+      if (sub === 'stash') return 'Saved a virtual workspace snapshot.';
+      if (sub === 'restore') return 'Virtual file restored to its starter version.';
+      if (sub === 'clone')
+        return 'Remote cloning is unavailable; use the bundled practice projects in ~/blank-life/projects.';
+      if (sub === 'init') return 'Initialized an empty virtual Git repository.';
+      return 'Virtual Git supports status, diff, log, branch, add, commit, switch, stash, restore, init, and remote.';
+    }
+    if (cmd === 'node' && args[0] === '--version') return 'v22.12.0 (game simulation)';
+    if (cmd === 'npm' && args[0] === '--version') return '10.9.0 (game simulation)';
+    if (cmd === 'python3' && args[0] === '--version') return 'Python 3.12.3 (game simulation)';
+    if (cmd === 'go' && args[0] === 'version')
+      return 'go version go1.22.2 linux/amd64 (game simulation)';
+    if (cmd === 'npm') {
+      if (args[0] === 'install')
+        return 'added 24 simulated packages. No device files or network services were changed.';
+      if (args[0] === 'run')
+        return args[1] === 'build'
+          ? ['> blank-life-project build', '✓ Simulated build finished successfully.']
+          : args[1] === 'dev'
+            ? ['> blank-life-project dev', '✓ Simulated preview started at http://blank-life.local']
+            : args[1]
+              ? `npm ERR! Missing script: ${args[1]}`
+              : 'Usage: npm run SCRIPT';
+      return 'Usage: npm install | npm run dev | npm run build';
+    }
+    if (cmd === 'python3' && args[0] === '-m' && args[1] === 'venv') {
+      const target = resolve(args[2] || '.venv');
+      if (!isWithin(target, home))
+        return 'Virtual environments must be created inside your home folder.';
+      setFs((old) => ({
+        ...old,
+        dirs: [...new Set([...old.dirs, target, `${target}/bin`, `${target}/lib`])],
+      }));
+      return `Created simulated virtual environment at ${args[2] || '.venv'}.`;
+    }
+    if (cmd === 'python3' && args[0] === '-m' && args[1] === 'pip')
+      return 'pip 24.0 (game simulation)';
+    if (cmd === 'python3' && args[0]) {
+      const content = read(args[0]);
+      if (content === null) return `python3: can't open file '${args[0]}': No such virtual file`;
+      const prints = [...content.matchAll(/print\((['"])(.*?)\1\)/g)].map((m) => m[2]);
+      return prints.length
+        ? prints
+        : 'Python execution is limited to simple print(...) practice lines in virtual files.';
+    }
+    if (cmd === 'go' && ['run', 'test', 'build'].includes(args[0]))
+      return args[0] === 'test'
+        ? ['?  blank-life/game  [no test files] (simulated)']
+        : ['Go task completed in the game simulation.'];
+    if (cmd === 'docker')
+      return args[0] === '--version'
+        ? 'Docker version 26.0.0 (game simulation)'
+        : args[0] === 'ps'
+          ? ['CONTAINER ID   IMAGE         STATUS', '(no simulated containers)']
+          : args[0] === 'images'
+            ? ['REPOSITORY  TAG  IMAGE ID', '(no simulated images)']
+            : 'Docker actions are simulated; the device Docker daemon is not accessible.';
+    if (cmd === 'tar' || cmd === 'zip' || cmd === 'unzip' || cmd === 'gzip' || cmd === 'gunzip')
+      return `${cmd}: archive actions are represented in the virtual workspace; binary archive extraction is not implemented.`;
+    if (cmd === 'code')
+      return 'VS Code is not launched from the game. Use nano FILE to edit a virtual workspace file.';
+    if (MANUAL[cmd])
+      return [
+        `Simulated ${cmd}: ${MANUAL[cmd]}`,
+        'This command is acknowledged inside the game sandbox; it cannot act on the real device, a real server, or the internet.',
+      ];
+    return `bash: ${cmd}: command not found in the game shell. Type help or guide.`;
+  };
+  const submit = (e) => {
+    e?.preventDefault();
+    const raw = input.trim();
+    if (!raw) return;
+    if (confirm) {
+      const decision = raw.toLowerCase();
+      if (['y', 'yes'].includes(decision)) {
+        const result = removePath(confirm.target, confirm.recursive);
+        addOutput(raw, result.ok || result.error);
+      } else
+        addOutput(
+          raw,
+          decision === 'n' || decision === 'no' ? 'Cancelled.' : 'Type yes or no to confirm.',
+        );
+      if (['y', 'yes', 'n', 'no'].includes(decision)) setConfirm(null);
+      setInput('');
+      return;
+    }
+    setHistory((prev) => [...prev, raw].slice(-100));
+    setHistoryIndex(-1);
+    const result = execute(raw);
+    if (result !== null) addOutput(raw, result);
+    setInput('');
+  };
+  const keyDown = (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const before = input.slice(0, inputRef.current?.selectionStart || input.length),
+        parts = before.split(/\s+/),
+        prefix = parts.at(-1) || '',
+        choices = before.trim().includes(' ')
+          ? Object.keys(fs.files)
+              .map((path) => path.slice(cwd.length + 1))
+              .filter(Boolean)
+          : [
+              ...new Set([
+                'pwd',
+                'ls',
+                'cd',
+                'clear',
+                'whoami',
+                'date',
+                'history',
+                'man',
+                'mkdir',
+                'touch',
+                'cp',
+                'mv',
+                'rm',
+                'rmdir',
+                'tree',
+                'find',
+                'cat',
+                'less',
+                'head',
+                'tail',
+                'nano',
+                'grep',
+                'wc',
+                'sort',
+                'uniq',
+                'diff',
+                'file',
+                'du',
+                'df',
+                'sudo',
+                'apt',
+                'git',
+                'npm',
+                'node',
+                'python3',
+                'go',
+                'docker',
+                'guide',
+                'help',
+                ...Object.keys(MANUAL),
+              ]),
+            ];
+      const match = choices.find((item) => item.startsWith(prefix));
+      if (match) {
+        const next = before.slice(0, before.length - prefix.length) + match;
+        setInput(next + input.slice(before.length));
+      }
+      return;
+    }
+    if (e.key === 'c' && e.ctrlKey) {
+      e.preventDefault();
+      setInput('');
+      setLines((prev) => [...prev, '^C']);
+    }
+    if (e.key === 'd' && e.ctrlKey) {
+      e.preventDefault();
+      if (!input) {
+        setLines((prev) => [
+          ...prev,
+          'Shell session closed. Type a command to start a new game session.',
+        ]);
+      } else setInput(input.slice(0, -1));
+    }
+    if (e.key === 'u' && e.ctrlKey) {
+      e.preventDefault();
+      setInput('');
+    }
+    if (e.key === 'w' && e.ctrlKey) {
+      e.preventDefault();
+      setInput(input.trimEnd().replace(/\S+$/, ''));
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const index = Math.max(0, historyIndex < 0 ? history.length - 1 : historyIndex - 1);
+      setHistoryIndex(index);
+      setInput(history[index] || '');
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const index = Math.min(history.length, historyIndex + 1);
+      setHistoryIndex(index);
+      setInput(history[index] || '');
+    }
+    if (e.key === 'l' && e.ctrlKey) {
+      e.preventDefault();
+      setLines([]);
+    }
+  };
+  const saveEdit = () => {
+    mutateFile(editFile, editText);
+    setLines((prev) => [...prev, `Saved ${editFile.slice(cwd.length + 1) || editFile}.`]);
+    setEditFile(null);
+    setEditText('');
+  };
+  const reference = GUIDE;
+  return (
+    <div className="game-terminal">
+      <div className="terminal-heading">
+        <TerminalSquare size={19} />
+        <span>
+          <b>Ubuntu Terminal</b>
+          <small>Startup.life Linux workspace · simulated session</small>
+        </span>
+        <button className="terminal-learn-shortcut" onClick={onLearn}>
+          <BookOpen size={13} /> Learn to Earn
+        </button>
+        <button className="terminal-learn-shortcut" onClick={onLearn}>
+          <BookOpen size={13} /> Learn to Earn
+        </button>
+        <div className="terminal-tabs">
+          <button className={tab === 'shell' ? 'active' : ''} onClick={() => setTab('shell')}>
+            <Code2 size={13} /> Shell
+          </button>
+          <button
+            className={tab === 'reference' ? 'active' : ''}
+            onClick={() => setTab('reference')}
+          >
+            <BookOpen size={13} /> Reference
+          </button>
+        </div>
+      </div>
+      {tab === 'shell' ? (
+        <>
+          <div className="terminal-location">
+            <span>{cwd.replace(home, '~')}</span>
+            <span>{username}@blank-life</span>
+          </div>
+          <pre ref={outputRef} className="terminal-output">
+            {lines.join('\n')}
+          </pre>
+          {editFile ? (
+            <div className="terminal-editor">
+              <div>
+                <b>nano</b>
+                <span>{editFile.slice(cwd.length + 1) || editFile}</span>
+                <button onClick={() => setEditFile(null)}>Cancel</button>
+                <button onClick={saveEdit}>Save file</button>
+              </div>
+              <textarea
+                aria-label="Virtual file contents"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+              />
+            </div>
+          ) : (
+            <form onSubmit={submit}>
+              <span>$</span>
+              <input
+                ref={inputRef}
+                aria-label="Terminal command"
+                autoComplete="off"
+                spellCheck="false"
+                value={input}
+                onKeyDown={keyDown}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={confirm ? 'Type yes or no' : 'Type help, guide, or a Linux command'}
+              />
+              <button aria-label="Run command">
+                <ArrowRight size={16} />
+              </button>
+            </form>
+          )}
+          <small className="terminal-safety">
+            Commands run only in this saved game sandbox. Real system, network, disk, account, and
+            remote actions are never run.
+          </small>
+        </>
+      ) : (
+        <div className="terminal-reference">
+          <div className="reference-intro">
+            <b>Linux command guide</b>
+            <span>
+              Common Ubuntu commands from the supplied reference. Click a command to load it into
+              the game shell.
+            </span>
+          </div>
+          {reference.map((group) => (
+            <section key={group.title}>
+              <h3>{group.title}</h3>
+              {group.items.map(([command, description]) => (
+                <button
+                  key={command}
+                  disabled={/^(Ctrl|Tab|↑|↓|Home|End)/i.test(command)}
+                  title={
+                    /^(Ctrl|Tab|↑|↓|Home|End)/i.test(command) ? 'Keyboard shortcut reference' : ''
+                  }
+                  onClick={() => {
+                    setInput(command);
+                    setTab('shell');
+                  }}
+                >
+                  <code>{command}</code>
+                  <span>{description}</span>
+                </button>
+              ))}
+            </section>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
