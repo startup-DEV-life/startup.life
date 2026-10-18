@@ -1,6 +1,6 @@
 # Startup.life on GDevelop
 
-This is the first GDevelop-native playable-world slice for Startup.life. The main project is `BlankLife/BlankLife.json` and the supplied Lagos Shadow Frontier Blender export is included as `BlankLife/assets/lagos-shadow-frontier.glb`.
+This is the primary GDevelop-native playable-world project for Startup.life. The main project is `BlankLife/BlankLife.json` and the supplied Lagos Shadow Frontier Blender export is included as `BlankLife/assets/lagos-shadow-frontier.glb`.
 
 The scene setup and third-person controls are adapted from GDevelop's [3D island terrain example](https://github.com/GDevelopApp/GDevelop-examples/tree/main/examples/3d-island-terrain); the sample island/foliage art was replaced with your GLB and original placeholder controls/avatar.
 
@@ -20,3 +20,5 @@ This preset favors predictable frame pacing and battery use on budget phones. Th
 This project is an engine migration starter, not a complete port of the existing Startup.life web app. The existing TypeScript app and Node server remain in the repository. Login, persistent player profiles, Socket.IO multiplayer, quests, the Learn2Earn experience, terminal, books, videos, and job placement still need GDevelop-side screens/events and a networking adapter. GDevelop's built-in WebSocket client speaks WebSocket; the current server uses Socket.IO, so they cannot connect directly without a compatible server endpoint or a small bridge.
 
 The island GLB is a single imported model for this first slice. Buildings are visually present, while entry/interior scenes and per-building interactions still need to be authored as separate GDevelop scenes/events.
+
+See [`MIGRATION.md`](MIGRATION.md) for the active build order and the browser systems that will be retained and ported into GDevelop.

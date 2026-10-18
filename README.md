@@ -2,9 +2,11 @@
 
 An independent browser game prototype: a multiplayer Lagos-inspired city rebuilt as a stylized 3D developer district. It is not the proprietary source code for lagoslife.app.
 
-## GDevelop edition
+## GDevelop edition (primary engine path)
 
-A GDevelop-native third-person island starter is available in [`gdevelop/BlankLife/BlankLife.json`](gdevelop/BlankLife/BlankLife.json), with a portable project archive at [`gdevelop/BlankLife-GDevelop.zip`](gdevelop/BlankLife-GDevelop.zip). Open the JSON file in GDevelop to work on the engine version. It uses the supplied Lagos Shadow Frontier GLB and includes a generated placeholder avatar, desktop movement, touch controls, and a third-person camera. See [`gdevelop/README.md`](gdevelop/README.md) for setup and the current migration boundary. The existing TypeScript browser game and Node server are preserved alongside it.
+The active engine path is the GDevelop-native project at [`gdevelop/BlankLife/BlankLife.json`](gdevelop/BlankLife/BlankLife.json), with a portable project archive at [`gdevelop/BlankLife-GDevelop.zip`](gdevelop/BlankLife-GDevelop.zip). Open the JSON file in GDevelop to work on the engine version. It uses the supplied Lagos Shadow Frontier GLB and includes a generated placeholder avatar, desktop movement, touch controls, and a third-person camera.
+
+The existing TypeScript game and Node server are retained as the content and backend reference while the GDevelop project is expanded. The migration order, retained assets, and integration boundaries are documented in [`gdevelop/MIGRATION.md`](gdevelop/MIGRATION.md).
 
 ## Run it locally
 
