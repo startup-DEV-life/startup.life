@@ -8,6 +8,10 @@ The active engine path is the GDevelop-native project at [`gdevelop/BlankLife/Bl
 
 The existing TypeScript game and Node server are retained as the content and backend reference while the GDevelop project is expanded. The migration order, retained assets, and integration boundaries are documented in [`gdevelop/MIGRATION.md`](gdevelop/MIGRATION.md).
 
+## Board games platform
+
+Board games are organized in the private [`startup.life-games`](https://github.com/startup-DEV-life/startup.life-games) repository, with separate folders for Chess, Checkers, Word Tiles, and an original property-trading game. Platform administration is organized in the private [`startup.life-admin`](https://github.com/startup-DEV-life/startup.life-admin) repository. The integration contract and the single shared PostgreSQL database boundary are in [`docs/GAMES_HUB.md`](docs/GAMES_HUB.md).
+
 ## Run it locally
 
 Requires Node.js 20.19+ or 22.12+ and npm.
