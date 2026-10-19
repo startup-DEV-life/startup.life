@@ -2290,6 +2290,12 @@ export default function App() {
                 <p className="phone-greeting">
                   Hi, {player.name} <small>Your island at a glance</small>
                 </p>
+                {!user && (
+                  <div className="phone-auth-actions">
+                    <button onClick={() => openAuth('login')}>Sign in</button>
+                    <button className="phone-auth-primary" onClick={() => openAuth('signup')}>Create account</button>
+                  </div>
+                )}
                 <div className="phone-apps">
                   <button onClick={() => setPhoneView('map')}>
                     <Map />
@@ -3345,17 +3351,6 @@ function AuthModal({ mode, player, avatars, jobs, error, busy, onClose, onMode, 
                 <option value="grower">Grower · mentor and support founders</option>
               </select>
               <small>Grower accounts can visit the leadership floor in this demo.</small>
-            </label>
-          )}
-          {mode === 'signup' && (
-            <label className="career-select-label">
-              CHOOSE YOUR CAMPUS PATH
-              <select name="accountType" defaultValue={player.accountType || 'developer'}>
-                <option value="beginner">Beginner · tutorials and guided quests</option>
-                <option value="developer">Developer · build and pitch a startup</option>
-                <option value="grower">Grower · mentor and support founders</option>
-              </select>
-              <small>Grower access is required for the leadership floor in this demo.</small>
             </label>
           )}
           {mode !== 'edit' && (

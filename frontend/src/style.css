@@ -2428,6 +2428,102 @@ button:not(:disabled):active {
     500 10px 'DM Sans',
     sans-serif;
 }
+.phone-auth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.phone-auth-actions button {
+  min-height: 39px;
+  border: 1px solid #526486;
+  border-radius: 11px;
+  background: #151e36;
+  color: #d8e7f4;
+  font: 700 12px 'DM Sans', sans-serif;
+}
+.phone-auth-actions .phone-auth-primary {
+  border-color: #70dce3;
+  background: #75dce5;
+  color: #10192b;
+}
+.phone-auth-actions button:focus-visible,
+.gameup-installed-game:focus-visible {
+  outline: 2px solid #93e9ed;
+  outline-offset: 2px;
+}
+.gameup-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.gameup-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: #82dfdf;
+  font: 800 9px 'DM Sans', sans-serif;
+  letter-spacing: .14em;
+}
+.gameup-heading h2 { margin-bottom: 0; }
+.gameup-count {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border: 1px solid #3b4b69;
+  border-radius: 999px;
+  color: #c2d5ea;
+  font: 700 10px 'DM Sans', sans-serif;
+}
+.gameup-installed-list {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0;
+}
+.gameup-installed-game {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 9px;
+  min-height: 54px;
+  padding: 7px 9px;
+  border: 1px solid #3a4967;
+  border-radius: 12px;
+  background: #111a30;
+  color: #e9f1fa;
+  text-decoration: none;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.gameup-installed-game:hover {
+  transform: translateY(-1px);
+  border-color: #7bdde5;
+  background: #1a2945;
+}
+.gameup-game-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 10px;
+  background: #183a50;
+  color: #8de9ed;
+  font: 800 18px 'Manrope', sans-serif;
+}
+.gameup-checkers { background: #482e45; color: #ffaaa0; }
+.gameup-scrabble { background: #4c4129; color: #f4d88e; }
+.gameup-property-trading { background: #30324f; color: #c4b9ff; }
+.gameup-ludo { background: #234938; color: #8de5b1; }
+.gameup-game-copy { min-width: 0; }
+.gameup-game-copy b, .gameup-game-copy small { display: block; }
+.gameup-game-copy b { font: 750 12px 'Manrope', sans-serif; }
+.gameup-game-copy small {
+  overflow: hidden;
+  margin-top: 2px;
+  color: #a8bbd3;
+  font: 500 9px 'DM Sans', sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gameup-installed-game > svg { color: #91dfe8; }
 .phone-apps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

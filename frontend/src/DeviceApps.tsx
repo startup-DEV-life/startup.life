@@ -13,6 +13,13 @@ import {
 } from 'lucide-react';
 
 const GAMEUP_URL = 'https://startup-life-games.onrender.com';
+const installedGames = [
+  { id: 'chess', name: 'Chess', detail: 'Two-player strategy', players: '2 players', mark: '♞' },
+  { id: 'checkers', name: 'Checkers', detail: 'Quick tactical matches', players: '2 players', mark: '◉' },
+  { id: 'scrabble', name: 'Word Tiles', detail: 'Build words and score', players: '2–4 players', mark: 'Aa' },
+  { id: 'property-trading', name: 'Property Trading', detail: 'Build your city portfolio', players: '2–6 players', mark: '⌂' },
+  { id: 'ludo', name: 'Ludo Royale', detail: 'Race your pieces home', players: '2–4 players', mark: '✦' },
+];
 const request = async (path: string, options: RequestInit = {}) => {
   const headers = new Headers(options.headers);
   if (options.body && !(options.body instanceof Blob) && !(options.body instanceof ArrayBuffer))
@@ -26,14 +33,21 @@ const request = async (path: string, options: RequestInit = {}) => {
 export function GameUpApp() {
   return (
     <section className="device-app-page gameup-app">
-      <h2>Your island game room</h2>
-      <p>
-        Open the shared board-game hub for chess, checkers, Scrabble, and property-trading games.
-      </p>
-      <a className="device-primary-link" href={GAMEUP_URL} target="_blank" rel="noreferrer">
-        Open GameUp game hub <ArrowUpRight size={15} />
-      </a>
-      <small>The hub opens as a separate web app. Live multiplayer tables are not connected yet.</small>
+      <div className="gameup-heading">
+        <div><span className="gameup-kicker">GAMEUP · INSTALLED</span><h2>Your game library</h2></div>
+        <span className="gameup-count">{installedGames.length} games</span>
+      </div>
+      <p>Choose a game to open its page in the GameUp hub.</p>
+      <div className="gameup-installed-list">
+        {installedGames.map((game) => (
+          <a key={game.id} className="gameup-installed-game" href={`${GAMEUP_URL}/?game=${game.id}#library`} target="_blank" rel="noreferrer">
+            <span className={`gameup-game-mark gameup-${game.id}`}>{game.mark}</span>
+            <span className="gameup-game-copy"><b>{game.name}</b><small>{game.detail} · {game.players}</small></span>
+            <ArrowUpRight size={15} aria-hidden="true" />
+          </a>
+        ))}
+      </div>
+      <small>Games open in a separate hub. Local practice is available; live multiplayer is not connected yet.</small>
     </section>
   );
 }
