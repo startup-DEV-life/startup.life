@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   ArrowDownToLine,
   ArrowUpRight,
@@ -138,7 +138,7 @@ export function DemoAndFilesApp({ accountType, username = '', compact = false }:
   const stopRecording = () => {
     if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
   };
-  const publish = async (event: React.FormEvent) => {
+  const publish = async (event: FormEvent) => {
     event.preventDefault();
     if (!clip) return setError('Record a demo clip before publishing.');
     if (!title.trim() || !repoUrl.trim())
@@ -172,7 +172,7 @@ export function DemoAndFilesApp({ accountType, username = '', compact = false }:
       setBusy(false);
     }
   };
-  const sendFile = async (event: React.FormEvent<HTMLFormElement>) => {
+  const sendFile = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
     const input = form.elements.namedItem('transfer-file') as HTMLInputElement;
