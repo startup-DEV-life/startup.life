@@ -12,7 +12,7 @@ import {
   Video,
 } from 'lucide-react';
 
-const GAMEUP_REPO = 'https://github.com/startup-DEV-life/startup.life-games';
+const GAMEUP_URL = 'https://startup-life-games.onrender.com';
 const request = async (path: string, options: RequestInit = {}) => {
   const headers = new Headers(options.headers);
   if (options.body && !(options.body instanceof Blob) && !(options.body instanceof ArrayBuffer))
@@ -30,10 +30,10 @@ export function GameUpApp() {
       <p>
         Open the shared board-game hub for chess, checkers, Scrabble, and property-trading games.
       </p>
-      <a className="device-primary-link" href={GAMEUP_REPO} target="_blank" rel="noreferrer">
-        <Github size={16} /> Open GameUp repository <ArrowUpRight size={15} />
+      <a className="device-primary-link" href={GAMEUP_URL} target="_blank" rel="noreferrer">
+        Open GameUp game hub <ArrowUpRight size={15} />
       </a>
-      <small>Repository access follows the permissions on your GitHub account.</small>
+      <small>The hub opens as a separate web app. Live multiplayer tables are not connected yet.</small>
     </section>
   );
 }
@@ -377,5 +377,3 @@ export function DemoAndFilesApp({ accountType, username = '', compact = false }:
     </section>
   );
 }
-
-export { GAMEUP_REPO };
