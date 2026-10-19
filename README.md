@@ -44,6 +44,8 @@ The browser game, Node.js backend, and Vite config use TypeScript. React compone
 
 Set `ADMIN_USERNAME` in `.env` to grant chat moderation access to a chosen account.
 
+Demo videos and shared player files are stored under `backend/data/private-uploads/` by default. Set `PRIVATE_UPLOADS_PATH` to a mounted persistent-volume directory on a hosted service; an instance filesystem without a persistent volume may be cleared during restarts or deployments.
+
 ## Game features
 
 - A full stylized 3D island with rocky coast, mountain ridges, a street grid, marked avenues, a runway and hangar, homes, long apartment blocks, parks, piers, boats, and skyline landmarks. The supplied island screenshot guided the terrain and layout.
@@ -51,6 +53,9 @@ Set `ADMIN_USERNAME` in `.env` to grant chat moderation access to a chosen accou
 - All modeled buildings are clickable and open a shared interior activity panel: developer studios, named venues, the airport hangar, long apartment buildings, and individual homes. Unassigned buildings have generic explore/meet/rest activities so their final purpose can be supplied later.
 - Named venues retain their own activities. Guests can enter and explore; signed-in players can save named venue visits, earn pocket money, and improve mood.
 - A player phone with an island map, district navigation, career board, places, messages, and profile shortcuts.
+- A preinstalled GameUp app on the phone and laptop that links to the private `startup-DEV-life/startup.life-games` board-game repository.
+- Role-aware device apps: Beginners keep career paths and learning, Developers can record and publish project demos and share files, and Growers can browse developer demos with their GitHub repositories.
+- Authenticated demo-video and file-transfer APIs. Demo videos are capped at 50 MB, player-to-player files at 15 MB, and downloads are available only to the sender and recipient or to authorized demo viewers.
 - Installable mobile PWA with home-screen icons, standalone display, offline app-shell caching, and hold-to-move touch controls. The app shell can open offline, but accounts, multiplayer, and saved actions require the online backend.
 - Original geometry uses the supplied island, alley, human topology, and low-poly environment images as broad visual references. The models and props are generated in code; no reference image or proprietary asset pack is copied into the game.
 - WASD, arrow keys, on-screen buttons, mouse/touch movement, and camera orbit.

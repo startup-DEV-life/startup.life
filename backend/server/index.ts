@@ -123,7 +123,7 @@ CREATE INDEX IF NOT EXISTS idx_player_files_sent ON player_files(sender_id,sent_
 `);
 const libraryFiles = join(backendData, 'learning-library');
 mkdirSync(libraryFiles, { recursive: true });
-const privateUploadFiles = join(backendData, 'private-uploads');
+const privateUploadFiles = process.env.PRIVATE_UPLOADS_PATH || join(backendData, 'private-uploads');
 mkdirSync(privateUploadFiles, { recursive: true });
 const upsertResource = db.prepare(`INSERT INTO programming_resources
  (id,title,description,resource_type,languages,subjects,authors,source_repository,source_url,source_file,source_line,catalog_license,content_license,notes,availability,difficulty,metadata,payload,imported_at,updated_at)
