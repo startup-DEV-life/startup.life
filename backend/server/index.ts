@@ -354,6 +354,72 @@ const decryptGithubToken = (value) => {
 };
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, time: stamp() }));
+// Private read-only endpoints used by the separate operations dashboard. The
+// shared key is only sent server-to-server and never reaches the game client.
+const adminApiKey = process.env.ADMIN_API_KEY || '';
+const requireAdminApiKey = (req, res, next) => {
+  const supplied = req.get('authorization')?.replace(/^Bearer\s+/i, '') || '';
+  const expected = Buffer.from(adminApiKey);
+  const actual = Buffer.from(supplied);
+  if (!adminApiKey) return res.status(503).json({ error: 'Admin data access is not configured.' });
+  if (expected.length !== actual.length || !timingSafeEqual(expected, actual))
+    return res.status(401).json({ error: 'Unauthorized.' });
+  res.set('Cache-Control', 'no-store');
+  next();
+};
+app.get('/api/internal/admin/users', requireAdminApiKey, (req, res) => {
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+  const users = db.prepare(`
+    SELECT u.id, u.username, u.display_name AS displayName, u.created_at AS createdAt,
+      p.account_type AS accountType, p.job_id AS jobId, p.xp, p.coins,
+      p.tasks_done AS tasksDone, p.updated_at AS lastSeen,
+      (SELECT MAX(created_at) FROM sessions WHERE user_id=u.id) AS lastLogin,
+      (SELECT COUNT(*) FROM job_completions WHERE user_id=u.id) AS jobsCompleted,
+      (SELECT COUNT(*) FROM coding_quest_completions WHERE user_id=u.id) AS codingQuestsCompleted,
+      (SELECT COUNT(*) FROM learning_completions WHERE user_id=u.id) AS lessonsCompleted
+    FROM users u JOIN players p ON p.user_id=u.id
+    ORDER BY u.created_at DESC LIMIT ? OFFSET ?
+  `).all(limit, offset);
+  const total = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
+  res.json({ users, total, limit, offset });
+});
+app.get('/api/internal/admin/activity', requireAdminApiKey, (req, res) => {
+  const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 100));
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+  const activity = db.prepare(`
+    SELECT * FROM (
+      SELECT 'account_created' AS type, u.username, u.display_name AS displayName,
+        'Created an account' AS summary, u.created_at AS occurredAt FROM users u
+      UNION ALL SELECT 'sign_in', u.username, u.display_name, 'Signed in', s.created_at
+        FROM sessions s JOIN users u ON u.id=s.user_id
+      UNION ALL SELECT 'place_visit', u.username, u.display_name, 'Visited ' || v.place_id, v.visited_at
+        FROM visits v JOIN users u ON u.id=v.user_id
+      UNION ALL SELECT 'job_completed', u.username, u.display_name, 'Completed job ' || j.job_id, j.completed_at
+        FROM job_completions j JOIN users u ON u.id=j.user_id
+      UNION ALL SELECT 'lesson_completed', u.username, u.display_name, 'Completed lesson ' || l.lesson_id, l.completed_at
+        FROM learning_completions l JOIN users u ON u.id=l.user_id
+      UNION ALL SELECT 'coding_quest_completed', u.username, u.display_name, 'Completed coding quest ' || c.quest_id, c.completed_at
+        FROM coding_quest_completions c JOIN users u ON u.id=c.user_id
+      UNION ALL SELECT 'demo_published', u.username, u.display_name, 'Published a developer demo', d.published_at
+        FROM developer_demos d JOIN users u ON u.id=d.developer_id
+      UNION ALL SELECT 'file_shared', u.username, u.display_name, 'Shared a file', f.sent_at
+        FROM player_files f JOIN users u ON u.id=f.sender_id
+      UNION ALL SELECT 'book_purchased', u.username, u.display_name, 'Purchased a learning book', b.purchased_at
+        FROM learning_book_purchases b JOIN users u ON u.id=b.user_id
+      UNION ALL SELECT 'chat_message', u.username, u.display_name, 'Posted in community chat', c.created_at
+        FROM chat_messages c JOIN users u ON u.id=c.user_id
+    ) ORDER BY occurredAt DESC LIMIT ? OFFSET ?
+  `).all(limit, offset);
+  const total = db.prepare(`
+    SELECT (SELECT COUNT(*) FROM users) + (SELECT COUNT(*) FROM sessions) +
+      (SELECT COUNT(*) FROM visits) + (SELECT COUNT(*) FROM job_completions) +
+      (SELECT COUNT(*) FROM learning_completions) + (SELECT COUNT(*) FROM coding_quest_completions) +
+      (SELECT COUNT(*) FROM developer_demos) + (SELECT COUNT(*) FROM player_files) +
+      (SELECT COUNT(*) FROM learning_book_purchases) + (SELECT COUNT(*) FROM chat_messages) AS count
+  `).get().count;
+  res.json({ activity, total, limit, offset });
+});
 app.get('/api/places', (_req, res) => res.json(places));
 app.get('/api/jobs', (_req, res) => res.json(jobs));
 app.get('/api/items', (_req, res) => res.json(items));
