@@ -5,6 +5,7 @@ const ThreeCity = lazy(() => import('./ThreeCity.tsx'));
 import LearnHub from './LearnHub.tsx';
 import GameTerminal from './GameTerminal.tsx';
 import GitHubApp from './GitHubApp.tsx';
+import { DemoAndFilesApp, GameUpApp } from './DeviceApps.tsx';
 import {
   ArrowDown,
   ArrowLeft,
@@ -23,6 +24,7 @@ import {
   DoorOpen,
   Download,
   GraduationCap,
+  Gamepad2,
   Github,
   Heart,
   Laptop,
@@ -39,6 +41,7 @@ import {
   ShieldAlert,
   Smartphone,
   Sparkles,
+  Video,
   Sun,
   UserRound,
   Users,
@@ -964,6 +967,14 @@ export default function App() {
   const doBuildingActivity = async (activity) => {
     if (!interior) return;
     if (interior.job) {
+      if (player.accountType !== 'developer') {
+        setActivityNotice(
+          player.accountType === 'beginner'
+            ? 'Beginner accounts can explore career paths and learning drills. Developer work assignments unlock with a Developer profile.'
+            : 'Growers can browse developer demos and career paths. Work assignments are for Developer profiles.',
+        );
+        return;
+      }
       const career = jobs.find((j) => j.id === interior.id);
       if (!user) {
         openAuth('signup');
@@ -1219,18 +1230,22 @@ export default function App() {
           setNotice('Select a building from the places list, then walk to its entrance.');
         },
       },
-      {
-        id: 'task',
-        title: 'Complete your first developer task',
-        detail: `${player.tasksDone || 0} task${player.tasksDone === 1 ? '' : 's'} shipped`,
-        done: (player.tasksDone || 0) > 0,
-        action: () => {
-          if (player.jobId) {
-            const job = jobs.find((j) => j.id === player.jobId);
-            if (job) travel({ ...job, job: true });
-          } else setJobsOpen(true);
-        },
-      },
+      ...(player.accountType !== 'developer'
+        ? []
+        : [
+            {
+              id: 'task',
+              title: 'Complete your first developer task',
+              detail: `${player.tasksDone || 0} task${player.tasksDone === 1 ? '' : 's'} shipped`,
+              done: (player.tasksDone || 0) > 0,
+              action: () => {
+                if (player.jobId) {
+                  const job = jobs.find((j) => j.id === player.jobId);
+                  if (job) travel({ ...job, job: true });
+                } else setJobsOpen(true);
+              },
+            },
+          ]),
     ],
     questDone = quests.filter((q) => q.done).length;
   const moveJoystick = (e) => {
@@ -1564,7 +1579,10 @@ export default function App() {
             ))}
           </div>
           <div className="quest-reward">
-            <Sparkles size={14} /> Explore the island and ship real work.
+            <Sparkles size={14} />
+            {player.accountType !== 'developer'
+              ? 'Explore, practice, and meet the community.'
+              : 'Explore the island and ship real work.'}
           </div>
         </aside>
       )}
@@ -1573,7 +1591,9 @@ export default function App() {
           <div className="career-board-head">
             <div>
               <span>DEV DISTRICT · CAREERS</span>
-              <b>Choose your path</b>
+              <b>
+                {player.accountType === 'beginner' ? 'Explore career paths' : 'Choose your path'}
+              </b>
             </div>
             <button
               className="mini-icon"
@@ -1583,7 +1603,7 @@ export default function App() {
               <X size={16} />
             </button>
           </div>
-          {user && player.jobId && (
+          {user && player.jobId && player.accountType === 'developer' && (
             <div className="career-progress">
               <span>
                 LEVEL {Math.floor((player.xp || 0) / 500) + 1} · {player.xp || 0} XP
@@ -1600,7 +1620,9 @@ export default function App() {
                 <div>
                   <b>{q.title}</b>
                   <small>
-                    {q.studio} · {q.reward} coins/task
+                    {player.accountType !== 'developer'
+                      ? 'Learning path'
+                      : `${q.studio} · ${q.reward} coins/task`}
                   </small>
                 </div>
                 <button
@@ -1612,7 +1634,11 @@ export default function App() {
               </div>
             ))}
           </div>
-          <p className="career-tip">Walk to your studio. Finish a task to earn cash and XP.</p>
+          <p className="career-tip">
+            {player.accountType !== 'developer'
+              ? 'Choose a path to shape your learning journey.'
+              : 'Walk to your studio. Finish a task to earn cash and XP.'}
+          </p>
         </aside>
       )}
       <aside className="location-rail">
@@ -2109,6 +2135,22 @@ export default function App() {
                   <BriefcaseBusiness size={16} />
                   Career path
                 </button>
+                <button
+                  className={laptopView === 'gameup' ? 'active' : ''}
+                  onClick={() => setLaptopView('gameup')}
+                >
+                  <Gamepad2 size={16} />
+                  GameUp
+                </button>
+                {player.accountType !== 'beginner' && (
+                  <button
+                    className={laptopView === 'studio' ? 'active' : ''}
+                    onClick={() => setLaptopView('studio')}
+                  >
+                    <Video size={16} />
+                    {player.accountType === 'grower' ? 'Demo feed' : 'Demos & files'}
+                  </button>
+                )}
               </nav>
               <main className="laptop-screen">
                 {laptopView === 'quests' ? (
@@ -2177,12 +2219,23 @@ export default function App() {
                       onComplete={completeLesson}
                     />
                   </div>
+                ) : laptopView === 'gameup' ? (
+                  <GameUpApp />
+                ) : laptopView === 'studio' ? (
+                  <DemoAndFilesApp
+                    accountType={player.accountType}
+                    username={user?.username || ''}
+                  />
                 ) : (
                   <div className="laptop-careers">
                     <div className="laptop-page-heading">
                       <span>DEV DISTRICT · CAREERS</span>
                       <h2>Choose your path</h2>
-                      <p>Select a role to unlock matching tasks around the island.</p>
+                      <p>
+                        {player.accountType !== 'developer'
+                          ? 'Explore career paths and find the kind of development you want to learn.'
+                          : 'Select a role to unlock matching tasks around the island.'}
+                      </p>
                     </div>
                     <div className="career-list">
                       {jobs.map((q) => (
@@ -2193,7 +2246,9 @@ export default function App() {
                           <div>
                             <b>{q.title}</b>
                             <small>
-                              {q.studio} · {q.reward} coins/task
+                              {player.accountType !== 'developer'
+                                ? 'Learning path'
+                                : `${q.studio} · ${q.reward} coins/task`}
                             </small>
                           </div>
                           <button
@@ -2244,10 +2299,25 @@ export default function App() {
                     <CarFront />
                     <b>Dispatch</b>
                   </button>
-                  <button className="phone-app-featured" onClick={() => setPhoneView('placements')}>
-                    <BriefcaseBusiness />
-                    <b>Startup</b>
+                  {player.accountType !== 'beginner' && (
+                    <button
+                      className="phone-app-featured"
+                      onClick={() => setPhoneView('placements')}
+                    >
+                      <BriefcaseBusiness />
+                      <b>Startup</b>
+                    </button>
+                  )}
+                  <button onClick={() => setPhoneView('gameup')}>
+                    <Gamepad2 />
+                    <b>GameUp</b>
                   </button>
+                  {player.accountType !== 'beginner' && (
+                    <button onClick={() => setPhoneView('studio')}>
+                      <Video />
+                      <b>{player.accountType === 'grower' ? 'Demo feed' : 'Demos & files'}</b>
+                    </button>
+                  )}
                   <button onClick={() => setPhoneView('web')}>
                     <Search />
                     <b>Search web</b>
@@ -2272,7 +2342,7 @@ export default function App() {
                     }}
                   >
                     <BriefcaseBusiness />
-                    <b>Careers</b>
+                    <b>Career paths</b>
                   </button>
                   <button
                     onClick={() => {
@@ -2375,6 +2445,14 @@ export default function App() {
                       </>
                     )}
                   </>
+                ) : phoneView === 'gameup' ? (
+                  <GameUpApp />
+                ) : phoneView === 'studio' ? (
+                  <DemoAndFilesApp
+                    accountType={player.accountType}
+                    username={user?.username || ''}
+                    compact
+                  />
                 ) : phoneView === 'map' ? (
                   <>
                     <h3>Island map</h3>

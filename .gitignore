@@ -5,3 +5,4 @@ backend/data/*.sqlite*
 .env
 .DS_Store
 /backend/data/learning-library/
+/backend/data/private-uploads/

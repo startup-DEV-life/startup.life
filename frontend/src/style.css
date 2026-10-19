@@ -2021,6 +2021,399 @@ button:not(:disabled):active {
   background: linear-gradient(155deg, #d4ece1, #f4e7c9 66%, #cde3d8);
   color: #263a31;
 }
+
+/* Installed laptop and phone apps */
+.device-app-page {
+  width: min(100%, 760px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 22px clamp(14px, 3vw, 30px) 30px;
+}
+.device-app-page > h2 {
+  margin: 0 0 7px;
+  font:
+    800 23px/1.15 'Manrope',
+    sans-serif;
+  letter-spacing: -0.035em;
+}
+.device-app-page > p {
+  max-width: 56ch;
+  margin: 0 0 17px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.developer-laptop .device-app-page {
+  color: #edf4ff;
+}
+.developer-laptop .device-app-page > p,
+.developer-laptop .device-app-page > small {
+  color: #a8bbd2;
+}
+.player-phone .device-app-page {
+  width: 100%;
+  min-height: 0;
+  padding: 10px 1px 22px;
+  color: #1d302b;
+}
+.player-phone .device-app-page > h2 {
+  font-size: 19px;
+}
+.player-phone .device-app-page > p,
+.player-phone .device-app-page > small {
+  color: #587164;
+}
+.device-primary-link,
+.device-primary-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 15px;
+  border: 1px solid #55c7eb;
+  border-radius: 10px;
+  background: #11354a;
+  color: #e9faff;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+.device-primary-link:hover,
+.device-primary-button:hover:not(:disabled) {
+  background: #174b65;
+}
+.device-app-page > small {
+  display: block;
+  margin-top: 11px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.device-app-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 18px 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #34455b;
+}
+.device-app-tabs button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #b8c7d9;
+  font-size: 10px;
+  font-weight: 700;
+}
+.device-app-tabs button.active,
+.device-app-tabs button:hover {
+  border-color: #46627c;
+  background: #1a2c42;
+  color: #e6f6ff;
+}
+.player-phone .device-app-tabs {
+  border-color: #c4d7ca;
+}
+.player-phone .device-app-tabs button {
+  color: #4b6759;
+}
+.player-phone .device-app-tabs button.active,
+.player-phone .device-app-tabs button:hover {
+  border-color: #7bb9a0;
+  background: #dff2e8;
+  color: #164835;
+}
+.demo-publish-form,
+.file-send-form {
+  display: grid;
+  gap: 9px;
+  margin: 10px 0 19px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #34455b;
+}
+.demo-publish-form > label,
+.file-send-form > label {
+  color: #c0d4e9;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+.demo-publish-form input,
+.demo-publish-form textarea,
+.file-send-form input,
+.file-send-form select {
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid #455970;
+  border-radius: 8px;
+  background: #0d1928;
+  color: #edf4ff;
+  font:
+    500 11px 'DM Sans',
+    sans-serif;
+}
+.demo-publish-form textarea {
+  min-height: 66px;
+  resize: vertical;
+}
+.demo-publish-form input::placeholder,
+.demo-publish-form textarea::placeholder {
+  color: #9db0c6;
+}
+.demo-publish-form :focus-visible,
+.file-send-form :focus-visible,
+.device-app-tabs :focus-visible,
+.device-primary-link:focus-visible,
+.demo-record-actions button:focus-visible,
+.device-file-list a:focus-visible,
+.demo-feed-card a:focus-visible {
+  outline: 2px solid #66d7f3;
+  outline-offset: 2px;
+}
+.demo-camera-preview,
+.demo-clip-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #40536b;
+  border-radius: 10px;
+  background: #050a11;
+  object-fit: cover;
+}
+.demo-clip-preview {
+  max-height: 290px;
+}
+.demo-record-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.demo-record-actions button {
+  display: inline-flex;
+  min-height: 37px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid #36b5d9;
+  border-radius: 8px;
+  background: #10384a;
+  color: #e8fbff;
+  font-size: 10px;
+  font-weight: 750;
+}
+.demo-record-actions button.recording {
+  border-color: #f28591;
+  background: #582b3b;
+}
+.demo-record-actions small,
+.demo-publish-form > small {
+  color: #a8bbd2;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.device-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.54;
+}
+.device-app-message,
+.device-app-error {
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 10px !important;
+}
+.device-app-message {
+  background: #123d36;
+  color: #c7f6dd !important;
+}
+.device-app-error {
+  background: #492a31;
+  color: #ffdce2 !important;
+}
+.device-section-title {
+  margin: 16px 0 9px;
+  color: #eff6ff;
+  font:
+    750 13px 'Manrope',
+    sans-serif;
+}
+.player-phone .device-section-title {
+  color: #243e31;
+}
+.demo-feed-list {
+  display: grid;
+  gap: 17px;
+}
+.demo-feed-card {
+  overflow: hidden;
+  border: 1px solid #354a60;
+  border-radius: 12px;
+  background: #101c2b;
+}
+.demo-feed-card > video {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  aspect-ratio: 16 / 9;
+  background: #050a11;
+  object-fit: contain;
+}
+.demo-feed-card > div {
+  padding: 12px 14px 14px;
+}
+.demo-feed-card small {
+  color: #a9bfd3;
+  font-size: 9px;
+}
+.demo-feed-card h3 {
+  margin: 6px 0 5px;
+  color: #f2f7ff;
+  font:
+    750 14px 'Manrope',
+    sans-serif;
+}
+.demo-feed-card p {
+  margin: 0 0 10px;
+  color: #c3d0df;
+  font-size: 11px;
+  line-height: 1.55;
+}
+.demo-feed-card a,
+.device-file-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #81e0f5;
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.player-phone .demo-feed-card {
+  border-color: #c0d5c8;
+  background: #fbfff9;
+}
+.player-phone .demo-feed-card small {
+  color: #587164;
+}
+.player-phone .demo-feed-card h3 {
+  color: #243e31;
+}
+.player-phone .demo-feed-card p {
+  color: #3f5a4b;
+}
+.player-phone .demo-feed-card a,
+.player-phone .device-file-list a {
+  color: #176347;
+}
+.device-app-empty {
+  margin: 0;
+  padding: 14px 0;
+  color: #a8bbd2;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.player-phone .device-app-empty {
+  color: #587164;
+}
+.device-file-list {
+  display: grid;
+  gap: 8px;
+}
+.device-file-list article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #34455b;
+}
+.device-file-list article > span {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.device-file-list article b {
+  overflow-wrap: anywhere;
+  color: #eff6ff;
+  font-size: 11px;
+}
+.device-file-list article small {
+  color: #a8bbd2;
+  font-size: 9px;
+}
+.player-phone .device-file-list article {
+  border-color: #c4d7ca;
+}
+.player-phone .device-file-list article b {
+  color: #243e31;
+}
+.player-phone .device-file-list article small {
+  color: #587164;
+}
+.player-phone .file-send-form input,
+.player-phone .file-send-form select {
+  border-color: #b9d0c2;
+  background: #fbfff9;
+  color: #243e31;
+}
+.player-phone .file-send-form > label {
+  color: #4b6759;
+}
+.player-phone .device-primary-button {
+  background: #176347;
+  color: #f0fff6;
+}
+.player-phone .demo-publish-form {
+  border-color: #c4d7ca;
+}
+.player-phone .demo-publish-form > label {
+  color: #4b6759;
+}
+.player-phone .demo-publish-form input,
+.player-phone .demo-publish-form textarea {
+  border-color: #b9d0c2;
+  background: #fbfff9;
+  color: #243e31;
+}
+.player-phone .demo-publish-form input::placeholder,
+.player-phone .demo-publish-form textarea::placeholder {
+  color: #698273;
+}
+.player-phone .demo-publish-form > small,
+.player-phone .demo-record-actions small {
+  color: #587164;
+}
+.player-phone .demo-app .device-app-message {
+  background: #dbf2e3;
+  color: #174b34 !important;
+}
+.player-phone .demo-app .device-app-error {
+  background: #f7dfe1;
+  color: #652732 !important;
+}
+@media (max-width: 480px) {
+  .device-app-page {
+    padding-top: 8px;
+  }
+  .player-phone .device-app-page > h2 {
+    font-size: 18px;
+  }
+  .device-app-tabs button {
+    padding: 0 8px;
+    font-size: 9px;
+  }
+  .device-file-list article {
+    align-items: flex-start;
+  }
+  .device-file-list a {
+    flex: 0 0 auto;
+  }
+}
 .phone-greeting {
   margin: 4px 2px 14px;
   font:

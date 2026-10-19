@@ -14,7 +14,7 @@ import {
 } from 'node:crypto';
 import { promisify } from 'node:util';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
 import cookie from 'cookie';
@@ -104,8 +104,27 @@ END;
 db.exec(
   `CREATE TABLE IF NOT EXISTS coding_quest_completions(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,quest_id TEXT NOT NULL,code TEXT NOT NULL,completed_at TEXT NOT NULL,PRIMARY KEY(user_id,quest_id));CREATE TABLE IF NOT EXISTS github_links(user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,github_id TEXT NOT NULL,login TEXT NOT NULL,avatar_url TEXT,encrypted_token TEXT NOT NULL,linked_at TEXT NOT NULL);CREATE TABLE IF NOT EXISTS github_oauth_states(state_hash TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires_at INTEGER NOT NULL);CREATE TABLE IF NOT EXISTS learning_books(id TEXT PRIMARY KEY,title TEXT NOT NULL,language TEXT NOT NULL,description TEXT NOT NULL,price INTEGER NOT NULL,filename TEXT NOT NULL,added_by TEXT NOT NULL,created_at TEXT NOT NULL);CREATE TABLE IF NOT EXISTS learning_book_purchases(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,book_id TEXT NOT NULL REFERENCES learning_books(id) ON DELETE CASCADE,purchased_at TEXT NOT NULL,PRIMARY KEY(user_id,book_id));CREATE TABLE IF NOT EXISTS learning_videos(id TEXT PRIMARY KEY,title TEXT NOT NULL,language TEXT NOT NULL,description TEXT NOT NULL,youtube_url TEXT NOT NULL,added_by TEXT NOT NULL,created_at TEXT NOT NULL);`,
 );
+db.exec(`
+CREATE TABLE IF NOT EXISTS developer_demos(
+ id TEXT PRIMARY KEY, developer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ title TEXT NOT NULL, caption TEXT NOT NULL, repo_url TEXT NOT NULL,
+ stored_name TEXT NOT NULL, mime_type TEXT NOT NULL, byte_size INTEGER NOT NULL,
+ published_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_developer_demos_published ON developer_demos(published_at DESC);
+CREATE TABLE IF NOT EXISTS player_files(
+ id TEXT PRIMARY KEY, sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ filename TEXT NOT NULL, stored_name TEXT NOT NULL, mime_type TEXT NOT NULL,
+ byte_size INTEGER NOT NULL, sent_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_player_files_inbox ON player_files(recipient_id,sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_player_files_sent ON player_files(sender_id,sent_at DESC);
+`);
 const libraryFiles = join(backendData, 'learning-library');
 mkdirSync(libraryFiles, { recursive: true });
+const privateUploadFiles = join(backendData, 'private-uploads');
+mkdirSync(privateUploadFiles, { recursive: true });
 const upsertResource = db.prepare(`INSERT INTO programming_resources
  (id,title,description,resource_type,languages,subjects,authors,source_repository,source_url,source_file,source_line,catalog_license,content_license,notes,availability,difficulty,metadata,payload,imported_at,updated_at)
  VALUES (@id,@title,@description,@resourceType,@languages,@subjects,@authors,@sourceRepository,@sourceUrl,@sourceFile,@sourceLine,@catalogLicense,@contentLicense,@notes,@availability,@difficulty,@metadata,@payload,@now,@now)
@@ -417,6 +436,199 @@ app.get('/api/me', (req, res) => {
       .all(p.id),
   });
 });
+const requireRole =
+  (...roles: string[]) =>
+  (req, res, next) => {
+    if (!req.account) return res.status(401).json({ error: 'Sign in to continue.' });
+    if (!roles.includes(req.account.accountType))
+      return res.status(403).json({ error: 'This feature is not available for your player role.' });
+    next();
+  };
+const headerText = (value: unknown, max: number) => {
+  if (typeof value !== 'string') return '';
+  try {
+    return decodeURIComponent(value)
+      .replace(/[<>\u0000-\u001f]/g, '')
+      .trim()
+      .slice(0, max);
+  } catch {
+    return '';
+  }
+};
+const fileExtension = (name: string, fallback: string) => {
+  const ext = extname(name).toLowerCase();
+  return /^\.[a-z0-9]{1,8}$/.test(ext) ? ext : fallback;
+};
+app.get('/api/people', auth, requireRole('developer'), (req, res) => {
+  const people = db
+    .prepare(
+      `SELECT u.id,u.username,u.display_name AS name,p.account_type AS accountType
+       FROM users u JOIN players p ON p.user_id=u.id WHERE u.id<>? ORDER BY u.display_name COLLATE NOCASE LIMIT 100`,
+    )
+    .all(req.account.user_id);
+  res.json({ people });
+});
+app.get('/api/demos', auth, (req, res) => {
+  const role = req.account.accountType;
+  if (!['developer', 'grower'].includes(role))
+    return res.status(403).json({ error: 'Demo videos are for developers and Growers.' });
+  const demos = db
+    .prepare(
+      `SELECT d.id,d.title,d.caption,d.repo_url AS repoUrl,d.mime_type AS mimeType,
+        d.byte_size AS byteSize,d.published_at AS publishedAt,u.display_name AS developerName
+       FROM developer_demos d JOIN users u ON u.id=d.developer_id
+       ${role === 'developer' ? 'WHERE d.developer_id=?' : ''}
+       ORDER BY d.published_at DESC LIMIT 100`,
+    )
+    .all(...(role === 'developer' ? [req.account.user_id] : []));
+  res.json({ demos });
+});
+app.post(
+  '/api/demos',
+  auth,
+  requireRole('developer'),
+  express.raw({ type: ['video/webm', 'video/mp4', 'video/quicktime'], limit: '50mb' }),
+  (req, res) => {
+    const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    const title = headerText(req.headers['x-demo-title'], 80);
+    const caption = headerText(req.headers['x-demo-caption'], 500);
+    const repoUrl = headerText(req.headers['x-demo-repo'], 500);
+    const mimeType = String(req.headers['content-type'] || '')
+      .split(';')[0]
+      .toLowerCase();
+    let parsedRepo: URL;
+    try {
+      parsedRepo = new URL(repoUrl);
+    } catch {
+      return res.status(400).json({ error: 'Add a valid GitHub repository URL.' });
+    }
+    if (!['video/webm', 'video/mp4', 'video/quicktime'].includes(mimeType))
+      return res.status(415).json({ error: 'Use a WebM, MP4, or QuickTime video.' });
+    if (!body.length || body.length > 50 * 1024 * 1024)
+      return res.status(413).json({ error: 'The video must be between 1 byte and 50 MB.' });
+    if (!title) return res.status(400).json({ error: 'Add a title for this demo.' });
+    if (
+      parsedRepo.protocol !== 'https:' ||
+      !['github.com', 'www.github.com'].includes(parsedRepo.hostname) ||
+      parsedRepo.pathname.split('/').filter(Boolean).length < 2
+    )
+      return res.status(400).json({ error: 'The project link must point to a GitHub repository.' });
+    const id = randomBytes(16).toString('hex');
+    const storedName = `${id}${mimeType === 'video/webm' ? '.webm' : mimeType === 'video/quicktime' ? '.mov' : '.mp4'}`;
+    const publishedAt = stamp();
+    try {
+      writeFileSync(join(privateUploadFiles, storedName), body, { flag: 'wx' });
+      db.prepare(
+        `INSERT INTO developer_demos(id,developer_id,title,caption,repo_url,stored_name,mime_type,byte_size,published_at)
+         VALUES(?,?,?,?,?,?,?,?,?)`,
+      ).run(
+        id,
+        req.account.user_id,
+        title,
+        caption,
+        parsedRepo.toString(),
+        storedName,
+        mimeType,
+        body.length,
+        publishedAt,
+      );
+      res.status(201).json({ ok: true, id, publishedAt });
+    } catch (error) {
+      console.error('Demo upload failed:', error);
+      res.status(500).json({ error: 'Could not publish this demo. Try again.' });
+    }
+  },
+);
+app.get('/api/demos/:id/video', auth, (req, res) => {
+  const demo = db
+    .prepare('SELECT developer_id,stored_name,mime_type FROM developer_demos WHERE id=?')
+    .get(req.params.id);
+  if (!demo) return res.status(404).json({ error: 'Demo video not found.' });
+  if (req.account.accountType !== 'grower' && demo.developer_id !== req.account.user_id)
+    return res
+      .status(403)
+      .json({ error: 'Only Growers and the publishing developer can view this video.' });
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.type(demo.mime_type).sendFile(join(privateUploadFiles, demo.stored_name), (error) => {
+    if (error && !res.headersSent)
+      res.status(404).json({ error: 'Video file is no longer available.' });
+  });
+});
+app.get('/api/files', auth, (req, res) => {
+  const files = db
+    .prepare(
+      `SELECT f.id,f.filename,f.mime_type AS mimeType,f.byte_size AS byteSize,f.sent_at AS sentAt,
+        s.display_name AS senderName,r.display_name AS recipientName,
+        CASE WHEN f.recipient_id=? THEN 'received' ELSE 'sent' END AS direction
+       FROM player_files f JOIN users s ON s.id=f.sender_id JOIN users r ON r.id=f.recipient_id
+       WHERE f.sender_id=? OR f.recipient_id=? ORDER BY f.sent_at DESC LIMIT 100`,
+    )
+    .all(req.account.user_id, req.account.user_id, req.account.user_id);
+  res.json({ files });
+});
+app.post(
+  '/api/files',
+  auth,
+  requireRole('developer'),
+  express.raw({ type: 'application/octet-stream', limit: '15mb' }),
+  (req, res) => {
+    const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    const originalName = headerText(req.headers['x-file-name'], 180);
+    const recipientId = String(req.headers['x-recipient-id'] || '');
+    const recipient = db
+      .prepare('SELECT id FROM users WHERE id=? AND id<>?')
+      .get(recipientId, req.account.user_id);
+    if (!recipient)
+      return res.status(400).json({ error: 'Choose another registered player as the recipient.' });
+    if (!originalName) return res.status(400).json({ error: 'Choose a file with a valid name.' });
+    if (!body.length || body.length > 15 * 1024 * 1024)
+      return res.status(413).json({ error: 'Files must be between 1 byte and 15 MB.' });
+    const filename = originalName.replace(/[/\\]/g, '_').replace(/\.\./g, '_');
+    const requestedType = String(req.headers['x-file-type'] || 'application/octet-stream').slice(
+      0,
+      100,
+    );
+    const mimeType = /^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(requestedType)
+      ? requestedType
+      : 'application/octet-stream';
+    const id = randomBytes(16).toString('hex');
+    const storedName = `${id}${fileExtension(filename, '.bin')}`;
+    const sentAt = stamp();
+    try {
+      writeFileSync(join(privateUploadFiles, storedName), body, { flag: 'wx' });
+      db.prepare(
+        `INSERT INTO player_files(id,sender_id,recipient_id,filename,stored_name,mime_type,byte_size,sent_at)
+         VALUES(?,?,?,?,?,?,?,?)`,
+      ).run(
+        id,
+        req.account.user_id,
+        recipientId,
+        filename,
+        storedName,
+        mimeType,
+        body.length,
+        sentAt,
+      );
+      res.status(201).json({ ok: true, id, sentAt });
+    } catch (error) {
+      console.error('File transfer failed:', error);
+      res.status(500).json({ error: 'Could not send this file. Try again.' });
+    }
+  },
+);
+app.get('/api/files/:id/download', auth, (req, res) => {
+  const file = db
+    .prepare(
+      `SELECT f.sender_id,f.recipient_id,f.filename,f.stored_name,f.mime_type
+       FROM player_files f WHERE f.id=?`,
+    )
+    .get(req.params.id);
+  if (!file) return res.status(404).json({ error: 'File not found.' });
+  if (![file.sender_id, file.recipient_id].includes(req.account.user_id))
+    return res.status(403).json({ error: 'This file was shared with another player.' });
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.type(file.mime_type).download(join(privateUploadFiles, file.stored_name), file.filename);
+});
 app.post('/api/auth/signup', authLimit, async (req, res) => {
   const username =
     typeof req.body?.username === 'string' ? req.body.username.trim().toLowerCase() : '';
@@ -512,7 +724,7 @@ app.post('/api/jobs/select', auth, (req, res) => {
   io.emit('player:update', p);
   res.json({ player: p, job });
 });
-app.post('/api/jobs/complete', auth, (req, res) => {
+app.post('/api/jobs/complete', auth, requireRole('developer'), (req, res) => {
   const id = req.account.user_id,
     p = playerQuery.get(id),
     job = jobs.find((x) => x.id === p.jobId);
