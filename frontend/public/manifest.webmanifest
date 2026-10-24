@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Startup.life",
   "short_name": "Startup.life",
-  "description": "Build your developer story in a 3D Lagos-inspired island city.",
+  "description": "Build your developer story in a pixel-art Lagos-inspired city.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

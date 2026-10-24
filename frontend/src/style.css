@@ -120,6 +120,26 @@ button:not(:disabled):active {
   height: 100%;
   cursor: crosshair;
 }
+.pixel-city {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: #90cbd3;
+  image-rendering: pixelated;
+}
+.pixel-sky { position: absolute; inset: 0 0 48%; background: linear-gradient(#58b8da 0 48%, #a9dce1 48%); }
+.pixel-sky i { position: absolute; width: 54px; height: 10px; background: #e9fff7; box-shadow: 10px 0 #e9fff7, 20px 0 #e9fff7, -10px 10px #e9fff7, 40px 10px #e9fff7; opacity: .85; }
+.pixel-sky i:nth-child(1) { top: 15%; left: 10%; }.pixel-sky i:nth-child(2) { top: 30%; left: 68%; transform: scale(.7); }.pixel-sky i:nth-child(3) { top: 8%; left: 45%; transform: scale(.5); }
+.pixel-water { position: absolute; inset: 44% 0 0; background: repeating-linear-gradient(0deg, #3988a0 0 4px, #4e9fb0 4px 8px); }
+.pixel-map { position: absolute; inset: 20% 7% 8%; overflow: hidden; border: 8px solid #28575b; box-shadow: 0 0 0 7px #e7d37c, 0 20px 0 #174347, 0 28px 45px #172f377a; background: repeating-linear-gradient(90deg, #94c873 0 24px, #8fc16e 24px 48px), repeating-linear-gradient(0deg, transparent 0 24px, #85b667 24px 48px); cursor: crosshair; }
+.pixel-map::before { content: ''; position: absolute; inset: 7% 5%; opacity: .45; background: radial-gradient(circle at 14% 20%, #e9db7c 0 11px, transparent 12px), radial-gradient(circle at 72% 75%, #e9db7c 0 13px, transparent 14px), radial-gradient(circle at 90% 30%, #e9db7c 0 8px, transparent 9px); }
+.pixel-roads i { position: absolute; display: block; background: #e9d28a; box-shadow: inset 0 3px #faf0b7, inset 0 -3px #b59255; }.pixel-roads i:nth-child(1) { left: 17%; top: -4%; width: 8%; height: 108%; }.pixel-roads i:nth-child(2) { left: 54%; top: -4%; width: 7%; height: 108%; }.pixel-roads i:nth-child(3) { left: -4%; top: 31%; width: 108%; height: 8%; }.pixel-roads i:nth-child(4) { left: -4%; top: 70%; width: 108%; height: 7%; }
+.pixel-district { position: absolute; z-index: 1; color: #345e45; font: 900 10px/1 monospace; letter-spacing: .08em; opacity: .7; }.district-one { left: 30%; top: 18%; }.district-two { left: 63%; top: 50%; }.district-three { left: 29%; top: 82%; }
+.pixel-place { position: absolute; z-index: 2; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 3px; width: 86px; padding: 0; border: 0; background: transparent; color: #173234; font: 800 8px/1.1 monospace; text-shadow: 1px 1px #efffdc; }.pixel-place b { max-width: 95px; padding: 2px 3px; background: #efffdcdd; box-shadow: 2px 2px #54735e; }.pixel-building { display: block; width: 28px; height: 26px; background: #467f91; border: 4px solid #1b4855; box-shadow: 8px 0 #467f91, 16px 0 #467f91, 0 -6px #f2d581, 8px -12px #f2d581, 16px -6px #f2d581; }.pixel-place.gold .pixel-building { background: #d89251; }.pixel-place.coral .pixel-building { background: #ce6e63; }.pixel-place.violet .pixel-building { background: #876bb7; }.pixel-place.mint .pixel-building { background: #4f9c76; }.pixel-place.active .pixel-building { animation: pixel-bob .55s steps(2) infinite; outline: 4px solid #fff1a0; }
+.pixel-player, .pixel-remote { position: absolute; z-index: 4; transform: translate(-50%, -50%); }.pixel-player { display: grid; justify-items: center; color: #fff; font: 800 8px/1 monospace; text-shadow: 2px 2px #173234; }.pixel-player span { width: 18px; height: 18px; display: grid; place-items: center; color: #ffdf8a; background: #1f5263; border: 3px solid #0f3540; box-shadow: 3px 3px #0f3540; font-size: 14px; }.pixel-player b { margin-top: 4px; }.pixel-remote { color: #ed6c7f; font-size: 17px; text-shadow: 2px 2px #6c3040; }.pixel-city-caption { position: absolute; z-index: 3; left: 50%; bottom: 19px; transform: translateX(-50%); min-width: 260px; padding: 9px 14px; text-align: center; color: #f8f5d0; background: #183c49e8; border: 3px solid #f0d581; box-shadow: 4px 4px #0b242d; font: 800 10px/1.5 monospace; }.pixel-city-caption b, .pixel-city-caption span { display: block; }.pixel-city-caption span { color: #b9dfcc; font-weight: 600; }.pixel-legend { position: absolute; z-index: 3; right: 20px; bottom: 24px; display: flex; gap: 9px; padding: 7px; color: #ecfbd7; background: #183c49db; border: 2px solid #638e88; font: 700 9px monospace; }.pixel-legend i { display: inline-block; width: 8px; height: 8px; margin-right: 3px; }.legend-player { background: #ffdf8a; }.legend-place { background: #4f9c76; }.legend-online { background: #ed6c7f; }.pixel-rift { background: #32264e; filter: hue-rotate(28deg) saturate(1.2); }
+@keyframes pixel-bob { to { transform: translateY(-5px); } }
+@media (max-width: 720px) { .pixel-map { inset: 16% 3% 10%; border-width: 5px; }.pixel-place { width: 65px; font-size: 7px; }.pixel-building { transform: scale(.75); margin-bottom: -5px; }.pixel-city-caption { bottom: 70px; min-width: 215px; }.pixel-legend { bottom: 17px; right: 50%; transform: translateX(50%); font-size: 8px; } }
 .map-grain {
   position: absolute;
   inset: 0;

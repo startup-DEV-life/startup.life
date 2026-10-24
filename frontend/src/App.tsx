@@ -1,7 +1,7 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import StartupWelcome, { StartupMark } from './StartupWelcome.tsx';
 import { io } from 'socket.io-client';
-const ThreeCity = lazy(() => import('./ThreeCity.tsx'));
+import PixelCity from './PixelCity.tsx';
 import LearnHub from './LearnHub.tsx';
 import GameTerminal from './GameTerminal.tsx';
 import GitHubApp from './GitHubApp.tsx';
@@ -1275,37 +1275,20 @@ export default function App() {
   };
   return (
     <div className={interior ? 'game-shell building-inside' : 'game-shell'}>
-      <Suspense
-        fallback={
-          <div className="world-loading" role="status">
-            <span />
-            Preparing the island…
-          </div>
-        }
-      >
-        <ThreeCity
-          playerRef={p}
-          playerName={player.name}
-          online={online}
-          places={visiblePlaces}
-          jobs={jobs}
-          active={active}
-          enteredBuildingId={interior?.id || null}
-          enteredBuilding={interior}
-          dungeonActive={dungeonActive}
-          dungeonRun={dungeonRun}
-          onCombatEvent={handleCombatEvent}
-          inVehicle={inVehicle}
-          items={items}
-          weather={weather}
-          cameraMode={cameraMode}
-          lightingPreset={lightingPreset}
-          onPickup={collectItem}
-          onObstacles={(q) => (obstacles.current = q)}
-          onPlace={travel}
-          onMapMove={mapMove}
-        />
-      </Suspense>
+      <PixelCity
+        playerRef={p}
+        playerName={player.name}
+        online={online}
+        places={visiblePlaces}
+        jobs={jobs}
+        active={active}
+        enteredBuilding={interior}
+        dungeonActive={dungeonActive}
+        weather={weather}
+        onPlace={travel}
+        onMapMove={mapMove}
+        onObstacles={(q) => (obstacles.current = q)}
+      />
       <div className="map-grain" />
       <>
         {dungeonActive && (

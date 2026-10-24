@@ -15,18 +15,18 @@ import './StartupWelcome.css';
 const slides = [
   {
     eyebrow: 'THE WORLD',
-    title: 'A developer life you can step into.',
-    body: 'Explore a Lagos-inspired island city, walk between districts, enter a workplace, and make your next career move inside the world.',
-    chips: ['Third-person 3D', 'Explore on foot', 'Playable in browser'],
+    title: 'A developer life in pixel form.',
+    body: 'Explore a Lagos-inspired pixel city, walk between districts, enter a workplace, and make your next career move inside the world.',
+    chips: ['2D pixel city', 'Explore on foot', 'Playable in browser'],
     icon: <Compass />,
     visual: 'city',
     caption: 'ONE CITY · MANY PATHS',
   },
   {
     eyebrow: 'HOW IT WAS MADE',
-    title: 'The island is built with Three.js.',
-    body: 'Custom TypeScript code assembles the terrain, roads, buildings, lighting, player avatar, camera, and interactions into a live WebGL scene.',
-    chips: ['Three.js renderer', 'Procedural city geometry', 'React game interface'],
+    title: 'The city is built with pixel art.',
+    body: 'Custom TypeScript and CSS assemble a responsive top-down city, roads, buildings, player marker, and interactions into a fast 2D game map.',
+    chips: ['2D pixel renderer', 'Clickable city map', 'React game interface'],
     icon: <Layers />,
     visual: 'scene',
     caption: 'SCENE → PLAYER → INTERACTION',
@@ -34,7 +34,7 @@ const slides = [
   {
     eyebrow: 'LANGUAGES & TOOLS',
     title: 'TypeScript runs the game and server.',
-    body: 'The browser client uses React, TypeScript, Vite, CSS, and Three.js. The Node.js backend is also written in TypeScript and uses Express APIs and Socket.IO for live presence. Supabase SQL migrations are included, though they are not the active game database yet.',
+    body: 'The browser client uses React, TypeScript, Vite, and CSS. The Node.js backend is also written in TypeScript and uses Express APIs and Socket.IO for live presence. Supabase SQL migrations are included, though they are not the active game database yet.',
     chips: ['TypeScript / TSX', 'JavaScript runtime: Node.js', 'SQL schema: Supabase'],
     icon: <Code2 />,
     visual: 'code',

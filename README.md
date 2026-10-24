@@ -1,10 +1,10 @@
 # dev-life — Startup.life · Dev District
 
-An independent browser game prototype: a multiplayer Lagos-inspired city rebuilt as a stylized 3D developer district. It is not the proprietary source code for lagoslife.app.
+An independent browser game prototype: a multiplayer Lagos-inspired city rebuilt as a stylized 2D pixel developer district. It is not the proprietary source code for lagoslife.app.
 
-## GDevelop edition (primary engine path)
+## Archived GDevelop edition
 
-The active engine path is the GDevelop-native project at [`gdevelop/BlankLife/BlankLife.json`](gdevelop/BlankLife/BlankLife.json), with a portable project archive at [`gdevelop/BlankLife-GDevelop.zip`](gdevelop/BlankLife-GDevelop.zip). Open the JSON file in GDevelop to work on the engine version. It uses the supplied Lagos Shadow Frontier GLB and includes a generated placeholder avatar, desktop movement, touch controls, and a third-person camera.
+The browser pixel game is now the active engine path. The old GDevelop-native project remains archived at [`gdevelop/`](gdevelop/) until its removal is explicitly approved, because it is a separate previously requested project archive.
 
 The existing TypeScript game and Node server are retained as the content and backend reference while the GDevelop project is expanded. The migration order, retained assets, and integration boundaries are documented in [`gdevelop/MIGRATION.md`](gdevelop/MIGRATION.md).
 
@@ -21,7 +21,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The Vite server proxies API and Socket.IO traffic to Express on port 4000. The Three.js scene is generated locally and does not require map credentials or external map tiles. The database creates itself at `backend/data/lagos-life.sqlite`.
+Open `http://localhost:5173`. The Vite server proxies API and Socket.IO traffic to Express on port 4000. The pixel city is rendered with React and CSS and does not require map credentials or external assets. The database creates itself at `backend/data/lagos-life.sqlite`.
 
 For a production build:
 
@@ -48,17 +48,17 @@ Demo videos and shared player files are stored under `backend/data/private-uploa
 
 ## Game features
 
-- A full stylized 3D island with rocky coast, mountain ridges, a street grid, marked avenues, a runway and hangar, homes, long apartment blocks, parks, piers, boats, and skyline landmarks. The supplied island screenshot guided the terrain and layout.
-- Human-proportioned, original low-poly 3D player avatars with profile-driven face, body shape, skin, hair, and streetwear, with avatars for the local player and connected online users only; ambient human NPCs are removed.
-- All modeled buildings are clickable and open a shared interior activity panel: developer studios, named venues, the airport hangar, long apartment buildings, and individual homes. Unassigned buildings have generic explore/meet/rest activities so their final purpose can be supplied later.
+- A responsive top-down pixel city with clickable districts, destinations, roads, player marker, and nearby-player markers.
+- Pixel-styled player and place markers driven by the existing saved player and multiplayer position data.
+- Buildings and destinations open the same interior activity panel, developer studios, named venues, homes, and generic explore/meet/rest activities.
 - Named venues retain their own activities. Guests can enter and explore; signed-in players can save named venue visits, earn pocket money, and improve mood.
 - A player phone with an island map, district navigation, career board, places, messages, and profile shortcuts.
 - A preinstalled GameUp app on the phone and laptop that links to the private `startup-DEV-life/startup.life-games` board-game repository.
 - Role-aware device apps: Beginners keep career paths and learning, Developers can record and publish project demos and share files, and Growers can browse developer demos with their GitHub repositories.
 - Authenticated demo-video and file-transfer APIs. Demo videos are capped at 50 MB, player-to-player files at 15 MB, and downloads are available only to the sender and recipient or to authorized demo viewers.
 - Installable mobile PWA with home-screen icons, standalone display, offline app-shell caching, and hold-to-move touch controls. The app shell can open offline, but accounts, multiplayer, and saved actions require the online backend.
-- Original geometry uses the supplied island, alley, human topology, and low-poly environment images as broad visual references. The models and props are generated in code; no reference image or proprietary asset pack is copied into the game.
-- WASD, arrow keys, on-screen buttons, mouse/touch movement, and camera orbit.
+- Original pixel geometry and UI use no proprietary map, character, model, or asset pack.
+- WASD, arrow keys, on-screen buttons, and click/touch movement.
 - Seven developer careers, including frontend, backend, and full-stack engineering. New accounts choose a career, and players can change careers later.
 - A laptop developer workspace with the full supplied Linux command guide, a persistent simulated file system, editable project files, and safe in-game command emulation. It never runs commands on the player’s device or a real server.
 - A Learn2Earn-inspired developer learning journey: original sequential problem-solving, debugging, web foundations, collaboration, AI-native engineering, project, and career-evidence challenges. Signed-in completion is validated and saved by the backend; each first correct completion awards virtual XP and game currency.
@@ -72,7 +72,7 @@ The repository groups runtime code by responsibility so each part has a clear ho
 
 | Folder | What belongs there |
 | --- | --- |
-| `frontend/` | React/Three.js game client, Vite config, PWA files, icons, and public 3D assets. |
+| `frontend/` | React pixel-game client, Vite config, PWA files, and icons. |
 | `backend/` | Express and Socket.IO server, SQLite runtime data, learning uploads, programming catalog, and Supabase schema/migrations. |
 | `shared/data/` | JSON game content used by both the browser client and backend: places, jobs, quests, homes, and items. |
 | `docs/` | Product, architecture, setup, and gameplay documentation. |
@@ -90,9 +90,9 @@ This project uses original demo city geometry, character shapes, job description
 For public deployment, configure HTTPS, database backups, account recovery, community policies and moderation staffing. The current online presence and mystery-round state live in one server process; horizontal scaling needs shared Socket.IO and game state.
 
 
-## Map asset handoff
+## Pixel map contribution
 
-The current island is procedurally built in `frontend/src/ThreeCity.tsx`; there is no in-game or backend upload form. To replace or extend it with a complete external map, provide a `.glb` (preferred, with textures/materials embedded). For a `.gltf`, include every referenced texture and buffer in a single ZIP. Include approximate file size, model scale/orientation notes, and the asset's source/license. The asset can then be integrated into the scene and served as a static game asset (or moved to object storage/CDN for larger production files).
+The current city is rendered by [`frontend/src/PixelCity.tsx`](frontend/src/PixelCity.tsx). New destinations should be added through the shared places and jobs data, using the pixel map rather than 3D models.
 
 ## Multiplayer capacity
 
@@ -105,7 +105,7 @@ Startup.life is packaged as an installable Progressive Web App (PWA). Deploy it 
 
 ### Try it on a phone during development
 
-Connect the phone and development computer to the same Wi-Fi network, run `npm run dev`, then open `http://<computer-lan-ip>:5173` on the phone. The Vite development server listens on the local network and proxies game API and multiplayer traffic to the backend. Use the on-screen arrow pad to walk, drag the 3D scene to rotate the camera, pinch to zoom, and tap buildings or venues to interact. The development URL is for local play; installable PWA behavior on a deployed phone site requires HTTPS.
+Connect the phone and development computer to the same Wi-Fi network, run `npm run dev`, then open `http://<computer-lan-ip>:5173` on the phone. The Vite development server listens on the local network and proxies game API and multiplayer traffic to the backend. Use the on-screen arrow pad or tap the pixel map to walk, then tap destinations to interact. The development URL is for local play; installable PWA behavior on a deployed phone site requires HTTPS.
 
 
 The Learn2Earn learning journey in Startup.life is an independent educational game experience inspired by the broad public programme stages. It is not operated by or affiliated with Learn2Earn or Talent Nation. In-game XP and currency are fictional and do not represent wages, stipends, admissions, certificates, or access to paid work. Players can visit the [official Learn2Earn site](https://learn2earn.ng/) for the real programme and selection process.
