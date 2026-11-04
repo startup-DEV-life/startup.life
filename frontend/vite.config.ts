@@ -15,5 +15,23 @@ export default defineConfig({
       '/socket.io': { target: 'http://localhost:4000', ws: true },
     },
   },
-  build: { outDir: resolve(frontendRoot, '../dist'), emptyOutDir: true },
+  build: {
+    outDir: resolve(frontendRoot, '../dist'),
+    emptyOutDir: true,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'three-vendor',
+              test: /node_modules[\\/]three[\\/]/,
+              minSize: 20_000,
+              maxSize: 450_000,
+              priority: 20,
+            },
+          ],
+        },
+      },
+    },
+  },
 });
