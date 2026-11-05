@@ -7,6 +7,7 @@ import LearnHub from './LearnHub.tsx';
 import GameTerminal from './GameTerminal.tsx';
 import GitHubApp from './GitHubApp.tsx';
 import { DemoAndFilesApp, GameUpApp } from './DeviceApps.tsx';
+import AdminDashboard from './AdminDashboard.tsx';
 import {
   ArrowDown,
   ArrowLeft,
@@ -63,6 +64,17 @@ const WORLD = {
   w: WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX,
   h: WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY,
 };
+const INITIAL_GAME_SETTINGS = {
+  explorationIsland: 'Lagos Island',
+  features: {
+    exploration: true,
+    gamePass: true,
+    gameLive: true,
+    learningLibrary: true,
+    communityChat: true,
+  },
+  games: { chess: true, checkers: true, wordTiles: true, propertyMarket: true, ludo: true },
+};
 async function api(path: string, options: any = {}) {
   const r = await fetch(path, {
     credentials: 'include',
@@ -85,6 +97,7 @@ export default function App() {
     [homes, setHomes] = useState<any[]>(seedHomes),
     [jobs, setJobs] = useState<any[]>(seedJobs),
     [user, setUser] = useState<any>(null),
+    [gameSettings, setGameSettings] = useState<any>(INITIAL_GAME_SETTINGS),
     [player, setPlayer] = useState<any>({
       name: 'Guest',
       username: '',
@@ -155,6 +168,7 @@ export default function App() {
     [serverError, setServerError] = useState(''),
     [reports, setReports] = useState<any[]>([]),
     [reportsOpen, setReportsOpen] = useState(false),
+    [adminOpen, setAdminOpen] = useState(false),
     [jobsOpen, setJobsOpen] = useState(false),
     [crewOpen, setCrewOpen] = useState(false),
     [crewRound, setCrewRound] = useState<any>(null),
@@ -392,6 +406,14 @@ export default function App() {
     }
   }, []);
   useEffect(() => {
+    const update = (event) => setGameSettings(event.detail);
+    window.addEventListener('admin-settings-updated', update);
+    api('/api/game-settings')
+      .then(setGameSettings)
+      .catch(() => {});
+    return () => window.removeEventListener('admin-settings-updated', update);
+  }, []);
+  useEffect(() => {
     const offer = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
@@ -437,6 +459,12 @@ export default function App() {
         setHomes(b);
         setJobs(d);
         setItems(e);
+        const entryParams = new URLSearchParams(window.location.search);
+        if (c.user?.isAdmin && !entryParams.has('play')) {
+          window.location.replace('/?admin=1');
+          return;
+        }
+        if (entryParams.has('play')) history.replaceState({}, '', location.pathname);
         if (c.user) {
           setUser(c.user);
           updatePlayer(c.player);
@@ -829,6 +857,10 @@ export default function App() {
           method: 'POST',
           body: JSON.stringify({ username: f.get('username'), password: f.get('password') }),
         });
+        if (d.user.isAdmin) {
+          window.location.replace('/?admin=1');
+          return;
+        }
         setUser(d.user);
         updatePlayer(d.player);
         setOwned(d.homes.map((h) => h.id));
@@ -2290,7 +2322,7 @@ export default function App() {
                     />
                   </div>
                 ) : laptopView === 'gameup' ? (
-                  <GameUpApp />
+                  <GameUpApp enabled={gameSettings.features.gamePass} games={gameSettings.games} />
                 ) : laptopView === 'studio' ? (
                   <DemoAndFilesApp
                     accountType={player.accountType}
@@ -2535,7 +2567,7 @@ export default function App() {
                     )}
                   </>
                 ) : phoneView === 'gameup' ? (
-                  <GameUpApp />
+                  <GameUpApp enabled={gameSettings.features.gamePass} games={gameSettings.games} />
                 ) : phoneView === 'studio' ? (
                   <DemoAndFilesApp
                     accountType={player.accountType}
@@ -3035,6 +3067,16 @@ export default function App() {
             <Heart /> Homes & plots
           </button>
           {user?.isAdmin && (
+            <button
+              onClick={() => {
+                setAdminOpen(true);
+                setMenu(false);
+              }}
+            >
+              <ShieldAlert /> Admin control room
+            </button>
+          )}
+          {user?.isAdmin && (
             <button onClick={loadReports}>
               <ShieldAlert /> Moderation queue
             </button>
@@ -3178,6 +3220,13 @@ export default function App() {
             <p>No open reports. Nice one.</p>
           )}
         </div>
+      )}
+      {adminOpen && (
+        <AdminDashboard
+          onClose={() => setAdminOpen(false)}
+          onNotice={setNotice}
+          onSettingsChange={setGameSettings}
+        />
       )}
       {modal && (
         <AuthModal

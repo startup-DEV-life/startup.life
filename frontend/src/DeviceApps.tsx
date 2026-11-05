@@ -30,16 +30,18 @@ const request = async (path: string, options: RequestInit = {}) => {
   return data;
 };
 
-export function GameUpApp() {
+export function GameUpApp({ enabled = true, games = {} }: { enabled?: boolean; games?: Record<string, boolean> }) {
+  const gameIds = { chess: 'chess', checkers: 'checkers', scrabble: 'wordTiles', 'property-trading': 'propertyMarket', ludo: 'ludo' };
+  const availableGames = installedGames.filter((game) => games[gameIds[game.id]] !== false);
   return (
     <section className="device-app-page gameup-app">
       <div className="gameup-heading">
         <div><span className="gameup-kicker">GAMEUP · INSTALLED</span><h2>Your game library</h2></div>
-        <span className="gameup-count">{installedGames.length} games</span>
+        <span className="gameup-count">{availableGames.length} games</span>
       </div>
-      <p>Choose a game to open its page in the GameUp hub.</p>
+      {!enabled ? <p>Game Pass is temporarily unavailable. Please check back later.</p> : <p>Choose a game to open its page in the GameUp hub.</p>}
       <div className="gameup-installed-list">
-        {installedGames.map((game) => (
+        {enabled && availableGames.map((game) => (
           <a key={game.id} className="gameup-installed-game" href={`${GAMEUP_URL}/?game=${game.id}#library`} target="_blank" rel="noreferrer">
             <span className={`gameup-game-mark gameup-${game.id}`}>{game.mark}</span>
             <span className="gameup-game-copy"><b>{game.name}</b><small>{game.detail} · {game.players}</small></span>

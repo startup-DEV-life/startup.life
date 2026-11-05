@@ -127,6 +127,21 @@ const libraryFiles = join(backendData, 'learning-library');
 mkdirSync(libraryFiles, { recursive: true });
 const privateUploadFiles = process.env.PRIVATE_UPLOADS_PATH || join(backendData, 'private-uploads');
 mkdirSync(privateUploadFiles, { recursive: true });
+db.exec(
+  'CREATE TABLE IF NOT EXISTS admin_settings (setting_key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL)',
+);
+db.exec(
+  'CREATE TABLE IF NOT EXISTS admin_accounts (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, created_at TEXT NOT NULL, created_by TEXT)',
+);
+const legacyAdminName = process.env.ADMIN_USERNAME?.trim().toLowerCase();
+if (legacyAdminName) {
+  const legacyAdmin = db.prepare('SELECT id FROM users WHERE username=?').get(legacyAdminName);
+  if (legacyAdmin)
+    db.prepare('INSERT OR IGNORE INTO admin_accounts(user_id,created_at) VALUES(?,?)').run(
+      legacyAdmin.id,
+      new Date().toISOString(),
+    );
+}
 const upsertResource = db.prepare(`INSERT INTO programming_resources
  (id,title,description,resource_type,languages,subjects,authors,source_repository,source_url,source_file,source_line,catalog_license,content_license,notes,availability,difficulty,metadata,payload,imported_at,updated_at)
  VALUES (@id,@title,@description,@resourceType,@languages,@subjects,@authors,@sourceRepository,@sourceUrl,@sourceFile,@sourceLine,@catalogLicense,@contentLicense,@notes,@availability,@difficulty,@metadata,@payload,@now,@now)
@@ -326,13 +341,12 @@ const displayName = (x) =>
         .replace(/[<>\u0000-\u001f]/g, '')
         .slice(0, 20)
     : '';
+const isAdminUser = (id) => !!db.prepare('SELECT 1 FROM admin_accounts WHERE user_id=?').get(id);
 const userSummary = (id, username, name) => ({
   id,
   username,
   name,
-  isAdmin:
-    !!process.env.ADMIN_USERNAME &&
-    username.toLowerCase() === process.env.ADMIN_USERNAME.trim().toLowerCase(),
+  isAdmin: isAdminUser(id),
 });
 const githubKey = () => {
   const value = process.env.GITHUB_TOKEN_ENCRYPTION_KEY || '';
@@ -709,6 +723,64 @@ app.get('/api/files/:id/download', auth, (req, res) => {
   res.setHeader('Cache-Control', 'private, no-store');
   res.type(file.mime_type).download(join(privateUploadFiles, file.stored_name), file.filename);
 });
+const isLocalAdminSetupRequest = (req) => {
+  const address = req.socket.remoteAddress || '';
+  return address === '::1' || address.startsWith('127.') || address.startsWith('::ffff:127.');
+};
+app.get('/api/admin/setup/status', (req, res) => {
+  const ownerExists = db.prepare('SELECT 1 FROM admin_accounts LIMIT 1').get();
+  res.set('Cache-Control', 'no-store').json({
+    ownerExists: !!ownerExists,
+    setupAvailable: !ownerExists && isLocalAdminSetupRequest(req),
+    localSetupRequired: !ownerExists && !isLocalAdminSetupRequest(req),
+  });
+});
+app.post('/api/admin/setup', authLimit, async (req, res) => {
+  if (!isLocalAdminSetupRequest(req))
+    return res.status(403).json({ error: 'Owner setup is only available from the host computer.' });
+  if (db.prepare('SELECT 1 FROM admin_accounts LIMIT 1').get())
+    return res.status(409).json({ error: 'The owner account has already been created.' });
+  const username =
+    typeof req.body?.username === 'string' ? req.body.username.trim().toLowerCase() : '';
+  const name = displayName(req.body?.displayName);
+  const password = req.body?.password;
+  if (!/^[a-z0-9_]{3,18}$/.test(username))
+    return res
+      .status(400)
+      .json({ error: 'Username must be 3–18 letters, numbers or underscores.' });
+  if (name.length < 2) return res.status(400).json({ error: 'Add your display name.' });
+  if (typeof password !== 'string' || password.length < 10 || password.length > 128)
+    return res.status(400).json({ error: 'Use a password between 10 and 128 characters.' });
+  if (db.prepare('SELECT 1 FROM users WHERE username=?').get(username))
+    return res.status(409).json({ error: 'That username is already taken.' });
+  try {
+    const id = randomBytes(16).toString('hex');
+    const pwd = await passwordHash(password);
+    const created = stamp();
+    const claimOwner = db
+      .transaction(() => {
+        if (db.prepare('SELECT 1 FROM admin_accounts LIMIT 1').get()) return false;
+        db.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(id, username, name, pwd, created);
+        db.prepare(
+          'INSERT INTO players(user_id,job_id,account_type,updated_at) VALUES(?,?,?,?)',
+        ).run(id, 'frontend-engineer', 'developer', created);
+        db.prepare('INSERT INTO admin_accounts(user_id,created_at) VALUES(?,?)').run(id, created);
+        return true;
+      })
+      .immediate();
+    if (!claimOwner)
+      return res.status(409).json({ error: 'The owner account has already been created.' });
+    issueSession(res, id);
+    res.status(201).json({
+      user: userSummary(id, username, name),
+      player: publicPlayer(playerQuery.get(id)),
+      homes: [],
+    });
+  } catch (error) {
+    console.error('Admin owner setup failed:', error);
+    res.status(500).json({ error: 'Could not create the owner account.' });
+  }
+});
 app.post('/api/auth/signup', authLimit, async (req, res) => {
   const username =
     typeof req.body?.username === 'string' ? req.body.username.trim().toLowerCase() : '';
@@ -999,8 +1071,7 @@ app.post('/api/learn/books/:id/buy', campus, (req, res) => {
 app.get('/api/learn/books/:id/download', campus, (req, res) => {
   const b = db.prepare('SELECT * FROM learning_books WHERE id=?').get(req.params.id);
   if (!b) return res.status(404).json({ error: 'Book not found.' });
-  const staffName = process.env.ADMIN_USERNAME?.trim().toLowerCase(),
-    isStaff = staffName && req.account.username === staffName,
+  const isStaff = isAdminUser(req.account.user_id),
     owned = db
       .prepare('SELECT 1 FROM learning_book_purchases WHERE user_id=? AND book_id=?')
       .get(req.account.user_id, b.id);
@@ -1446,12 +1517,101 @@ app.post('/api/chat/:id/report', auth, (req, res) => {
   }
 });
 const staff = (req, res, next) => {
-  const configured = process.env.ADMIN_USERNAME?.trim().toLowerCase();
   if (!req.account) return res.status(401).json({ error: 'Sign in first.' });
-  if (!configured || req.account.username !== configured)
+  if (!isAdminUser(req.account.user_id))
     return res.status(403).json({ error: 'This account is not configured as a moderator.' });
   next();
 };
+const defaultAdminSettings = {
+  explorationIsland: 'Lagos Island',
+  features: {
+    exploration: true,
+    gamePass: true,
+    gameLive: true,
+    learningLibrary: true,
+    communityChat: true,
+  },
+  games: { chess: true, checkers: true, wordTiles: true, propertyMarket: true, ludo: true },
+};
+const readAdminSettings = () => {
+  const row = db.prepare("SELECT value FROM admin_settings WHERE setting_key='dashboard'").get();
+  if (!row) return defaultAdminSettings;
+  try {
+    const saved = JSON.parse(row.value);
+    return {
+      ...defaultAdminSettings,
+      ...saved,
+      features: { ...defaultAdminSettings.features, ...saved.features },
+      games: { ...defaultAdminSettings.games, ...saved.games },
+    };
+  } catch {
+    return defaultAdminSettings;
+  }
+};
+app.get('/api/game-settings', (_req, res) =>
+  res.set('Cache-Control', 'no-store').json(readAdminSettings()),
+);
+app.get('/api/admin/dashboard', auth, staff, (req, res) => {
+  const settings = readAdminSettings();
+  const stats = {
+    players: db.prepare('SELECT COUNT(*) AS count FROM users').get().count,
+    online: online.size,
+    library: db
+      .prepare(
+        '(SELECT COUNT(*) FROM learning_books) + (SELECT COUNT(*) FROM learning_videos) AS count',
+      )
+      .get().count,
+    reports: db.prepare("SELECT COUNT(*) AS count FROM chat_reports WHERE status='open'").get()
+      .count,
+  };
+  const activity = db
+    .prepare(
+      `
+    SELECT * FROM (
+      SELECT 'account_created' AS type, u.username, u.display_name AS displayName, 'Created an account' AS summary, u.created_at AS occurredAt FROM users u
+      UNION ALL SELECT 'place_visit', u.username, u.display_name, 'Visited ' || v.place_id, v.visited_at FROM visits v JOIN users u ON u.id=v.user_id
+      UNION ALL SELECT 'job_completed', u.username, u.display_name, 'Completed job ' || j.job_id, j.completed_at FROM job_completions j JOIN users u ON u.id=j.user_id
+      UNION ALL SELECT 'lesson_completed', u.username, u.display_name, 'Completed lesson ' || l.lesson_id, l.completed_at FROM learning_completions l JOIN users u ON u.id=l.user_id
+      UNION ALL SELECT 'demo_published', u.username, u.display_name, 'Published a developer demo', d.published_at FROM developer_demos d JOIN users u ON u.id=d.developer_id
+      UNION ALL SELECT 'chat_message', u.username, u.display_name, 'Posted in community chat', c.created_at FROM chat_messages c JOIN users u ON u.id=c.user_id
+    ) ORDER BY occurredAt DESC LIMIT 30
+  `,
+    )
+    .all();
+  res.set('Cache-Control', 'no-store').json({
+    admin: { username: req.account.username, name: req.account.display_name },
+    stats,
+    activity,
+    settings,
+  });
+});
+app.put('/api/admin/settings', auth, staff, (req, res) => {
+  const current = readAdminSettings();
+  const incoming = req.body || {};
+  const validKeys = {
+    features: Object.keys(defaultAdminSettings.features),
+    games: Object.keys(defaultAdminSettings.games),
+  };
+  const settings = {
+    explorationIsland:
+      typeof incoming.explorationIsland === 'string'
+        ? incoming.explorationIsland
+            .replace(/[<>\u0000-\u001f]/g, '')
+            .trim()
+            .slice(0, 64) || current.explorationIsland
+        : current.explorationIsland,
+    features: { ...current.features },
+    games: { ...current.games },
+  };
+  for (const group of Object.keys(validKeys))
+    for (const key of validKeys[group])
+      if (typeof incoming[group]?.[key] === 'boolean') settings[group][key] = incoming[group][key];
+  db.prepare(
+    `INSERT INTO admin_settings(setting_key,value,updated_at) VALUES('dashboard',?,?)
+    ON CONFLICT(setting_key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at`,
+  ).run(JSON.stringify(settings), stamp());
+  res.set('Cache-Control', 'no-store').json({ settings });
+});
 app.post(
   '/api/admin/learn/books',
   auth,
