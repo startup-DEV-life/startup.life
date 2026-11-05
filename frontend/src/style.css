@@ -10485,3 +10485,43 @@ button:not(:disabled):active {
     max-width: 220px;
   }
 }
+
+.vr-entry > button {
+  display: block;
+  margin-bottom: 6px;
+}
+.phone-vr-status {
+  max-width: 260px;
+  font-size: 11px;
+  background: #0b1729ed;
+  padding: 8px;
+  border-radius: 8px;
+}
+.phone-viewer-vr .game-shell {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+}
+.phone-viewer-vr .game-shell > :not(.three-city):not(.vr-entry) {
+  display: none !important;
+}
+.phone-viewer-vr .vr-entry {
+  top: 8px;
+  left: 8px;
+  right: auto;
+  bottom: auto;
+  max-width: 220px;
+  opacity: 0.85;
+}
+.phone-viewer-vr .vr-entry > button {
+  padding: 7px 10px;
+  font-size: 11px;
+}
+.phone-viewer-vr .vr-entry .phone-vr-status,
+.phone-viewer-vr .vr-entry details {
+  display: none;
+}
+.phone-viewer-vr {
+  overflow: hidden;
+}

@@ -35,3 +35,19 @@ Implemented locally on `feature/meta-quest-webxr`; not deployed yet. On a real Q
 
 - [Three.js WebXR basics](https://threejs.org/manual/pages/webxr-basics.html)
 - [Meta Quest Browser specifications](https://developers.meta.com/vr/documentation/web/browser-specs/)
+
+## Phone VR cases — separate split-screen mode
+
+The **Phone VR · split screen** button now offers a basic side-by-side stereoscopic viewer independently of WebXR. This targets Android and iPhone browsers, with browser-dependent sensor/fullscreen availability. It does not require a Meta Quest.
+
+1. Open the game, tap **Phone VR · split screen**, and approve motion access if your phone asks.
+2. Rotate the phone to landscape and place it in the viewer. Fullscreen and orientation lock are attempted but may be unavailable, especially on iPhone.
+3. Look down at the in-world menu. Hold the reticle over **walk / stop**, **recenter** or **exit** for 1.6 seconds. A cooldown prevents repeated activation. Nearby buildings also support gaze selection using the existing entrance flow.
+4. A standard Bluetooth gamepad can move the player. Without sensor data, drag on the screen to look or use the controller's right stick. These fallbacks do not imply head tracking is available.
+5. Exit from the gaze menu or on-screen **Exit phone VR** button. The normal camera, controls and UI return. Phone/laptop forms remain outside VR. Interiors remain seated cutaway views.
+
+Implementation: `frontend/src/game/phoneVR.ts` uses a Three.js StereoCamera, two scissored eye viewports, phone orientation events and the shared collision/multiplayer simulation. The local eye separation approximates 64 mm at the game's scale. Saved graphics settings are temporarily reduced as in Quest mode. Walking stops on visibility loss, blur and exit. Sensor access is requested only on explicit entry and listeners are removed on exit.
+
+This is a basic viewer, not a calibrated Google Cardboard SDK implementation: no lens distortion correction, viewer QR calibration, positional tracking or guaranteed support across all phone/browser combinations. Sensor access generally requires HTTPS or localhost. Physical Android/iPhone sensors, stereo comfort and viewer lens alignment have not been tested. Production build/TypeScript checks passed; no runtime/browser/headset tests were run for this change. The phone VR addition remains local and is not deployed.
+
+References: [Three.js stereo rendering](https://threejs.org/docs/pages/StereoEffect.html), [motion permission and secure contexts](https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent/requestPermission_static).

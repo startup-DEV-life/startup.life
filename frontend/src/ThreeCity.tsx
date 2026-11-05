@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EAST_ISLAND, WORLD_BOUNDS } from '../../shared/world.ts';
+import { createPhoneVR } from './game/phoneVR.ts';
 import { createQuestVR } from './game/questVR.ts';
 import { createWorldArt } from './game/worldArt.ts';
 import {
@@ -3109,6 +3110,11 @@ export default function ThreeCity({
   const [error, setError] = useState('');
   const [vrStatus, setVrStatus] = useState({ state: 'checking', message: 'Checking VR support…' });
   const vrRef = useRef<any>(null);
+  const phoneRef = useRef<any>(null);
+  const [phoneMode, setPhoneMode] = useState(false);
+  const [phoneMessage, setPhoneMessage] = useState(
+    'For phone VR cases · Android and iPhone browsers.',
+  );
   useEffect(() => {
     const el = host.current;
     if (!el) return;
@@ -3399,7 +3405,7 @@ export default function ThreeCity({
       ray.setFromCamera(pointer, camera);
       selectRay();
     };
-    const selectRay = (controllerRay = null) => {
+    const selectRay = (controllerRay = null, preview = false) => {
       if (controllerRay) ray.ray.copy(controllerRay.ray);
       const visibleImportedMeshes = importedPlaceMeshes.filter((mesh) => {
         for (let node = mesh; node; node = node.parent) if (!node.visible) return false;
@@ -3409,7 +3415,8 @@ export default function ThreeCity({
         [...jobsMeshes, ...placeMeshes, ...visibleImportedMeshes],
         true,
       )[0];
-      if (hit && (!renderer.xr.isPresenting || hit.distance < 280)) {
+      if (hit && ((!renderer.xr.isPresenting && !phone.active) || hit.distance < 280)) {
+        if (preview) return `${hit.object.uuid}:${hit.instanceId ?? ''}`;
         if (hit.instanceId !== undefined) {
           const entry = hit.object.userData.buildingEntries?.[hit.instanceId];
           if (entry) {
@@ -3484,7 +3491,7 @@ export default function ThreeCity({
           return;
         }
       }
-      if (renderer.xr.isPresenting) return;
+      if (renderer.xr.isPresenting || phone.active || preview) return null;
       const floor = ray.intersectObject(ground, false)[0];
       if (floor) {
         const x = Math.max(
@@ -3500,7 +3507,8 @@ export default function ThreeCity({
     };
     const onDown = (e) => (down = { x: e.clientX, y: e.clientY }),
       onUp = (e) => {
-        if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5) pick(e);
+        if (!phone.active && down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5)
+          pick(e);
         down = null;
       };
     renderer.domElement.addEventListener('pointerdown', onDown);
@@ -3520,6 +3528,25 @@ export default function ThreeCity({
       onLeave: () => callbacks.current.onExitBuilding?.(),
     });
     vrRef.current = vr;
+    const phone = createPhoneVR({
+      renderer,
+      scene,
+      camera,
+      controls,
+      playerRef,
+      onStatus: (active, message) => {
+        if (!disposed) {
+          setPhoneMode(active);
+          setPhoneMessage(message);
+        }
+      },
+      onProbe: (r) => (!dungeonRef.current ? selectRay(r, true) : ''),
+      onSelect: (r) => {
+        if (!interiorRef.current && !dungeonRef.current) selectRay(r);
+      },
+      onLeave: () => callbacks.current.onExitBuilding?.(),
+    });
+    phoneRef.current = phone;
     const vrArtCamera = { position: new THREE.Vector3() };
     const resize = () => {
       if (renderer.xr.isPresenting) return;
@@ -3545,7 +3572,9 @@ export default function ThreeCity({
     const draw = () => {
       if (disposed) return;
       vr.input();
-      if (vr.active) simulationFrameRef?.current?.(performance.now());
+      phone.input();
+      const immersive = vr.active || phone.active;
+      if (immersive) simulationFrameRef?.current?.(performance.now());
       const player = playerRef.current,
         selfX = wx(player.x) * WORLD_SCALE,
         selfZ = wz(player.y) * WORLD_SCALE,
@@ -3555,7 +3584,7 @@ export default function ThreeCity({
         water = city.userData.waterMaterial,
         mode = cameraModeRef.current;
       lastFrame = time;
-      const requestedQuality = vr.active
+      const requestedQuality = immersive
         ? 'low'
         : resolveGraphicsQuality(qualityRef.current, lowEndGPU);
       if (requestedQuality !== appliedQuality) applyQuality(requestedQuality);
@@ -3836,7 +3865,7 @@ export default function ThreeCity({
       );
       selfCar.position.set(selfX, selfGround + 3, selfZ);
       selfCar.rotation.y = player.heading || 0;
-      if (!vr.active) {
+      if (!immersive) {
         if (mode !== appliedCameraMode) {
           controls.enabled = mode !== 'walk';
           controls.minPolarAngle = mode === 'drone' ? 0.08 : 0.22;
@@ -3930,7 +3959,7 @@ export default function ThreeCity({
         visiblePeople.current = onlineRef.current
           .map((p) => ({ ...p, distance: (p.x - player.x) ** 2 + (p.y - player.y) ** 2 }))
           .sort((a, b) => a.distance - b.distance)
-          .slice(0, vr.active || mobileGPU ? 20 : 55);
+          .slice(0, immersive || mobileGPU ? 20 : 55);
         avatarRefresh.current = time;
       }
       const people = visiblePeople.current.filter((p) => !p.inBuilding),
@@ -3976,13 +4005,13 @@ export default function ThreeCity({
           a.userData.arms[1].rotation.x = -Math.sin(time * 0.003 + (p.avatar || 0)) * 0.1;
         }
       }
-      if (!vr.active && mode !== 'walk' && !interiorRoot) controls.update();
+      if (!immersive && mode !== 'walk' && !interiorRoot) controls.update();
       if (interiorRoot) {
         self.visible = false;
         selfCar.visible = false;
         for (const person of interiorRoot.userData.interiorPeople || [])
           person.node.position.y = person.base + Math.sin(time * 0.0014 + person.phase) * 1.6;
-        if (!vr.active && activeInteriorId?.startsWith('generated-innovation-tower:')) {
+        if (!immersive && activeInteriorId?.startsWith('generated-innovation-tower:')) {
           const portrait =
             renderer.domElement.clientWidth / renderer.domElement.clientHeight < 0.78;
           interiorRoot.scale.set(portrait ? 0.58 : 1, portrait ? 0.82 : 1, portrait ? 0.58 : 1);
@@ -3990,18 +4019,19 @@ export default function ThreeCity({
           camera.position.set(portrait ? 360 : 430, portrait ? 265 : 215, portrait ? 620 : 610);
           controls.target.copy(focus);
           camera.lookAt(focus);
-        } else if (!vr.active) {
+        } else if (!immersive) {
           camera.position.set(238, 174, 270);
           controls.target.set(0, 39, -10);
           camera.lookAt(0, 39, -10);
         }
       }
-      if (vr.active) {
+      if (immersive) {
         controls.enabled = false;
         self.visible = false;
         selfCar.visible = false;
         fx.playerRing.visible = false;
-        vr.place(selfX, selfGround, selfZ, !!interiorRoot);
+        if (vr.active) vr.place(selfX, selfGround, selfZ, !!interiorRoot);
+        else phone.place(selfX, selfGround, selfZ, !!interiorRoot, time);
         camera.getWorldPosition(vrArtCamera.position);
       }
       art.update(
@@ -4010,7 +4040,8 @@ export default function ThreeCity({
         lightingRef.current,
         !!interiorRoot || dungeonRef.current,
       );
-      renderer.render(scene, camera);
+      if (phone.active) phone.render();
+      else renderer.render(scene, camera);
       if (import.meta.env.DEV && captureFrameRef?.current) {
         const receiveFrame = captureFrameRef.current;
         captureFrameRef.current = null;
@@ -4033,6 +4064,8 @@ export default function ThreeCity({
     const dispose = () => {
       disposed = true;
       renderer.setAnimationLoop(null);
+      phone.dispose();
+      phoneRef.current = null;
       vr.dispose();
       vrRef.current = null;
       observer.disconnect();
@@ -4082,9 +4115,24 @@ export default function ThreeCity({
         <span className="city-label-dot" />
         STARTUP.LIFE <i>·</i> LAGOS DEVELOPER CITY
       </div>
-      <aside className="vr-entry" aria-label="Meta Quest VR">
+      <aside className="vr-entry" aria-label="VR modes">
         <button
-          disabled={vrStatus.state !== 'ready' && vrStatus.state !== 'active'}
+          disabled={vrStatus.state === 'active'}
+          onClick={() => (phoneMode ? phoneRef.current?.exit() : phoneRef.current?.enter())}
+        >
+          {phoneMode ? 'Exit phone VR' : 'Phone VR · split screen'}
+        </button>
+        {phoneMode && (
+          <>
+            <button onClick={() => phoneRef.current?.recenter()}>Recenter view</button>
+            <button onClick={() => phoneRef.current?.toggleWalk()}>Walk / stop</button>
+          </>
+        )}
+        <p className="phone-vr-status" role="status">
+          {phoneMessage}
+        </p>
+        <button
+          disabled={phoneMode || (vrStatus.state !== 'ready' && vrStatus.state !== 'active')}
           onClick={() =>
             vrStatus.state === 'active' ? vrRef.current?.exit() : vrRef.current?.enter()
           }
