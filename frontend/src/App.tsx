@@ -93,7 +93,8 @@ export default function App() {
     keys = useRef<Record<string, any>>({}),
     last = useRef({ frame: 0, move: 0 }),
     audioRef = useRef<any>(null),
-    obstacles = useRef<any[]>([]);
+    obstacles = useRef<any[]>([]),
+    simulationFrame = useRef<any>(null);
   const [places, setPlaces] = useState<any[]>(seedPlaces),
     [homes, setHomes] = useState<any[]>(seedHomes),
     [jobs, setJobs] = useState<any[]>(seedJobs),
@@ -122,6 +123,7 @@ export default function App() {
     [phoneView, setPhoneView] = useState('home'),
     [laptopOpen, setLaptopOpen] = useState(false),
     [laptopView, setLaptopView] = useState('quests'),
+    [laptopExpanded, setLaptopExpanded] = useState(false),
     [dispatch, setDispatch] = useState<any>(null),
     [webQuery, setWebQuery] = useState(''),
     [placementQuery, setPlacementQuery] = useState(''),
@@ -639,15 +641,20 @@ export default function App() {
   }, [user, dungeonActive]);
   useEffect(() => {
     let raf;
-    const frame = (t) => {
-      raf = requestAnimationFrame(frame);
+    const frame = (t, fromXR = false) => {
+      if (!fromXR) {
+        raf = requestAnimationFrame((time) => frame(time));
+        if (p.current.xrActive) return;
+      }
       const dt = Math.min((t - last.current.frame) / 1000, 0.05);
       last.current.frame = t;
       let dx = 0,
         dy = 0;
       const k = keys.current,
-        pad = navigator.getGamepads?.()?.find((g) => g && g.connected),
-        speed = inVehicle ? 280 : k.Shift ? 132 : 80;
+        pad =
+          !p.current.xrActive &&
+          navigator.getGamepads?.()?.find((g) => g && g.connected && g.mapping !== 'xr-standard'),
+        speed = p.current.xrActive ? 20 : inVehicle ? 280 : k.Shift ? 132 : 80;
       if (pad) {
         dx = pad.axes[0] || 0;
         dy = pad.axes[1] || 0;
@@ -679,7 +686,11 @@ export default function App() {
         p.current.ty = p.current.y;
         p.current.dodgeQueued = false;
       }
-      if (p.current.joystick) {
+      if (p.current.xrActive && p.current.xrJoystick) {
+        dx += p.current.xrJoystick.x;
+        dy += p.current.xrJoystick.y;
+      }
+      if (!p.current.xrActive && p.current.joystick) {
         dx += p.current.joystick.x;
         dy += p.current.joystick.y;
       }
@@ -698,7 +709,7 @@ export default function App() {
         const x = p.current.tx - p.current.x,
           y = p.current.ty - p.current.y,
           n = Math.hypot(x, y);
-        if (n > 4) {
+        if (n > 4 && !p.current.xrActive) {
           p.current.x += (x / n) * Math.min(n, (inVehicle ? 360 : 100) * dt);
           p.current.y += (y / n) * Math.min(n, (inVehicle ? 360 : 100) * dt);
           p.current.heading = Math.atan2(-x, -y);
@@ -745,8 +756,12 @@ export default function App() {
         setNear((q) => (q === n ? q : n));
       }
     };
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    simulationFrame.current = (time) => frame(time, true);
+    raf = requestAnimationFrame((time) => frame(time));
+    return () => {
+      cancelAnimationFrame(raf);
+      simulationFrame.current = null;
+    };
   }, [active, inVehicle]);
   useEffect(() => {
     p.current.inBuilding = !!interior;
@@ -1515,6 +1530,8 @@ export default function App() {
         }
       >
         <ThreeCity
+          simulationFrameRef={simulationFrame}
+          onExitBuilding={exitBuilding}
           playerRef={p}
           playerName={player.name}
           online={online}
@@ -2332,7 +2349,10 @@ export default function App() {
         </section>
       )}
       {laptopOpen && (
-        <section className="developer-laptop" aria-label="Developer laptop">
+        <section
+          className={`developer-laptop${laptopExpanded ? ' laptop-expanded' : ''}`}
+          aria-label="Developer laptop"
+        >
           <div className="laptop-window">
             <header className="laptop-titlebar">
               <div className="laptop-brand">
@@ -2341,9 +2361,18 @@ export default function App() {
                   FIELD TERMINAL <small>LIAN YU · DEV ENVIRONMENT</small>
                 </span>
               </div>
-              <button onClick={() => setLaptopOpen(false)} aria-label="Close laptop">
-                <X size={17} />
-              </button>
+              <div className="laptop-window-controls">
+                <button
+                  onClick={() => setLaptopExpanded((expanded) => !expanded)}
+                  aria-label={laptopExpanded ? 'Restore laptop size' : 'Expand laptop'}
+                  aria-pressed={laptopExpanded}
+                >
+                  {laptopExpanded ? 'Restore' : 'Expand'}
+                </button>
+                <button onClick={() => setLaptopOpen(false)} aria-label="Close laptop">
+                  <X size={20} />
+                </button>
+              </div>
             </header>
             <div className="laptop-workspace">
               <nav className="laptop-apps" aria-label="Laptop apps">
