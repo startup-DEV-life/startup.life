@@ -18,6 +18,7 @@ import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
 import cookie from 'cookie';
+import { WORLD_BOUNDS, isOutsideCauseway } from '../../shared/world.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const sharedData = join(root, 'shared/data');
@@ -31,7 +32,7 @@ const items = JSON.parse(readFileSync(join(sharedData, 'items.json'), 'utf8'));
 const resourceCatalog: any[] = JSON.parse(
   readFileSync(join(backendData, 'programming-resources.json'), 'utf8'),
 );
-const WORLD = { minX: -760, maxX: 1810, minY: -750, maxY: 2230 };
+const WORLD = WORLD_BOUNDS;
 const RIFT_GATE = { x: 1728, y: 953 };
 const WORLD_CELL = 220;
 const worldCell = (x, y, inRift = false) =>
@@ -1752,6 +1753,7 @@ io.on('connection', (s) => {
       x > WORLD.maxX ||
       y < WORLD.minY ||
       y > WORLD.maxY ||
+      (!q.inRift && isOutsideCauseway(x, y)) ||
       distance > maxDistance
     )
       return;

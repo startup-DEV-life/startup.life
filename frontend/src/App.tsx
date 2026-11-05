@@ -55,7 +55,12 @@ import seedJobs from '../../shared/data/jobs.json';
 import seedItems from '../../shared/data/items.json';
 import lessons from '../../shared/data/learning.json';
 import { RIFT_ARENA } from './game/combat.ts';
-const WORLD = { minX: -760, maxX: 1810, minY: -750, maxY: 2230, w: 2570, h: 2980 };
+import { WORLD_BOUNDS, isOutsideCauseway } from '../../shared/world.ts';
+const WORLD = {
+  ...WORLD_BOUNDS,
+  w: WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX,
+  h: WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY,
+};
 async function api(path: string, options: any = {}) {
   const r = await fetch(path, {
     credentials: 'include',
@@ -226,6 +231,21 @@ export default function App() {
     buildingRole: 'Glass-and-jade work hall',
     uses: 'Walk through the courtyard and enter the shared coding hall.',
     generated: true,
+  };
+  const eastIslandPlace = {
+    id: 'east-island',
+    name: 'East Island',
+    companyName: 'East Island Guild District',
+    kind: 'Island district',
+    industry: 'Technology & culture',
+    district: 'East Island',
+    x: 3740,
+    y: 784,
+    color: '#3b9c93',
+    emoji: '🏝️',
+    buildingRole: 'Guild workspaces and signal tower',
+    uses: 'Reach the island by walking or driving across the East Causeway.',
+    navigationOnly: true,
   };
   const legendHouse = {
     id: 'legend-house',
@@ -642,7 +662,8 @@ export default function App() {
             Math.abs(p.current.x - b.x) < b.rx &&
             Math.abs(p.current.y - b.y) < b.ry,
         );
-        if (hit) {
+        const outsideBridge = isOutsideCauseway(p.current.x, p.current.y);
+        if (hit || outsideBridge) {
           p.current.x = oldX;
           p.current.y = oldY;
           p.current.tx = oldX;
@@ -704,8 +725,8 @@ export default function App() {
             job: true,
           }
         : q;
-    p.current.tx = Math.max(WORLD.minX, Math.min(WORLD.maxX, q.x + 48));
-    p.current.ty = Math.max(WORLD.minY, Math.min(WORLD.maxY, q.y + 45));
+    p.current.tx = Math.max(WORLD.minX, Math.min(WORLD.maxX, q.x + (q.navigationOnly ? 0 : 48)));
+    p.current.ty = Math.max(WORLD.minY, Math.min(WORLD.maxY, q.y + (q.navigationOnly ? 0 : 45)));
     setActive({ ...spot, selectedAt: Date.now() });
     if (q.autoEnter) {
       p.current.x = p.current.tx;
@@ -896,7 +917,7 @@ export default function App() {
     setNotice('You are exploring the Dev District as a guest.');
   };
   const enterBuilding = () => {
-    if (!active) return;
+    if (!active || active.navigationOnly) return;
     if (!near) {
       setNotice(`Walking to ${active.name}'s entrance…`);
       return;
@@ -1489,7 +1510,11 @@ export default function App() {
               <X size={16} />
             </button>
           </div>
-          <IslandRadar playerRef={p} places={visiblePlaces} online={online} />
+          <IslandRadar
+            playerRef={p}
+            places={[...visiblePlaces, metropolisPlace, eastIslandPlace]}
+            online={online}
+          />
           <div className="explorer-coordinates">
             <span>
               <i /> YOU ARE HERE
@@ -1785,15 +1810,17 @@ export default function App() {
               </div>
             </div>
             <p>{active.uses || active.description}</p>
-            <button className="visit-button" onClick={enterBuilding} disabled={!near}>
-              <DoorOpen size={16} />
-              {near
-                ? active.kind === 'Outdoors'
-                  ? 'Explore this area'
-                  : 'Enter building'
-                : 'Walking to entrance…'}
-              <span>{near ? 'Open to all players' : ''}</span>
-            </button>
+            {!active.navigationOnly && (
+              <button className="visit-button" onClick={enterBuilding} disabled={!near}>
+                <DoorOpen size={16} />
+                {near
+                  ? active.kind === 'Outdoors'
+                    ? 'Explore this area'
+                    : 'Enter building'
+                  : 'Walking to entrance…'}
+                <span>{near ? 'Open to all players' : ''}</span>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -2479,7 +2506,11 @@ export default function App() {
                 ) : phoneView === 'map' ? (
                   <>
                     <h3>Island map</h3>
-                    <IslandRadar playerRef={p} places={visiblePlaces} online={online} />
+                    <IslandRadar
+                      playerRef={p}
+                      places={[...visiblePlaces, metropolisPlace, eastIslandPlace]}
+                      online={online}
+                    />
                     <p className="phone-helper">
                       Explore a larger island with room to grow into new districts.
                     </p>
@@ -2503,6 +2534,7 @@ export default function App() {
                       {[
                         'Tech Place',
                         'Developer Metropolis',
+                        'East Island',
                         'Legend House',
                         'The Commons',
                         'Tech Noodle',
@@ -2513,8 +2545,10 @@ export default function App() {
                           key={d}
                           onClick={() => {
                             const place =
-                              d === 'Developer Metropolis'
-                                ? metropolisPlace
+                              d === 'Developer Metropolis' || d === 'East Island'
+                                ? d === 'East Island'
+                                  ? eastIslandPlace
+                                  : metropolisPlace
                                 : visiblePlaces.find(
                                     (q) =>
                                       q.name === d ||
@@ -3007,6 +3041,7 @@ export default function App() {
             {[
               'Tech Place',
               'Developer Metropolis',
+              'East Island',
               'Legend House',
               'The Commons',
               'Tech Noodle',
@@ -3018,8 +3053,10 @@ export default function App() {
                 onClick={() => {
                   setMapOpen(false);
                   travel(
-                    d === 'Developer Metropolis'
-                      ? metropolisPlace
+                    d === 'Developer Metropolis' || d === 'East Island'
+                      ? d === 'East Island'
+                        ? eastIslandPlace
+                        : metropolisPlace
                       : visiblePlaces.find((q) => q.name === d) || visiblePlaces[i],
                   );
                 }}
@@ -3166,71 +3203,53 @@ function IslandRadar({ playerRef, places, online }) {
       water.addColorStop(1, '#72b8c5');
       ctx.fillStyle = water;
       ctx.fillRect(0, 0, w, h);
-      ctx.beginPath();
-      ctx.moveTo(12, 12);
-      ctx.lineTo(294, 8);
-      ctx.quadraticCurveTo(315, 13, 312, 38);
-      ctx.lineTo(307, 164);
-      ctx.quadraticCurveTo(304, 189, 284, 188);
-      ctx.lineTo(27, 190);
-      ctx.quadraticCurveTo(7, 185, 8, 166);
-      ctx.lineTo(9, 35);
-      ctx.quadraticCurveTo(8, 18, 12, 12);
-      ctx.closePath();
-      ctx.fillStyle = '#a7c68d';
-      ctx.fill();
-      ctx.save();
-      ctx.clip();
-      // A simple grid of Lagos neighborhood streets with a lagoon through the city.
-      ctx.fillStyle = '#4baebd';
-      ctx.fillRect(7, 81, 309, 30);
-      ctx.fillStyle = '#d8c89d';
-      ctx.fillRect(7, 77, 309, 4);
-      ctx.fillRect(7, 111, 309, 4);
-      ctx.strokeStyle = '#7d8982';
-      ctx.lineWidth = 3;
-      for (let y = 31; y < 188; y += 31) {
+      const px = (q) => 20 + ((q.x - WORLD.minX) / WORLD.w) * 280,
+        py = (q) => 14 + ((q.y - WORLD.minY) / WORLD.h) * 170;
+      const islandShapes = [
+        { x: px({ x: 525 }), y: py({ y: 740 }), rx: 71, ry: 89, label: 'METROPOLIS' },
+        { x: px({ x: 3740 }), y: py({ y: 784 }), rx: 43, ry: 55, label: 'EAST ISLAND' },
+      ];
+      for (const island of islandShapes) {
         ctx.beginPath();
-        ctx.moveTo(5, y);
-        ctx.lineTo(316, y);
-        ctx.stroke();
-      }
-      for (let x = 39; x < 316; x += 46) {
+        ctx.ellipse(island.x, island.y, island.rx, island.ry, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#dec99a';
+        ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(x, 7);
-        ctx.lineTo(x, 191);
-        ctx.stroke();
-      }
-      ctx.strokeStyle = '#d9d4bd';
-      ctx.lineWidth = 5;
-      for (const x of [39, 85, 131, 177, 223, 269]) {
-        ctx.beginPath();
-        ctx.moveTo(x, 77);
-        ctx.lineTo(x, 115);
-        ctx.stroke();
-      }
-      const roofColors = ['#d68770', '#e5c279', '#7ea9a5', '#d1a1af', '#8fa77e', '#b7ac91'];
-      for (let row = 0; row < 5; row++)
-        for (let col = 0; col < 8; col++) {
-          const x = 18 + col * 37,
-            y = 18 + row * 31;
-          if (y > 73 && y < 118) continue;
-          if ((row * 7 + col * 3) % 4 === 0) {
-            ctx.fillStyle = '#78a96c';
-            ctx.fillRect(x, y, 23, 16);
-            ctx.fillStyle = '#43845c';
-            ctx.fillRect(x + 4, y + 4, 4, 4);
-            ctx.fillRect(x + 15, y + 8, 4, 4);
-          } else {
-            ctx.fillStyle = roofColors[(row * 5 + col) % roofColors.length];
-            ctx.fillRect(x, y, 17 + (col % 3) * 2, 12 + (row % 2) * 2);
-            ctx.fillStyle = 'rgba(255,255,255,.45)';
-            ctx.fillRect(x + 2, y + 2, 5, 2);
-          }
+        ctx.ellipse(island.x, island.y, island.rx - 4, island.ry - 4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#93b88b';
+        ctx.fill();
+        ctx.save();
+        ctx.clip();
+        ctx.strokeStyle = '#83928b';
+        ctx.lineWidth = 2;
+        for (let y = island.y - island.ry; y < island.y + island.ry; y += 20) {
+          ctx.beginPath();
+          ctx.moveTo(island.x - island.rx, y);
+          ctx.lineTo(island.x + island.rx, y);
+          ctx.stroke();
         }
-      ctx.restore();
-      const px = (q) => 20 + ((q.x + 760) / 2570) * 280,
-        py = (q) => 14 + ((q.y + 750) / 2980) * 170;
+        for (let x = island.x - island.rx; x < island.x + island.rx; x += 18) {
+          ctx.beginPath();
+          ctx.moveTo(x, island.y - island.ry);
+          ctx.lineTo(x, island.y + island.ry);
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.fillStyle = '#f9f2d8';
+        ctx.font = '700 7px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(island.label, island.x, island.y - island.ry - 3);
+        ctx.textAlign = 'start';
+      }
+      ctx.strokeStyle = '#d9c89e';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(146, py({ y: 784 }));
+      ctx.lineTo(203, py({ y: 784 }));
+      ctx.stroke();
+      ctx.strokeStyle = '#61767c';
+      ctx.lineWidth = 2;
+      ctx.stroke();
       for (const q of places) {
         const x = px(q),
           y = py(q);
@@ -3273,7 +3292,7 @@ function IslandRadar({ playerRef, places, online }) {
       ctx.fillText('N', 155, 14);
       ctx.fillStyle = 'rgba(255,255,255,.86)';
       ctx.font = '600 7px system-ui';
-      ctx.fillText('YABA · LAGOS', 12, 188);
+      ctx.fillText('EAST CAUSEWAY · TWO ISLANDS', 12, 188);
       ctx.textAlign = 'right';
       ctx.fillText(`X ${Math.round(p.x)} · Y ${Math.round(p.y)}`, 308, 188);
       ctx.textAlign = 'start';
@@ -3281,7 +3300,7 @@ function IslandRadar({ playerRef, places, online }) {
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
   }, [playerRef, places, online]);
-  return <canvas ref={canvasRef} className="island-radar" aria-label="Live Lagos city map" />;
+  return <canvas ref={canvasRef} className="island-radar" aria-label="Live two-island world map" />;
 }
 function CampusFloorControls({ floor, isGrower, security, onFloor }) {
   const names = ['Ground', 'First', 'Second', 'Third · Games', 'Fourth · Leadership'];
