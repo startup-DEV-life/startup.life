@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {
   advanceEnemy,
   attackEnemy,
@@ -1395,6 +1396,7 @@ function island(scene) {
       side: THREE.DoubleSide,
     }),
   );
+  land.name = 'legacy-island-surface';
   land.receiveShadow = true;
   land.castShadow = false;
   scene.add(land);
@@ -2799,7 +2801,11 @@ function createSunnyClouds(scene, compact = false) {
   for (let i = 0; i < count; i++) {
     const cloud = new THREE.Group();
     const material = new THREE.MeshBasicMaterial({ color: '#f6fbf4', fog: false });
-    for (const [offset, width, height] of [[-66, 115, 27], [34, 150, 39], [111, 72, 23]]) {
+    for (const [offset, width, height] of [
+      [-66, 115, 27],
+      [34, 150, 39],
+      [111, 72, 23],
+    ]) {
       const puff = new THREE.Mesh(new THREE.BoxGeometry(width, height, 48), material);
       puff.position.set(offset, height / 2, 0);
       cloud.add(puff);
@@ -3043,6 +3049,59 @@ export default function ThreeCity({
     ];
     callbacks.current.onObstacles?.(obstacles);
     const importedPlaceMeshes = [];
+    // Blender supplies the new visual island in local city coordinates. Keep the
+    // procedural city and its interaction state alive as the loading fallback.
+    Promise.all([
+      new GLTFLoader().loadAsync('/models/developer-metropolis/island-terrain.glb'),
+      new GLTFLoader().loadAsync('/models/developer-metropolis/campus.glb'),
+    ])
+      .then(([terrainChunk, campusChunk]) => {
+        if (disposed) return;
+        const legacyTerrain = city.getObjectByName('legacy-island-surface');
+        const campusData = generatedBuilding(
+          'developer-metropolis-campus',
+          'Developer Metropolis',
+          'Developer campus',
+          'A glass-and-jade work hall with an open courtyard and shared coding space.',
+          -960,
+          535,
+          '#258b9b',
+          '🏛️',
+        );
+        terrainChunk.scene.name = 'Blender Developer Metropolis terrain';
+        campusChunk.scene.name = 'Blender Developer Metropolis campus';
+        terrainChunk.scene.traverse((node) => {
+          if (node.isMesh) {
+            node.receiveShadow = true;
+            node.material.side = THREE.DoubleSide;
+          }
+        });
+        campusChunk.scene.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = !lowEndGPU;
+            node.receiveShadow = true;
+            if (node.name === 'Developer Metropolis Hall' || node.name === 'Main entrance glass') {
+              node.userData.buildingData = campusData;
+              importedPlaceMeshes.push(node);
+            }
+          }
+        });
+        city.add(terrainChunk.scene, campusChunk.scene);
+        if (legacyTerrain) legacyTerrain.visible = false;
+        obstacles.push({
+          x: -960 / SX + W / 2,
+          y: 511 / SZ + H / 2,
+          rx: 70 / SX,
+          ry: 49 / SZ,
+        });
+        callbacks.current.onObstacles?.(obstacles);
+        el.dataset.worldChunk = 'blender';
+      })
+      .catch((reason) => {
+        // A missing GLB must never block login, movement, or the existing city.
+        console.warn('Developer Metropolis asset unavailable; using procedural island.', reason);
+        el.dataset.worldChunk = 'procedural';
+      });
     scene.add(self, selfCar);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -3205,6 +3264,8 @@ export default function ThreeCity({
       lastFrame = performance.now(),
       lastEnemyTick = 0,
       previousRun = dungeonRun;
+    let perfWindowStart = lastFrame,
+      perfFrames = 0;
     const combatEffects = [],
       cameraTarget = new THREE.Vector3(),
       cameraFocus = new THREE.Vector3(),
@@ -3601,6 +3662,16 @@ export default function ThreeCity({
         }
       }
       renderer.render(scene, camera);
+      if (import.meta.env.DEV) {
+        perfFrames++;
+        if (time - perfWindowStart >= 1000) {
+          el.dataset.frameRate = String(Math.round((perfFrames * 1000) / (time - perfWindowStart)));
+          el.dataset.drawCalls = String(renderer.info.render.calls);
+          el.dataset.playerPosition = `${Math.round(player.x)},${Math.round(player.y)}`;
+          perfWindowStart = time;
+          perfFrames = 0;
+        }
+      }
     };
     draw();
     const dispose = () => {

@@ -212,6 +212,21 @@ export default function App() {
     buildingRole: 'Ground + five floors',
     uses: 'Ground-floor reception, Labs 1–4, leadership suite on floor 4, and Yabuka on floor 5 by elevator.',
   };
+  const metropolisPlace = {
+    id: 'generated-developer-metropolis-campus',
+    name: 'Developer Metropolis',
+    companyName: 'Developer Metropolis',
+    kind: 'Developer campus',
+    industry: 'Software & technology',
+    district: 'West Coast',
+    x: -455,
+    y: 1453,
+    color: '#258b9b',
+    emoji: '🏛️',
+    buildingRole: 'Glass-and-jade work hall',
+    uses: 'Walk through the courtyard and enter the shared coding hall.',
+    generated: true,
+  };
   const legendHouse = {
     id: 'legend-house',
     name: 'Legend House',
@@ -2293,7 +2308,9 @@ export default function App() {
                 {!user && (
                   <div className="phone-auth-actions">
                     <button onClick={() => openAuth('login')}>Sign in</button>
-                    <button className="phone-auth-primary" onClick={() => openAuth('signup')}>Create account</button>
+                    <button className="phone-auth-primary" onClick={() => openAuth('signup')}>
+                      Create account
+                    </button>
                   </div>
                 )}
                 <div className="phone-apps">
@@ -2485,6 +2502,7 @@ export default function App() {
                     <div className="phone-districts">
                       {[
                         'Tech Place',
+                        'Developer Metropolis',
                         'Legend House',
                         'The Commons',
                         'Tech Noodle',
@@ -2494,11 +2512,14 @@ export default function App() {
                         <button
                           key={d}
                           onClick={() => {
-                            const place = visiblePlaces.find(
-                              (q) =>
-                                q.name === d ||
-                                q.id === (d.includes('Beach') ? 'beach' : 'stadium'),
-                            );
+                            const place =
+                              d === 'Developer Metropolis'
+                                ? metropolisPlace
+                                : visiblePlaces.find(
+                                    (q) =>
+                                      q.name === d ||
+                                      q.id === (d.includes('Beach') ? 'beach' : 'stadium'),
+                                  );
                             if (place) {
                               travel(place);
                               setPhoneOpen(false);
@@ -2985,6 +3006,7 @@ export default function App() {
           <div className="districts">
             {[
               'Tech Place',
+              'Developer Metropolis',
               'Legend House',
               'The Commons',
               'Tech Noodle',
@@ -2995,7 +3017,11 @@ export default function App() {
                 key={d}
                 onClick={() => {
                   setMapOpen(false);
-                  travel(visiblePlaces.find((q) => q.name === d) || visiblePlaces[i]);
+                  travel(
+                    d === 'Developer Metropolis'
+                      ? metropolisPlace
+                      : visiblePlaces.find((q) => q.name === d) || visiblePlaces[i],
+                  );
                 }}
               >
                 {d}
