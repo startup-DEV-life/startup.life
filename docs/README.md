@@ -12,6 +12,8 @@ Use this page to find the right guide for the task at hand. These documents desc
 
 ## Feature-specific guides
 
+- [Startup roles and assignments](STARTUP_ROLES.md) — coding, marketing, HR, management, product, sales, support and finance tasks.
+
 - [Learning campus setup](learning-campus-setup.md) — setup and administration notes for learning content.
 - [Retained prototype assets](../assets/legacy-gdevelop/README.md) — preserved art and provenance from the retired standalone engine prototype.
 - World migration: [audit](WORLD_STAGE_1_AUDIT.md), [Blender island](WORLD_STAGE_2_REPORT.md), [streaming](WORLD_STAGE_3_REPORT.md), [art direction](WORLD_STAGE_4_REPORT.md), [cleanup plan](WORLD_STAGE_5_DELETION_PLAN.md), [cleanup verification](WORLD_STAGE_5_REPORT.md).
