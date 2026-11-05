@@ -10301,3 +10301,24 @@ button:not(:disabled):active {
 .install-modal > .startup-mark {
   margin: 0 auto 12px;
 }
+.phone-graphics-setting {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  color: #c5dbe7;
+  font-size: 12px;
+}
+.phone-graphics-setting select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #3d5568;
+  border-radius: 10px;
+  background: #112437;
+  color: #e4f4f8;
+  font: inherit;
+}
+.phone-graphics-setting select:focus-visible {
+  outline: 2px solid #7bd5ce;
+  outline-offset: 3px;
+}

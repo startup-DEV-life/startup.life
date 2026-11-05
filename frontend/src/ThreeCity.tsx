@@ -2,6 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EAST_ISLAND, WORLD_BOUNDS } from '../../shared/world.ts';
+import { createWorldArt } from './game/worldArt.ts';
+import {
+  GRAPHICS_PROFILES,
+  resolveGraphicsQuality,
+  type GraphicsQuality,
+} from './game/graphicsQuality.ts';
 import {
   advanceEnemy,
   attackEnemy,
@@ -15,7 +23,7 @@ const W = 1050,
   SX = 0.98,
   SZ = 0.75,
   WORLD_SCALE = 2;
-const MAP_LIMITS = { minX: -760, maxX: 1810, minY: -750, maxY: 2230 };
+const MAP_LIMITS = WORLD_BOUNDS;
 const ISLAND_RX = 1540,
   ISLAND_RZ = 1305;
 const TERRAIN_PEAKS = [
@@ -1327,7 +1335,7 @@ function carModel() {
 }
 
 function island(scene) {
-  // Block-built shoreline frames the city without putting obstacles on roads.
+  // Coast art stays outside all roads and gameplay footprints.
   const waterMaterial = celMaterial({
     color: '#4bb4c3',
     map: surfaceMap('#54b7c3', 'water'),
@@ -1338,7 +1346,8 @@ function island(scene) {
     emissive: '#123f49',
     emissiveIntensity: 0.08,
   });
-  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(8000, 8000), waterMaterial);
+  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(12000, 8000), waterMaterial);
+  ocean.name = 'world-ocean';
   ocean.rotation.x = -Math.PI / 2;
   ocean.position.y = -14;
   ocean.receiveShadow = true;
@@ -1395,40 +1404,50 @@ function island(scene) {
       side: THREE.DoubleSide,
     }),
   );
+  land.name = 'legacy-island-surface';
+  land.position.y = -0.85;
   land.receiveShadow = true;
   land.castShadow = false;
   scene.add(land);
-  const coastBlock = new THREE.BoxGeometry(1, 1, 1);
-  const coastGrass = new THREE.InstancedMesh(coastBlock, mat('#86ab66'), 320);
-  const coastDirt = new THREE.InstancedMesh(coastBlock, mat('#9d8060'), 320);
-  const coastSand = new THREE.InstancedMesh(coastBlock, mat('#e2c98d'), 320);
-  const block = new THREE.Object3D();
-  for (let i = 0; i < 320; i++) {
-    const a = (i / 320) * Math.PI * 2;
-    const ripple = 1 + Math.sin(a * 5 + 0.3) * 0.014 + Math.sin(a * 9 + 1.2) * 0.008;
-    const x = Math.cos(a) * rx * ripple;
-    const z = Math.sin(a) * rz * ripple;
-    const width = 23 + (i % 3) * 4;
-    block.rotation.set(0, 0, 0);
-    block.position.set(x, -7, z);
-    block.scale.set(width, 15, width);
-    block.updateMatrix();
-    coastDirt.setMatrixAt(i, block.matrix);
-    block.position.y = 1.4;
-    block.scale.set(width, 2.8, width);
-    block.updateMatrix();
-    coastGrass.setMatrixAt(i, block.matrix);
-    block.position.set(x * 1.012, -2.2, z * 1.012);
-    block.scale.set(width + 6, 4, width + 6);
-    block.updateMatrix();
-    coastSand.setMatrixAt(i, block.matrix);
+  const coastPositions = [],
+    coastColors = [],
+    coastIndices = [];
+  const coastRings: Array<[number, number, string]> = [
+    [0.998, 1.6, '#78946c'],
+    [1.012, -2, '#dfc18c'],
+    [1.019, -6, '#a0a486'],
+    [1.02, -14.2, '#607c7c'],
+  ];
+  for (const [radial, height, tint] of coastRings) {
+    const color = new THREE.Color(tint);
+    for (let i = 0; i <= 128; i++) {
+      const a = (i / 128) * Math.PI * 2;
+      const ripple = 1 + Math.sin(a * 5 + 0.3) * 0.014 + Math.sin(a * 9 + 1.2) * 0.008;
+      coastPositions.push(
+        Math.cos(a) * rx * radial * ripple,
+        height,
+        Math.sin(a) * rz * radial * ripple,
+      );
+      coastColors.push(color.r, color.g, color.b);
+    }
   }
-  for (const mesh of [coastDirt, coastSand, coastGrass]) {
-    mesh.instanceMatrix.needsUpdate = true;
-    mesh.receiveShadow = true;
-    scene.add(mesh);
-  }
-  // Square stones and sand bars keep the whole coast in the same visual language.
+  for (let ring = 0; ring < 3; ring++)
+    for (let i = 0; i < 128; i++) {
+      const a = ring * 129 + i,
+        b = a + 129;
+      coastIndices.push(a, b, a + 1, b, b + 1, a + 1);
+    }
+  const coastGeometry = new THREE.BufferGeometry();
+  coastGeometry.setAttribute('position', new THREE.Float32BufferAttribute(coastPositions, 3));
+  coastGeometry.setAttribute('color', new THREE.Float32BufferAttribute(coastColors, 3));
+  coastGeometry.setIndex(coastIndices);
+  coastGeometry.computeVertexNormals();
+  const coast = new THREE.Mesh(
+    coastGeometry,
+    celMaterial({ vertexColors: true, side: THREE.DoubleSide }),
+  );
+  coast.name = 'Painted continuous coastline';
+  scene.add(coast);
   const sandMat = mat('#d6c394'),
     rockMat = mat('#9b9d87');
   let seed = 807;
@@ -1442,7 +1461,10 @@ function island(scene) {
       x = Math.cos(a) * (rx * variation + rand() * 8),
       z = Math.sin(a) * (rz * variation + rand() * 8),
       size = 5 + rand() * 11,
-      boulder = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), i % 4 ? rockMat : sandMat);
+      boulder = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(size * 0.65, 1),
+        i % 4 ? rockMat : sandMat,
+      );
     boulder.position.set(x, -3 + rand() * 2, z);
     boulder.scale.set(1 + rand() * 0.55, 0.38 + rand() * 0.25, 0.8 + rand() * 0.35);
     boulder.rotation.y = rand() * Math.PI;
@@ -1455,10 +1477,12 @@ function island(scene) {
     [-520, 505, 0.36],
     [840, 240, 0.3],
   ]) {
-    const bar = new THREE.Mesh(new THREE.BoxGeometry(84 * s, 5, 62 * s), sandMat);
+    const bar = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 6), sandMat);
+    bar.scale.set(42 * s, 4, 31 * s);
     bar.position.set(x, -4, z);
     scene.add(bar);
-    const greenTop = new THREE.Mesh(new THREE.BoxGeometry(57 * s, 3, 40 * s), greenAlt);
+    const greenTop = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 6), mat('#81a879'));
+    greenTop.scale.set(28 * s, 3, 20 * s);
     greenTop.position.set(x, 1, z);
     scene.add(greenTop);
   }
@@ -1494,7 +1518,7 @@ function makePlaceMarker(name, emoji) {
 }
 function buildNeighborhoodBlocks(city, rand, footprints) {
   const limit = 150,
-    geometry = new THREE.BoxGeometry(1, 1, 1),
+    geometry = new RoundedBoxGeometry(1, 1, 1, 1, 0.045),
     facades = [
       '#83b894',
       '#d99a70',
@@ -1667,10 +1691,87 @@ function addDistrictBillboards(city) {
   }
 }
 
+function buildEastCauseway(city) {
+  const { bridgeStartX, bridgeEndX, z } = EAST_ISLAND;
+  const span = bridgeEndX - bridgeStartX + 100;
+  const center = (bridgeStartX + bridgeEndX) / 2;
+  box(city, center, 2.45, z, span, 0.7, 68, mat('#53636c'));
+  for (const side of [-1, 1]) {
+    box(city, center, 3.15, z + side * 35, span, 2.6, 3.2, mat('#d7c9aa'));
+  }
+  const pierGeometry = new THREE.BoxGeometry(11, 17, 11);
+  const piers = new THREE.InstancedMesh(pierGeometry, mat('#748486'), 18);
+  const markerGeometry = new THREE.PlaneGeometry(25, 1.1);
+  const markers = new THREE.InstancedMesh(markerGeometry, mat('#e9d7a3'), 18);
+  const dummy = new THREE.Object3D();
+  for (let i = 0; i < 9; i++) {
+    const x = bridgeStartX + 85 + i * ((bridgeEndX - bridgeStartX - 140) / 8);
+    for (const side of [-1, 1]) {
+      const index = i * 2 + (side === 1 ? 1 : 0);
+      dummy.position.set(x, -6, z + side * 27);
+      dummy.rotation.set(0, 0, 0);
+      dummy.updateMatrix();
+      piers.setMatrixAt(index, dummy.matrix);
+      dummy.position.set(x, 3.18, z + side * 10);
+      dummy.rotation.set(-Math.PI / 2, 0, 0);
+      dummy.updateMatrix();
+      markers.setMatrixAt(index, dummy.matrix);
+    }
+  }
+  piers.instanceMatrix.needsUpdate = true;
+  markers.instanceMatrix.needsUpdate = true;
+  city.add(piers, markers);
+}
+
+function buildEastFallback(city) {
+  const group = new THREE.Group();
+  group.name = 'East island fallback';
+  const land = new THREE.Mesh(new THREE.CircleGeometry(1, 48), mat('#6f9a76'));
+  land.rotation.x = -Math.PI / 2;
+  land.scale.set(EAST_ISLAND.radiusX, EAST_ISLAND.radiusZ, 1);
+  land.position.set(EAST_ISLAND.x, 2.4, EAST_ISLAND.z);
+  group.add(land);
+  box(group, EAST_ISLAND.x, 2.6, EAST_ISLAND.z, 1500, 0.5, 62, mat('#53636c'));
+  city.add(group);
+  return group;
+}
+
+function buildEastFoliage(lowEndGPU) {
+  const group = new THREE.Group();
+  const trunk = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(2, 3.5, 20, 6),
+    mat('#765d45'),
+    56,
+  );
+  const crown = new THREE.InstancedMesh(new THREE.ConeGeometry(13, 30, 7), mat('#3b8260'), 56);
+  crown.name = 'East island foliage crowns';
+  const dummy = new THREE.Object3D();
+  for (let i = 0; i < 56; i++) {
+    const angle = (i * 2.3999632297) % (Math.PI * 2);
+    const radius = 0.64 + ((i * 17) % 21) / 100;
+    const x = EAST_ISLAND.x + Math.cos(angle) * EAST_ISLAND.radiusX * radius;
+    let z = EAST_ISLAND.z + Math.sin(angle) * EAST_ISLAND.radiusZ * radius;
+    if (Math.abs(z - EAST_ISLAND.z) < 85) z = EAST_ISLAND.z + (i % 2 ? 95 : -95);
+    dummy.position.set(x, 13, z);
+    dummy.rotation.set(0, 0, 0);
+    dummy.updateMatrix();
+    trunk.setMatrixAt(i, dummy.matrix);
+    dummy.position.y = 32;
+    dummy.updateMatrix();
+    crown.setMatrixAt(i, dummy.matrix);
+  }
+  trunk.instanceMatrix.needsUpdate = true;
+  crown.instanceMatrix.needsUpdate = true;
+  trunk.castShadow = crown.castShadow = !lowEndGPU;
+  group.add(trunk, crown);
+  return group;
+}
+
 function buildCity(scene, places, jobs, items = []) {
   const city = new THREE.Group();
   scene.add(city);
   island(city);
+  buildEastCauseway(city);
   city.userData.riftArena = buildRiftArena(city);
   const road = texturedMat('#7b8980', 0.96, 'stone', 0.2),
     roadLight = mat('#a49e88'),
@@ -1682,17 +1783,23 @@ function buildCity(scene, places, jobs, items = []) {
       texturedMat('#52b8c7', 0.9, 'water', 0.1),
     );
   lagoon.rotation.x = -Math.PI / 2;
+  lagoon.name = 'world-lagoon';
   lagoon.position.set(0, 2.25, lagoonZ);
+  // Keep the old ribbon available, but its rectangle crossed occupied lots.
+  // Coastal water now provides the island's visible water without moving venues.
+  lagoon.visible = false;
   city.add(lagoon);
   for (const side of [-1, 1]) {
     const bank = new THREE.Mesh(new THREE.PlaneGeometry(2700, 10), mat('#d5c69a'));
     bank.rotation.x = -Math.PI / 2;
     bank.position.set(0, 2.85, lagoonZ + side * 58);
+    bank.visible = false;
     city.add(bank);
   }
   const lagoonName = labelSprite('LAGOS LAGOON');
   lagoonName.scale.set(138, 24, 1);
   lagoonName.position.set(-80, 15, lagoonZ - 7);
+  lagoonName.visible = false;
   city.add(lagoonName);
   const avenue = new THREE.Mesh(new THREE.PlaneGeometry(2500, 22), road);
   avenue.rotation.x = -Math.PI / 2;
@@ -1743,13 +1850,13 @@ function buildCity(scene, places, jobs, items = []) {
   for (const x of townColumns) {
     const roadMesh = new THREE.Mesh(new THREE.PlaneGeometry(38, roadSpanZ), street);
     roadMesh.rotation.x = -Math.PI / 2;
-    roadMesh.position.set(x, 3.05, 0);
+    roadMesh.position.set(x, 3.28, 0);
     roadMesh.receiveShadow = true;
     city.add(roadMesh);
     for (let z = -roadSpanZ / 2 + 35; z < roadSpanZ / 2 - 20; z += 116) {
       const dash = new THREE.Mesh(dashGeo, marking);
       dash.rotation.set(-Math.PI / 2, 0, Math.PI / 2);
-      dash.position.set(x, 3.13, z);
+      dash.position.set(x, 3.4, z);
       city.add(dash);
     }
     for (const side of [-1, 1]) {
@@ -1768,7 +1875,7 @@ function buildCity(scene, places, jobs, items = []) {
   for (const x of townColumns) {
     const bridge = new THREE.Mesh(new THREE.PlaneGeometry(62, 112), street);
     bridge.rotation.x = -Math.PI / 2;
-    bridge.position.set(x, 3.2, lagoonZ);
+    bridge.position.set(x, 3.55, lagoonZ);
     city.add(bridge);
   }
   for (const x of townColumns)
@@ -1776,7 +1883,7 @@ function buildCity(scene, places, jobs, items = []) {
       for (let k = 0; k < 5; k++) {
         const stripe = new THREE.Mesh(new THREE.PlaneGeometry(2, 20), mat('#f4edcf'));
         stripe.rotation.x = -Math.PI / 2;
-        stripe.position.set(x - 10 + k * 5, 3.17, z);
+        stripe.position.set(x - 10 + k * 5, 3.5, z);
         city.add(stripe);
       }
   let seed = 119;
@@ -2072,15 +2179,17 @@ function buildCity(scene, places, jobs, items = []) {
     )
       continue;
     const ground = terrainHeightAt(x, z),
-      trunk = new THREE.Mesh(new THREE.BoxGeometry(5, 18, 5), mat('#805e45'));
+      trunk = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 3.2, 18, 7), mat('#805e45'));
     trunk.position.set(x, ground + 8.5, z);
     trunk.castShadow = true;
     city.add(trunk);
     const canopy = new THREE.Mesh(
-      new THREE.BoxGeometry(24, 20, 22),
+      new THREE.SphereGeometry(14, 10, 7),
       mat(['#47785b', '#5c8760', '#71885d'][planted % 3]),
     );
     canopy.position.set(x, ground + 24, z);
+    canopy.scale.set(1, 0.8, 0.88);
+    canopy.name = 'Painted park canopy';
     canopy.castShadow = true;
     canopy.receiveShadow = true;
     city.add(canopy);
@@ -2795,22 +2904,25 @@ function makeIllustratedCloudTexture() {
 }
 function createSunnyClouds(scene, compact = false) {
   const group = new THREE.Group(),
-    count = compact ? 4 : 9;
+    count = 14,
+    texture = makeIllustratedCloudTexture();
   for (let i = 0; i < count; i++) {
-    const cloud = new THREE.Group();
-    const material = new THREE.MeshBasicMaterial({ color: '#f6fbf4', fog: false });
-    for (const [offset, width, height] of [[-66, 115, 27], [34, 150, 39], [111, 72, 23]]) {
-      const puff = new THREE.Mesh(new THREE.BoxGeometry(width, height, 48), material);
-      puff.position.set(offset, height / 2, 0);
-      cloud.add(puff);
-    }
+    const cloud = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: texture,
+        color: '#fff8e7',
+        transparent: true,
+        depthWrite: false,
+        fog: true,
+      }),
+    );
     cloud.position.set(
       -2100 + (i % 4) * 1220,
-      510 + (i % 3) * 105,
+      620 + (i % 3) * 95,
       -1900 + Math.floor(i / 4) * 1350,
     );
-    cloud.scale.setScalar(1 + (i % 3) * 0.18);
-    cloud.userData.drift = 0.9 + (i % 4) * 0.22;
+    cloud.scale.set(680 + (i % 3) * 100, 275 + (i % 3) * 40, 1);
+    cloud.userData.drift = 2.5 + (i % 4) * 0.6;
     group.add(cloud);
   }
   scene.add(group);
@@ -2856,6 +2968,16 @@ function makeAmbientVfx(scene, compact = false) {
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
+  const glowCanvas = document.createElement('canvas');
+  glowCanvas.width = glowCanvas.height = 32;
+  const glowContext = glowCanvas.getContext('2d');
+  const glow = glowContext.createRadialGradient(16, 16, 0, 16, 16, 15);
+  glow.addColorStop(0, '#fffef0');
+  glow.addColorStop(0.25, '#fff6cabb');
+  glow.addColorStop(1, '#fff6ca00');
+  glowContext.fillStyle = glow;
+  glowContext.fillRect(0, 0, 32, 32);
+  material.map = new THREE.CanvasTexture(glowCanvas);
   const motes = new THREE.Points(geometry, material);
   motes.frustumCulled = false;
   scene.add(motes);
@@ -2944,6 +3066,8 @@ export default function ThreeCity({
   weather = 'clear',
   cameraMode = 'walk',
   lightingPreset = 'day',
+  graphicsQuality = 'auto' as GraphicsQuality,
+  captureFrameRef = null,
   inVehicle = false,
 }) {
   const host = useRef(null),
@@ -2958,6 +3082,7 @@ export default function ThreeCity({
     weatherRef = useRef(weather),
     cameraModeRef = useRef(cameraMode),
     lightingRef = useRef(lightingPreset),
+    qualityRef = useRef(graphicsQuality),
     avatarRefresh = useRef(0),
     visiblePeople = useRef([]);
   callbacks.current = { onPlace, onMapMove, onPickup, onObstacles, onCombatEvent };
@@ -2970,6 +3095,7 @@ export default function ThreeCity({
   weatherRef.current = weather;
   cameraModeRef.current = cameraMode;
   lightingRef.current = lightingPreset;
+  qualityRef.current = graphicsQuality;
   const [error, setError] = useState('');
   useEffect(() => {
     const el = host.current;
@@ -2982,38 +3108,45 @@ export default function ThreeCity({
       mobileGPU ||
       (memory !== undefined && memory <= 4) ||
       (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4);
+    let appliedQuality = resolveGraphicsQuality(qualityRef.current, lowEndGPU);
+    const initialProfile = GRAPHICS_PROFILES[appliedQuality];
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#8bcfdf');
     scene.fog = new THREE.Fog('#a8dbe0', 2500, 6400);
-    const camera = new THREE.PerspectiveCamera(47, 1, 0.1, 5200),
+    const camera = new THREE.PerspectiveCamera(47, 1, 1, 5200),
       renderer = new THREE.WebGLRenderer({
-        antialias: !lowEndGPU,
+        antialias: appliedQuality !== 'low',
         alpha: false,
         powerPreference: 'high-performance',
       });
     // Avoid rendering below native CSS resolution on phones; sub-1x pixel ratios
     // made the scene look visibly pixelated on modern high-density displays.
-    const pixelRatioCap = mobileGPU ? 1.25 : lowEndGPU ? 1 : 1.5;
+    const pixelRatioCap = initialProfile.pixelRatio;
     renderer.setPixelRatio(Math.min(devicePixelRatio || 1, pixelRatioCap));
-    renderer.shadowMap.enabled = !lowEndGPU;
+    renderer.shadowMap.enabled = initialProfile.shadows;
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 0.94;
     el.appendChild(renderer.domElement);
-    scene.add(new THREE.HemisphereLight('#e8f7ff', '#66794b', 2.05));
-    const sun = new THREE.DirectionalLight('#fff2c7', 3.35);
+    if (import.meta.env.DEV) el.dataset.rendererId = crypto.randomUUID();
+    const ambient = new THREE.HemisphereLight('#cde9f6', '#596c7c', 1.15);
+    scene.add(ambient);
+    const sun = new THREE.DirectionalLight('#ffe5b3', 1.8);
     sun.position.set(-430, 720, -350);
-    sun.castShadow = !lowEndGPU;
-    sun.shadow.mapSize.set(lowEndGPU ? 512 : 1024, lowEndGPU ? 512 : 1024);
+    sun.castShadow = initialProfile.shadows;
+    sun.shadow.mapSize.set(initialProfile.shadowSize, initialProfile.shadowSize);
     sun.shadow.camera.left = -950;
     sun.shadow.camera.right = 950;
     sun.shadow.camera.top = 950;
     sun.shadow.camera.bottom = -950;
-    sun.shadow.bias = -0.00015;
-    sun.shadow.normalBias = 0.025;
+    sun.shadow.camera.near = 10;
+    sun.shadow.camera.far = 2400;
+    sun.shadow.bias = -0.005;
+    sun.shadow.normalBias = 3;
     scene.add(sun);
-    const fill = new THREE.DirectionalLight('#8ec6c0', 0.7);
+    scene.add(sun.target);
+    const fill = new THREE.DirectionalLight('#8ec6df', 0.38);
     fill.position.set(560, 280, 460);
     scene.add(fill);
     const city = buildCity(scene, places, jobs, items),
@@ -3022,9 +3155,36 @@ export default function ThreeCity({
       selfCar = carModel(),
       others = new Map(),
       collected = new Set(),
-      fx = makeAmbientVfx(scene, mobileGPU),
+      fx = makeAmbientVfx(scene, false),
       clouds = createSunnyClouds(scene, mobileGPU);
     city.scale.setScalar(WORLD_SCALE);
+    const art = createWorldArt(scene, city, appliedQuality);
+    el.dataset.worldArt = 'painted-v1';
+    art.styleRoot(self);
+    art.styleRoot(selfCar);
+    const applyQuality = (next) => {
+      const profile = GRAPHICS_PROFILES[next];
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, profile.pixelRatio));
+      renderer.shadowMap.enabled = profile.shadows;
+      sun.castShadow = profile.shadows;
+      if (sun.shadow.mapSize.x !== profile.shadowSize) {
+        sun.shadow.map?.dispose();
+        sun.shadow.map = null;
+        sun.shadow.mapSize.set(profile.shadowSize, profile.shadowSize);
+      }
+      renderer.shadowMap.needsUpdate = true;
+      clouds.children.forEach((cloud, index) => {
+        cloud.visible = index < profile.clouds;
+      });
+      fx.geometry.setDrawRange(0, profile.particles);
+      art.setQuality(next);
+      el.dataset.graphicsQuality = next;
+      el.dataset.graphicsShadows = String(profile.shadows);
+      el.dataset.graphicsClouds = String(profile.clouds);
+      el.dataset.graphicsParticles = String(profile.particles);
+      appliedQuality = next;
+    };
+    applyQuality(appliedQuality);
     const obstacles = [
       ...city.children
         .filter(
@@ -3043,6 +3203,139 @@ export default function ThreeCity({
     ];
     callbacks.current.onObstacles?.(obstacles);
     const importedPlaceMeshes = [];
+    const islandLoader = new GLTFLoader();
+    const islandCache = new Map();
+    const eastFallback = buildEastFallback(city);
+    art.styleRoot(eastFallback);
+    const lastStreamPosition = new THREE.Vector2(wx(q.x), wz(q.y));
+    let eastFar = null,
+      eastNear = null,
+      eastFoliage = null,
+      eastNearActive = false,
+      lastStreamCheck = 0;
+    const loadEastChunk = (level) => {
+      if (islandCache.has(level)) return islandCache.get(level);
+      const promise = islandLoader
+        .loadAsync(`/models/east-island/${level}.glb`)
+        .then((asset) => {
+          if (disposed) return;
+          const root = asset.scene;
+          root.name = `East island ${level} LOD`;
+          root.visible = false;
+          root.traverse((node) => {
+            if (node.isMesh) {
+              node.receiveShadow = true;
+              node.castShadow = level === 'near';
+              node.material.side = THREE.DoubleSide;
+            }
+          });
+          city.add(root);
+          art.styleRoot(root);
+          if (level === 'far') eastFar = root;
+          else {
+            eastNear = root;
+            eastFoliage = buildEastFoliage(false);
+            eastFoliage.visible = false;
+            city.add(eastFoliage);
+            art.styleRoot(eastFoliage);
+            const tower = root.getObjectByName('Signal tower');
+            if (tower) {
+              tower.userData.buildingData = generatedBuilding(
+                'east-signal-tower',
+                'Jade Signal Tower',
+                'Technology office',
+                'An island workspace with a signal lab and shared development desks.',
+                EAST_ISLAND.x + 90,
+                EAST_ISLAND.z - 190,
+                '#258e91',
+                '🏢',
+              );
+              importedPlaceMeshes.push(tower);
+            }
+            const blocking = [{ x: EAST_ISLAND.x + 90, z: EAST_ISLAND.z - 190, w: 94, d: 94 }];
+            for (const side of [-1, 1])
+              for (let index = 0; index < 5; index++)
+                blocking.push({
+                  x: EAST_ISLAND.x - 465 + index * 225,
+                  z: EAST_ISLAND.z + side * (145 + (index % 2) * 34),
+                  w: 104,
+                  d: 86,
+                });
+            obstacles.push(
+              ...blocking.map((b) => ({
+                x: b.x / SX + W / 2,
+                y: b.z / SZ + H / 2,
+                rx: b.w / (2 * SX) + 3,
+                ry: b.d / (2 * SZ) + 3,
+              })),
+            );
+            callbacks.current.onObstacles?.(obstacles);
+          }
+          return root;
+        })
+        .catch((reason) => {
+          console.warn(`East island ${level} asset unavailable`, reason);
+          return null;
+        });
+      islandCache.set(level, promise);
+      return promise;
+    };
+    // Blender supplies the new visual island in local city coordinates. Keep the
+    // procedural city and its interaction state alive as the loading fallback.
+    Promise.all([
+      islandLoader.loadAsync('/models/developer-metropolis/island-terrain.glb'),
+      islandLoader.loadAsync('/models/developer-metropolis/campus.glb'),
+    ])
+      .then(([terrainChunk, campusChunk]) => {
+        if (disposed) return;
+        const legacyTerrain = city.getObjectByName('legacy-island-surface');
+        const campusData = generatedBuilding(
+          'developer-metropolis-campus',
+          'Developer Metropolis',
+          'Developer campus',
+          'A glass-and-jade work hall with an open courtyard and shared coding space.',
+          -960,
+          535,
+          '#258b9b',
+          '🏛️',
+        );
+        terrainChunk.scene.name = 'Blender Developer Metropolis terrain';
+        terrainChunk.scene.position.y = -0.85;
+        campusChunk.scene.name = 'Blender Developer Metropolis campus';
+        terrainChunk.scene.traverse((node) => {
+          if (node.isMesh) {
+            node.receiveShadow = true;
+            node.material.side = THREE.DoubleSide;
+          }
+        });
+        campusChunk.scene.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+            if (node.name === 'Developer Metropolis Hall' || node.name === 'Main entrance glass') {
+              node.userData.buildingData = campusData;
+              importedPlaceMeshes.push(node);
+            }
+          }
+        });
+        city.add(terrainChunk.scene, campusChunk.scene);
+        art.styleRoot(terrainChunk.scene);
+        art.styleRoot(campusChunk.scene);
+        if (legacyTerrain) legacyTerrain.visible = false;
+        obstacles.push({
+          x: -960 / SX + W / 2,
+          y: 511 / SZ + H / 2,
+          rx: 70 / SX,
+          ry: 49 / SZ,
+        });
+        callbacks.current.onObstacles?.(obstacles);
+        el.dataset.worldChunk = 'blender';
+      })
+      .catch((reason) => {
+        // A missing GLB must never block login, movement, or the existing city.
+        console.warn('Developer Metropolis asset unavailable; using procedural island.', reason);
+        el.dataset.worldChunk = 'procedural';
+      });
     scene.add(self, selfCar);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -3064,7 +3357,7 @@ export default function ThreeCity({
       interiorRoot = null,
       activeInteriorId = null;
     const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(2900, 2550),
+      new THREE.PlaneGeometry(11000, 3500),
       new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }),
     );
     ground.scale.set(WORLD_SCALE, 1, WORLD_SCALE);
@@ -3092,8 +3385,12 @@ export default function ThreeCity({
         (-(e.clientY - r.top) / r.height) * 2 + 1,
       );
       ray.setFromCamera(pointer, camera);
+      const visibleImportedMeshes = importedPlaceMeshes.filter((mesh) => {
+        for (let node = mesh; node; node = node.parent) if (!node.visible) return false;
+        return true;
+      });
       const hit = ray.intersectObjects(
-        [...jobsMeshes, ...placeMeshes, ...importedPlaceMeshes],
+        [...jobsMeshes, ...placeMeshes, ...visibleImportedMeshes],
         true,
       )[0];
       if (hit) {
@@ -3205,6 +3502,8 @@ export default function ThreeCity({
       lastFrame = performance.now(),
       lastEnemyTick = 0,
       previousRun = dungeonRun;
+    let perfWindowStart = lastFrame,
+      perfFrames = 0;
     const combatEffects = [],
       cameraTarget = new THREE.Vector3(),
       cameraFocus = new THREE.Vector3(),
@@ -3221,10 +3520,56 @@ export default function ThreeCity({
         water = city.userData.waterMaterial,
         mode = cameraModeRef.current;
       lastFrame = time;
+      const requestedQuality = resolveGraphicsQuality(qualityRef.current, lowEndGPU);
+      if (requestedQuality !== appliedQuality) applyQuality(requestedQuality);
+      sun.position.set(selfX - 430, 720, selfZ - 350);
+      sun.target.position.set(selfX, 0, selfZ);
+      if (time - lastStreamCheck > 250) {
+        lastStreamCheck = time;
+        const currentX = wx(player.x),
+          currentZ = wz(player.y),
+          targetX = wx(player.tx),
+          targetZ = wz(player.ty),
+          targetDelta = Math.hypot(targetX - currentX, targetZ - currentZ),
+          lookAhead = Math.min(900, targetDelta),
+          motionX = currentX - lastStreamPosition.x,
+          motionZ = currentZ - lastStreamPosition.y,
+          motionDistance = Math.hypot(motionX, motionZ),
+          predictedX =
+            currentX +
+            (targetDelta > 8
+              ? ((targetX - currentX) / targetDelta) * lookAhead
+              : motionDistance > 0.3
+                ? (motionX / motionDistance) * 650
+                : 0),
+          predictedZ =
+            currentZ +
+            (targetDelta > 8
+              ? ((targetZ - currentZ) / targetDelta) * lookAhead
+              : motionDistance > 0.3
+                ? (motionZ / motionDistance) * 650
+                : 0),
+          distance = Math.hypot(currentX - EAST_ISLAND.x, currentZ - EAST_ISLAND.z),
+          predictedDistance = Math.hypot(predictedX - EAST_ISLAND.x, predictedZ - EAST_ISLAND.z);
+        lastStreamPosition.set(currentX, currentZ);
+        if (Math.min(distance, predictedDistance) < 3800) void loadEastChunk('far');
+        if (Math.min(distance, predictedDistance) < 1750) void loadEastChunk('near');
+        if (eastNear && distance < 1750) eastNearActive = true;
+        if (distance > 2050) eastNearActive = false;
+        const useNear = !!eastNear && eastNearActive;
+        if (eastNear) eastNear.visible = useNear;
+        if (eastFoliage) eastFoliage.visible = useNear;
+        if (eastFar) eastFar.visible = !useNear && distance < 4300;
+        eastFallback.visible = !useNear && !eastFar?.visible;
+        if (import.meta.env.DEV)
+          el.dataset.streamLod = useNear ? 'near' : eastFar?.visible ? 'far' : 'unloaded';
+        if (import.meta.env.DEV) el.dataset.streamLoadCount = String(islandCache.size);
+      }
       clouds.children.forEach((cloud) => {
         cloud.position.x += frameDelta * cloud.userData.drift;
         if (cloud.position.x > 2450) cloud.position.x = -2450;
       });
+      clouds.position.set(selfX, 0, selfZ);
       const building = interiorRef.current,
         buildingKey = building?.id ? `${building.id}:${building.floor || 0}` : null;
       if (buildingKey && buildingKey !== activeInteriorId) {
@@ -3239,6 +3584,7 @@ export default function ThreeCity({
         }
         activeInteriorId = buildingKey;
         interiorRoot = buildInteriorRoom(building, playerName);
+        art.styleRoot(interiorRoot);
         scene.add(interiorRoot);
         city.visible = false;
         controls.enabled = false;
@@ -3266,6 +3612,9 @@ export default function ThreeCity({
         particlePositions[k + 2] = fx.base[k + 2] + Math.cos(time * 0.0003 + fx.phase[i]) * 4;
       }
       particleAttribute.needsUpdate = true;
+      fx.motes.position.set(selfX, 0, selfZ);
+      fx.motes.visible = !building && !dungeonRef.current;
+      clouds.visible = !building && !dungeonRef.current;
       fx.playerRing.visible = !building && !player.inVehicle;
       fx.playerRing.position.set(selfX, selfGround + 2, selfZ);
       const pulse = 0.94 + Math.sin(time * 0.004) * 0.08;
@@ -3495,10 +3844,17 @@ export default function ThreeCity({
       }
       const cycle = (Math.sin(time * 0.000035) + 1) / 2,
         preset = lightingRef.current;
+      ambient.intensity =
+        preset === 'night' ? 0.35 : preset === 'dynamic' ? 0.35 + cycle * 0.8 : 1.15;
+      clouds.children.forEach((cloud) =>
+        cloud.material.color.set(
+          preset === 'night' ? '#7d8cba' : preset === 'sunset' ? '#ffe0c0' : '#fff8e7',
+        ),
+      );
       if (preset === 'sunset') {
         scene.background.set('#ef9a79');
         sun.color.set('#ffd0a2');
-        sun.intensity = 1.55;
+        sun.intensity = 1.15;
         scene.fog.color.set('#ef9a79');
       } else if (preset === 'night') {
         scene.background.set('#192448');
@@ -3508,12 +3864,12 @@ export default function ThreeCity({
       } else if (preset === 'dynamic') {
         scene.background.setRGB(0.08 + cycle * 0.52, 0.13 + cycle * 0.57, 0.2 + cycle * 0.55);
         sun.color.set('#fff0cf');
-        sun.intensity = 1.25 + cycle * 1.9;
+        sun.intensity = 0.7 + cycle * 1.2;
         scene.fog.color.copy(scene.background);
       } else {
         scene.background.set('#91c5d2');
         sun.color.set('#fff0cf');
-        sun.intensity = 2.25;
+        sun.intensity = 1.8;
         scene.fog.color.set('#91c5d2');
       }
       if (dungeonRef.current) {
@@ -3554,6 +3910,7 @@ export default function ThreeCity({
         }
         if (!a) {
           a = p.inVehicle ? carModel() : avatar(p.name, p.avatar, p.id);
+          art.styleRoot(a);
           a.position.set(
             wx(p.x) * WORLD_SCALE,
             Math.max(0, terrainHeightAt(wx(p.x), wz(p.y)) - 2) + (p.inVehicle ? 3 : 0),
@@ -3600,7 +3957,25 @@ export default function ThreeCity({
           camera.lookAt(0, 39, -10);
         }
       }
+      art.update(time, camera, lightingRef.current, !!interiorRoot || dungeonRef.current);
       renderer.render(scene, camera);
+      if (import.meta.env.DEV && captureFrameRef?.current) {
+        const receiveFrame = captureFrameRef.current;
+        captureFrameRef.current = null;
+        renderer.domElement.toBlob(receiveFrame, 'image/png');
+      }
+      if (import.meta.env.DEV) {
+        perfFrames++;
+        if (time - perfWindowStart >= 1000) {
+          el.dataset.frameRate = String(Math.round((perfFrames * 1000) / (time - perfWindowStart)));
+          el.dataset.drawCalls = String(renderer.info.render.calls);
+          el.dataset.playerPosition = `${Math.round(player.x)},${Math.round(player.y)}`;
+          el.dataset.artSkyVisible = String(!interiorRoot && !dungeonRef.current);
+          el.dataset.artAnimationTime = String(Math.round(time));
+          perfWindowStart = time;
+          perfFrames = 0;
+        }
+      }
     };
     draw();
     const dispose = () => {
@@ -3610,8 +3985,12 @@ export default function ThreeCity({
       controls.dispose();
       renderer.domElement.removeEventListener('pointerdown', onDown);
       renderer.domElement.removeEventListener('pointerup', onUp);
+      fx.motes.material.map?.dispose();
+      clouds.children[0]?.material.map?.dispose();
+      sun.shadow.map?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
+      art.dispose();
       scene.traverse((o) => {
         if (o.isMesh || o.isSprite || o.isPoints) {
           o.geometry?.dispose?.();

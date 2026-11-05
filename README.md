@@ -2,11 +2,11 @@
 
 An independent browser game prototype: a multiplayer Lagos-inspired city rebuilt as a block-built 3D developer district. It is not the proprietary source code for lagoslife.app or Minecraft.
 
-## GDevelop edition (primary engine path)
+## Main engine and world pipeline
 
-The active engine path is the GDevelop-native project at [`gdevelop/BlankLife/BlankLife.json`](gdevelop/BlankLife/BlankLife.json), with a portable project archive at [`gdevelop/BlankLife-GDevelop.zip`](gdevelop/BlankLife-GDevelop.zip). Open the JSON file in GDevelop to work on the engine version. It uses the supplied Lagos Shadow Frontier GLB and includes a generated placeholder avatar, desktop movement, touch controls, and a third-person camera.
+Three.js is the main game engine, with a React/TypeScript interface and Node/Socket.IO backend. Blender generates reusable GLB chunks for Developer Metropolis and East Island. The islands share continuous world coordinates and a walkable causeway, with predictive loading, cached detail levels, painted materials and selectable graphics quality. Procedural geometry remains available as a fallback.
 
-The existing TypeScript game and Node server are retained as the content and backend reference while the GDevelop project is expanded. The migration order, retained assets, and integration boundaries are documented in [`gdevelop/MIGRATION.md`](gdevelop/MIGRATION.md).
+The obsolete standalone GDevelop project was retired after approval. Reusable [prototype assets and provenance](assets/legacy-gdevelop/README.md) are preserved, along with the complete Git history. See the [world migration reports](docs/README.md) for verification and remaining limitations.
 
 ## Board games platform
 
@@ -77,7 +77,8 @@ The repository groups runtime code by responsibility so each part has a clear ho
 | `shared/data/` | JSON game content used by both the browser client and backend: places, jobs, quests, homes, and items. |
 | `docs/` | Product, architecture, setup, and gameplay documentation. |
 | `scripts/` | One-off developer tools, including the programming-catalog importer. |
-| `gdevelop/` | The separate GDevelop starter project and its portable archive. |
+| `assets/` | Blender source models and preserved prototype assets. |
+| `tools/blender/` | Reproducible GLB asset generators. |
 
 Root-level `package.json`, `package-lock.json`, `tsconfig.json`, and `render.yaml` coordinate development, type-checking, and deployment. SQLite files and uploaded PDFs stay under `backend/data/` and are excluded from Git.
 
@@ -92,7 +93,7 @@ For public deployment, configure HTTPS, database backups, account recovery, comm
 
 ## Map asset handoff
 
-The current island is procedurally built in `frontend/src/ThreeCity.tsx`. Its coastline, trees, clouds, and stones use block geometry; the original developer city and gameplay remain part of the world. There is no in-game or backend map upload form. To replace or extend it with a complete external map, provide a `.glb` (preferred, with textures/materials embedded). For a `.gltf`, include every referenced texture and buffer in a single ZIP. Include approximate file size, model scale/orientation notes, and the asset's source/license. The asset can then be integrated into the scene and served as a static game asset (or moved to object storage/CDN for larger production files).
+The world combines Blender-generated GLB chunks with procedural fallback geometry in `frontend/src/ThreeCity.tsx`. The current rendering includes painted terrain, curved roofs, animated water, illustrated clouds and graphics quality profiles; the original developer city and gameplay remain part of the world. There is no in-game or backend map upload form. To replace or extend it with a complete external map, provide a `.glb` (preferred, with textures/materials embedded). For a `.gltf`, include every referenced texture and buffer in a single ZIP. Include approximate file size, model scale/orientation notes, and the asset's source/license. The asset can then be integrated into the scene and served as a static game asset (or moved to object storage/CDN for larger production files).
 
 ## Multiplayer capacity
 

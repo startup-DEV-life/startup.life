@@ -1,0 +1,36 @@
+{
+  "stage": 3,
+  "desktop": {
+    "viewport": [1280, 720],
+    "status": "passed",
+    "lodTransitions": ["far", "near", "far", "near"],
+    "prefetchedBeforeArrival": true,
+    "chunkRequests": 2,
+    "maxCoordinateStep": 11.312000000000024,
+    "sampleFps": 59,
+    "errors": []
+  },
+  "mobileViewport": {
+    "viewport": [390, 844],
+    "status": "passed",
+    "lodTransitions": ["far", "near", "far", "near"],
+    "prefetchedBeforeArrival": true,
+    "chunkRequests": 2,
+    "maxCoordinateStep": 14,
+    "sampleFps": 57,
+    "errors": []
+  },
+  "network": {
+    "status": "passed",
+    "players": 2,
+    "finalCoordinates": [[3280, 784], [3288, 784]],
+    "replicatedMoves": 72,
+    "offBridgeMoveRejected": true,
+    "persistence": "passed"
+  },
+  "limitations": [
+    "Browser fixture uses the real renderer with empty place/job lists to isolate crossing behavior.",
+    "Viewport tests are not physical mobile-device benchmarks.",
+    "Browser screenshot capture was unavailable."
+  ]
+}

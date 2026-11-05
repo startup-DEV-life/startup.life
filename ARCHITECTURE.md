@@ -38,7 +38,7 @@ Production URL: <https://blank-life.onrender.com>
 | `shared/data/` | JSON content shared by the client and server. |
 | `backend/data/` | Runtime SQLite database, private learning uploads, and the imported programming catalog. |
 | `frontend/` | Browser client source, static assets, and Vite configuration. |
-| `docs/`, `scripts/`, `gdevelop/` | Documentation, developer tools, and the separate GDevelop project. |
+| `docs/`, `scripts/`, `tools/`, `assets/` | Documentation, developer tools, Blender generators/sources and preserved prototype assets. |
 | `render.yaml` | Render service/build configuration. |
 | `BUILD.md` | Project build and hosting notes. |
 
