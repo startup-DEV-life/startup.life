@@ -1,3 +1,4 @@
+import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, MessageCircle, Plus, Search, Send, Users, X } from 'lucide-react';
 
@@ -91,7 +92,7 @@ export default function PhoneMessages({
       setError(reason.message);
     }
   };
-  const createGroup = async (event: React.FormEvent) => {
+  const createGroup = async (event: FormEvent) => {
     event.preventDefault();
     if (!groupName.trim() || !groupMembers.length) return;
     setBusy(true);
@@ -118,7 +119,7 @@ export default function PhoneMessages({
       setBusy(false);
     }
   };
-  const send = async (event: React.FormEvent) => {
+  const send = async (event: FormEvent) => {
     event.preventDefault();
     const body = draft.trim();
     if (!selected || !body) return;

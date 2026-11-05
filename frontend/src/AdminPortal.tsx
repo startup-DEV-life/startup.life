@@ -1,3 +1,4 @@
+import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Gamepad2, LockKeyhole, ShieldCheck } from 'lucide-react';
 import AdminDashboard from './AdminDashboard.tsx';
@@ -34,7 +35,7 @@ export default function AdminPortal() {
   }, []);
 
   const enterGame = () => window.location.assign('/?play=1');
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
     setSaving(true);
