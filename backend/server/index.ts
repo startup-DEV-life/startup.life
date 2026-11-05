@@ -14,7 +14,7 @@ import {
   timingSafeEqual,
 } from 'node:crypto';
 import { promisify } from 'node:util';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'node:fs';
 import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
@@ -127,12 +127,51 @@ const libraryFiles = join(backendData, 'learning-library');
 mkdirSync(libraryFiles, { recursive: true });
 const privateUploadFiles = process.env.PRIVATE_UPLOADS_PATH || join(backendData, 'private-uploads');
 mkdirSync(privateUploadFiles, { recursive: true });
+const profilePhotoFiles = join(backendData, 'profile-photos');
+mkdirSync(profilePhotoFiles, { recursive: true });
 db.exec(
   'CREATE TABLE IF NOT EXISTS admin_settings (setting_key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL)',
 );
 db.exec(
   'CREATE TABLE IF NOT EXISTS admin_accounts (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, created_at TEXT NOT NULL, created_by TEXT)',
 );
+db.exec(`
+CREATE TABLE IF NOT EXISTS startup_posts(
+ id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ title TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS startup_post_likes(
+ post_id TEXT NOT NULL REFERENCES startup_posts(id) ON DELETE CASCADE,
+ user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ created_at TEXT NOT NULL, PRIMARY KEY(post_id,user_id)
+);
+CREATE TABLE IF NOT EXISTS startup_post_comments(
+ id TEXT PRIMARY KEY, post_id TEXT NOT NULL REFERENCES startup_posts(id) ON DELETE CASCADE,
+ user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ body TEXT NOT NULL, created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_startup_posts_created ON startup_posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_startup_comments_post ON startup_post_comments(post_id,created_at);
+CREATE TABLE IF NOT EXISTS phone_conversations(
+ id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', is_group INTEGER NOT NULL DEFAULT 0,
+ created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS phone_conversation_members(
+ conversation_id TEXT NOT NULL REFERENCES phone_conversations(id) ON DELETE CASCADE,
+ user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ joined_at TEXT NOT NULL, PRIMARY KEY(conversation_id,user_id)
+);
+CREATE TABLE IF NOT EXISTS phone_messages(
+ id TEXT PRIMARY KEY, conversation_id TEXT NOT NULL REFERENCES phone_conversations(id) ON DELETE CASCADE,
+ sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ body TEXT NOT NULL, created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_phone_messages_conversation ON phone_messages(conversation_id,created_at DESC);
+CREATE TABLE IF NOT EXISTS player_profile_photos(
+ user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+ stored_name TEXT NOT NULL,mime_type TEXT NOT NULL,updated_at TEXT NOT NULL
+);
+`);
 const legacyAdminName = process.env.ADMIN_USERNAME?.trim().toLowerCase();
 if (legacyAdminName) {
   const legacyAdmin = db.prepare('SELECT id FROM users WHERE username=?').get(legacyAdminName);
@@ -269,6 +308,11 @@ const publicPlayer = (q) =>
     jobId: q.jobId || '',
     xp: q.xp || 0,
     tasksDone: q.tasksDone || 0,
+    profileImage: db
+      .prepare('SELECT 1 FROM player_profile_photos WHERE user_id=?')
+      .get(q.id || q.user_id)
+      ? `/api/avatars/${q.id || q.user_id}`
+      : '',
   };
 app.use((req, _res, next) => {
   try {
@@ -561,6 +605,291 @@ app.get('/api/people', auth, requireRole('developer'), (req, res) => {
     )
     .all(req.account.user_id);
   res.json({ people });
+});
+app.get('/api/phone/contacts', auth, (req, res) => {
+  const contacts = db
+    .prepare(
+      `
+    SELECT u.id,u.username,u.display_name AS name,
+      (SELECT '/api/avatars/' || z.user_id FROM player_profile_photos z WHERE z.user_id=u.id) AS profileImage,
+      p.account_type AS accountType,
+      p.job_id AS career,p.xp,p.tasks_done AS projects
+    FROM users u JOIN players p ON p.user_id=u.id WHERE u.id<>?
+    ORDER BY u.display_name COLLATE NOCASE LIMIT 200
+  `,
+    )
+    .all(req.account.user_id);
+  res.json({ contacts });
+});
+app.get('/api/phone/conversations', auth, (req, res) => {
+  const conversations = db
+    .prepare(
+      `
+    SELECT c.id,CASE WHEN c.is_group=0 THEN
+      (SELECT u.display_name FROM phone_conversation_members x JOIN users u ON u.id=x.user_id
+       WHERE x.conversation_id=c.id AND x.user_id<>? LIMIT 1) ELSE c.title END AS title,
+      CASE WHEN c.is_group=0 THEN
+       (SELECT '/api/avatars/' || x.user_id FROM phone_conversation_members x
+        WHERE x.conversation_id=c.id AND x.user_id<>? LIMIT 1) ELSE '' END AS profileImage,
+      c.is_group AS isGroup,c.created_at AS createdAt,
+      (SELECT COUNT(*) FROM phone_conversation_members m WHERE m.conversation_id=c.id) AS memberCount,
+      (SELECT body FROM phone_messages x WHERE x.conversation_id=c.id ORDER BY x.created_at DESC LIMIT 1) AS lastMessage,
+      (SELECT created_at FROM phone_messages x WHERE x.conversation_id=c.id ORDER BY x.created_at DESC LIMIT 1) AS updatedAt
+    FROM phone_conversations c JOIN phone_conversation_members m ON m.conversation_id=c.id
+    WHERE m.user_id=?
+    ORDER BY COALESCE((SELECT MAX(x.created_at) FROM phone_messages x WHERE x.conversation_id=c.id),c.created_at) DESC
+  `,
+    )
+    .all(req.account.user_id, req.account.user_id, req.account.user_id)
+    .map((conversation) => ({ ...conversation, isGroup: !!conversation.isGroup }));
+  res.json({ conversations });
+});
+app.post('/api/phone/conversations', auth, (req, res) => {
+  const memberIds = Array.isArray(req.body?.memberIds)
+      ? [
+          ...new Set(req.body.memberIds.filter((id) => typeof id === 'string' && id.length <= 64)),
+        ].slice(0, 9)
+      : [],
+    title =
+      typeof req.body?.title === 'string'
+        ? req.body.title
+            .trim()
+            .replace(/[<>\u0000-\u001f]/g, '')
+            .slice(0, 50)
+        : '';
+  const recipients = memberIds.filter((id) => id !== req.account.user_id);
+  if (!recipients.length) return res.status(400).json({ error: 'Choose someone to message.' });
+  const validCount = db
+    .prepare(
+      `SELECT COUNT(*) AS count FROM users WHERE id IN (${recipients.map(() => '?').join(',')})`,
+    )
+    .get(...recipients).count;
+  if (validCount !== recipients.length)
+    return res.status(400).json({ error: 'One or more players could not be found.' });
+  const isGroup = recipients.length > 1 || !!title;
+  if (isGroup && !title) return res.status(400).json({ error: 'Add a name for this group.' });
+  if (!isGroup) {
+    const existing = db
+      .prepare(
+        `
+      SELECT c.id FROM phone_conversations c
+      WHERE c.is_group=0
+        AND (SELECT COUNT(*) FROM phone_conversation_members m WHERE m.conversation_id=c.id)=2
+        AND EXISTS(SELECT 1 FROM phone_conversation_members m WHERE m.conversation_id=c.id AND m.user_id=?)
+        AND EXISTS(SELECT 1 FROM phone_conversation_members m WHERE m.conversation_id=c.id AND m.user_id=?)
+      LIMIT 1
+    `,
+      )
+      .get(req.account.user_id, recipients[0]);
+    if (existing) return res.json({ id: existing.id, existing: true });
+  }
+  const id = randomBytes(16).toString('hex'),
+    now = stamp();
+  const create = db.transaction(() => {
+    db.prepare(
+      'INSERT INTO phone_conversations(id,title,is_group,created_by,created_at) VALUES(?,?,?,?,?)',
+    ).run(id, title, isGroup ? 1 : 0, req.account.user_id, now);
+    const addMember = db.prepare(
+      'INSERT INTO phone_conversation_members(conversation_id,user_id,joined_at) VALUES(?,?,?)',
+    );
+    addMember.run(id, req.account.user_id, now);
+    for (const memberId of recipients) addMember.run(id, memberId, now);
+  });
+  create();
+  res.status(201).json({ id, existing: false });
+});
+const phoneConversationAccess = (conversationId, userId) =>
+  !!db
+    .prepare('SELECT 1 FROM phone_conversation_members WHERE conversation_id=? AND user_id=?')
+    .get(conversationId, userId);
+app.get('/api/phone/conversations/:id/messages', auth, (req, res) => {
+  if (!phoneConversationAccess(req.params.id, req.account.user_id))
+    return res.status(404).json({ error: 'Conversation not found.' });
+  const messages = db
+    .prepare(
+      `
+    SELECT m.id,m.body,m.created_at AS createdAt,m.sender_id AS senderId,u.display_name AS senderName
+    FROM phone_messages m JOIN users u ON u.id=m.sender_id
+    WHERE m.conversation_id=? ORDER BY m.created_at DESC LIMIT 100
+  `,
+    )
+    .all(req.params.id)
+    .reverse();
+  res.json({ messages });
+});
+app.post('/api/phone/conversations/:id/messages', auth, (req, res) => {
+  if (!phoneConversationAccess(req.params.id, req.account.user_id))
+    return res.status(404).json({ error: 'Conversation not found.' });
+  const body =
+    typeof req.body?.body === 'string'
+      ? req.body.body
+          .trim()
+          .replace(/[<>\u0000-\u001f]/g, '')
+          .slice(0, 1000)
+      : '';
+  if (!body) return res.status(400).json({ error: 'Write a message first.' });
+  const message = {
+    id: randomBytes(16).toString('hex'),
+    conversationId: req.params.id,
+    senderId: req.account.user_id,
+    body,
+    createdAt: stamp(),
+    senderName: req.account.display_name,
+  };
+  db.prepare(
+    'INSERT INTO phone_messages(id,conversation_id,sender_id,body,created_at) VALUES(?,?,?,?,?)',
+  ).run(message.id, message.conversationId, message.senderId, body, message.createdAt);
+  res.status(201).json({ message });
+});
+app.get('/api/investors', auth, (_req, res) => {
+  const investors = db
+    .prepare(
+      `
+    SELECT u.id,u.username,u.display_name AS name,
+      (SELECT '/api/avatars/' || z.user_id FROM player_profile_photos z WHERE z.user_id=u.id) AS profileImage,
+      p.job_id AS career,p.xp,p.tasks_done AS projects
+    FROM users u JOIN players p ON p.user_id=u.id
+    WHERE p.account_type='grower'
+    ORDER BY p.xp DESC,u.display_name COLLATE NOCASE LIMIT 100
+  `,
+    )
+    .all();
+  res.json({ investors });
+});
+app.get('/api/startup/posts', auth, (req, res) => {
+  const posts = db
+    .prepare(
+      `
+    SELECT p.id,p.user_id AS authorId,p.title,p.body,p.created_at AS createdAt,
+      u.display_name AS authorName,u.username AS authorUsername,
+      (SELECT '/api/avatars/' || z.user_id FROM player_profile_photos z WHERE z.user_id=u.id) AS authorImage,
+      (SELECT COUNT(*) FROM startup_post_likes l WHERE l.post_id=p.id) AS likeCount,
+      EXISTS(SELECT 1 FROM startup_post_likes l WHERE l.post_id=p.id AND l.user_id=?) AS liked,
+      (SELECT COUNT(*) FROM startup_post_comments c WHERE c.post_id=p.id) AS commentCount
+    FROM startup_posts p JOIN users u ON u.id=p.user_id
+    ORDER BY p.created_at DESC LIMIT 50
+  `,
+    )
+    .all(req.account.user_id)
+    .map((post) => ({
+      ...post,
+      liked: !!post.liked,
+      comments: db
+        .prepare(
+          `
+      SELECT c.id,c.body,c.created_at AS createdAt,u.id AS authorId,
+        u.display_name AS authorName,u.username AS authorUsername,
+        (SELECT '/api/avatars/' || z.user_id FROM player_profile_photos z WHERE z.user_id=u.id) AS authorImage
+      FROM startup_post_comments c JOIN users u ON u.id=c.user_id
+      WHERE c.post_id=? ORDER BY c.created_at DESC LIMIT 5
+    `,
+        )
+        .all(post.id)
+        .reverse(),
+    }));
+  res.json({ posts });
+});
+app.post('/api/startup/posts', auth, (req, res) => {
+  const title =
+      typeof req.body?.title === 'string'
+        ? req.body.title
+            .trim()
+            .replace(/[<>\u0000-\u001f]/g, '')
+            .slice(0, 80)
+        : '',
+    body =
+      typeof req.body?.body === 'string'
+        ? req.body.body
+            .trim()
+            .replace(/[<>\u0000-\u001f]/g, '')
+            .slice(0, 1000)
+        : '';
+  if (title.length < 2 || body.length < 3)
+    return res.status(400).json({ error: 'Add a title and a short description for your post.' });
+  const post = {
+    id: randomBytes(16).toString('hex'),
+    user_id: req.account.user_id,
+    title,
+    body,
+    created_at: stamp(),
+  };
+  db.prepare('INSERT INTO startup_posts(id,user_id,title,body,created_at) VALUES(?,?,?,?,?)').run(
+    post.id,
+    post.user_id,
+    post.title,
+    post.body,
+    post.created_at,
+  );
+  const author = db
+    .prepare(
+      `SELECT u.display_name AS authorName,u.username AS authorUsername,
+      (SELECT '/api/avatars/' || z.user_id FROM player_profile_photos z WHERE z.user_id=u.id) AS authorImage
+      FROM users u WHERE u.id=?`,
+    )
+    .get(post.user_id);
+  res.status(201).json({
+    post: {
+      id: post.id,
+      authorId: post.user_id,
+      title,
+      body,
+      createdAt: post.created_at,
+      ...author,
+      likeCount: 0,
+      liked: false,
+      commentCount: 0,
+      comments: [],
+    },
+  });
+});
+app.post('/api/startup/posts/:id/like', auth, (req, res) => {
+  if (!db.prepare('SELECT 1 FROM startup_posts WHERE id=?').get(req.params.id))
+    return res.status(404).json({ error: 'Post not found.' });
+  const existing = db
+    .prepare('SELECT 1 FROM startup_post_likes WHERE post_id=? AND user_id=?')
+    .get(req.params.id, req.account.user_id);
+  if (existing)
+    db.prepare('DELETE FROM startup_post_likes WHERE post_id=? AND user_id=?').run(
+      req.params.id,
+      req.account.user_id,
+    );
+  else
+    db.prepare('INSERT INTO startup_post_likes(post_id,user_id,created_at) VALUES(?,?,?)').run(
+      req.params.id,
+      req.account.user_id,
+      stamp(),
+    );
+  const likeCount = db
+    .prepare('SELECT COUNT(*) AS count FROM startup_post_likes WHERE post_id=?')
+    .get(req.params.id).count;
+  res.json({ liked: !existing, likeCount });
+});
+app.post('/api/startup/posts/:id/comments', auth, (req, res) => {
+  const body =
+    typeof req.body?.body === 'string'
+      ? req.body.body
+          .trim()
+          .replace(/[<>\u0000-\u001f]/g, '')
+          .slice(0, 500)
+      : '';
+  if (body.length < 1) return res.status(400).json({ error: 'Write a comment first.' });
+  if (!db.prepare('SELECT 1 FROM startup_posts WHERE id=?').get(req.params.id))
+    return res.status(404).json({ error: 'Post not found.' });
+  const id = randomBytes(16).toString('hex'),
+    createdAt = stamp();
+  db.prepare(
+    'INSERT INTO startup_post_comments(id,post_id,user_id,body,created_at) VALUES(?,?,?,?,?)',
+  ).run(id, req.params.id, req.account.user_id, body, createdAt);
+  res.status(201).json({
+    comment: {
+      id,
+      body,
+      createdAt,
+      authorId: req.account.user_id,
+      authorName: req.account.display_name,
+      authorUsername: req.account.username,
+    },
+  });
 });
 app.get('/api/demos', auth, (req, res) => {
   const role = req.account.accountType;
@@ -863,6 +1192,62 @@ app.patch('/api/player', auth, (req, res) => {
   const p = publicPlayer(playerQuery.get(req.account.user_id));
   io.emit('player:update', p);
   res.json({ player: p });
+});
+app.post(
+  '/api/player/profile-photo',
+  auth,
+  express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '5mb' }),
+  (req, res) => {
+    const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    const mimeType = String(req.headers['content-type'] || '')
+      .split(';')[0]
+      .toLowerCase();
+    const valid =
+      mimeType === 'image/jpeg'
+        ? body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff
+        : mimeType === 'image/png'
+          ? body.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+          : mimeType === 'image/webp'
+            ? body.subarray(0, 4).toString() === 'RIFF' &&
+              body.subarray(8, 12).toString() === 'WEBP'
+            : false;
+    if (!valid || body.length < 16 || body.length > 5 * 1024 * 1024)
+      return res
+        .status(400)
+        .json({ error: 'Choose a valid JPG, PNG, or WebP image smaller than 5 MB.' });
+    const extension = mimeType === 'image/jpeg' ? 'jpg' : mimeType.slice(6);
+    const storedName = `${req.account.user_id}-${randomBytes(12).toString('hex')}.${extension}`;
+    const previous = db
+      .prepare('SELECT stored_name FROM player_profile_photos WHERE user_id=?')
+      .get(req.account.user_id);
+    try {
+      writeFileSync(join(profilePhotoFiles, storedName), body, { flag: 'wx' });
+      db.prepare(
+        `INSERT INTO player_profile_photos(user_id,stored_name,mime_type,updated_at) VALUES(?,?,?,?)
+      ON CONFLICT(user_id) DO UPDATE SET stored_name=excluded.stored_name,mime_type=excluded.mime_type,updated_at=excluded.updated_at`,
+      ).run(req.account.user_id, storedName, mimeType, stamp());
+      if (previous)
+        try {
+          unlinkSync(join(profilePhotoFiles, previous.stored_name));
+        } catch {}
+    } catch (error) {
+      console.error('Profile photo upload failed:', error);
+      return res.status(500).json({ error: 'Could not save your profile photo.' });
+    }
+    const player = publicPlayer(playerQuery.get(req.account.user_id));
+    io.emit('player:update', player);
+    res.status(201).json({ player });
+  },
+);
+app.get('/api/avatars/:userId', (req, res) => {
+  const photo = db
+    .prepare('SELECT stored_name,mime_type FROM player_profile_photos WHERE user_id=?')
+    .get(req.params.userId);
+  if (!photo) return res.status(404).end();
+  res
+    .set('Cache-Control', 'public, max-age=86400')
+    .type(photo.mime_type)
+    .sendFile(join(profilePhotoFiles, photo.stored_name));
 });
 app.post('/api/jobs/select', auth, (req, res) => {
   const job = jobs.find((x) => x.id === req.body?.jobId);
@@ -1558,7 +1943,7 @@ app.get('/api/admin/dashboard', auth, staff, (req, res) => {
     online: online.size,
     library: db
       .prepare(
-        '(SELECT COUNT(*) FROM learning_books) + (SELECT COUNT(*) FROM learning_videos) AS count',
+        'SELECT (SELECT COUNT(*) FROM learning_books) + (SELECT COUNT(*) FROM learning_videos) AS count',
       )
       .get().count,
     reports: db.prepare("SELECT COUNT(*) AS count FROM chat_reports WHERE status='open'").get()
