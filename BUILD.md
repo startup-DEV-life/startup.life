@@ -2,11 +2,11 @@
 
 ## Stack
 
-- **Game client:** TypeScript, React, Vite, Three.js, CSS; GDevelop export in `gdevelop/`.
+- **Game client:** TypeScript, React, Vite, Three.js, CSS.
 - **Live play/API:** Node.js, Express, Socket.IO.
 - **Current game runtime database:** SQLite (`backend/data/lagos-life.sqlite`).
 - **Hosted Supabase database:** project `blank-life` (`oeddrnzcbtdesofpzxyo`) in `eu-west-1`; its 20-table server-owned schema is in `backend/supabase/migrations/`.
-- **3D world:** Three.js scene and original island model in `frontend/public/models/`.
+- **3D world:** Three.js, Blender-generated GLB chunks in `frontend/public/models/`, reproducible sources in `assets/blender/`, generators in `tools/blender/`, and procedural fallbacks.
 
 ## Run and build
 

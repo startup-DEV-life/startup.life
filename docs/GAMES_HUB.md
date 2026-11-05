@@ -15,4 +15,4 @@ The city is the player’s entry point. It should send an authenticated player t
 4. The Games API validates the handoff token and maps its user ID to `core.players.startup_life_player_id` in the shared PostgreSQL database.
 5. The Games Hub displays entries marked `live` or `beta` in `games.catalog`.
 
-The first code integration should be made after the Games Hub has a deployed URL and its signed-token format is agreed. This keeps the current local GDevelop and browser game runnable without hard-coding an unfinished destination.
+The first code integration should be made after the Games Hub has a deployed URL and its signed-token format is agreed. This keeps the current Three.js browser game runnable without hard-coding an unfinished destination.
