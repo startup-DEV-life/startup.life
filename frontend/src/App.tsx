@@ -7,6 +7,8 @@ import LearnHub from './LearnHub.tsx';
 import GameTerminal from './GameTerminal.tsx';
 import GitHubApp from './GitHubApp.tsx';
 import { DemoAndFilesApp, GameUpApp } from './DeviceApps.tsx';
+import AdminDashboard from './AdminDashboard.tsx';
+import PhoneMessages from './PhoneMessages.tsx';
 import {
   ArrowDown,
   ArrowLeft,
@@ -63,6 +65,17 @@ const WORLD = {
   w: WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX,
   h: WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY,
 };
+const INITIAL_GAME_SETTINGS = {
+  explorationIsland: 'Lagos Island',
+  features: {
+    exploration: true,
+    gamePass: true,
+    gameLive: true,
+    learningLibrary: true,
+    communityChat: true,
+  },
+  games: { chess: true, checkers: true, wordTiles: true, propertyMarket: true, ludo: true },
+};
 async function api(path: string, options: any = {}) {
   const r = await fetch(path, {
     credentials: 'include',
@@ -86,6 +99,8 @@ export default function App() {
     [homes, setHomes] = useState<any[]>(seedHomes),
     [jobs, setJobs] = useState<any[]>(seedJobs),
     [user, setUser] = useState<any>(null),
+    [authReady, setAuthReady] = useState(false),
+    [gameSettings, setGameSettings] = useState<any>(INITIAL_GAME_SETTINGS),
     [player, setPlayer] = useState<any>({
       name: 'Guest',
       username: '',
@@ -112,8 +127,14 @@ export default function App() {
     [dispatch, setDispatch] = useState<any>(null),
     [webQuery, setWebQuery] = useState(''),
     [placementQuery, setPlacementQuery] = useState(''),
+    [pitchTitle, setPitchTitle] = useState(''),
     [pitchDraft, setPitchDraft] = useState(''),
-    [pitchVideo, setPitchVideo] = useState(''),
+    [startupPosts, setStartupPosts] = useState<any[]>([]),
+    [startupCommentDrafts, setStartupCommentDrafts] = useState<Record<string, string>>({}),
+    [investors, setInvestors] = useState<any[]>([]),
+    [investorQuery, setInvestorQuery] = useState(''),
+    [startupFeedError, setStartupFeedError] = useState(''),
+    [messageTarget, setMessageTarget] = useState(''),
     [phoneGithub, setPhoneGithub] = useState<any>(null),
     [phoneGithubRepos, setPhoneGithubRepos] = useState<any[]>([]),
     [phoneGithubError, setPhoneGithubError] = useState(''),
@@ -121,24 +142,6 @@ export default function App() {
     [campusSecurity, setCampusSecurity] = useState(false),
     [joystick, setJoystick] = useState({ x: 0, y: 0 }),
     [darkTransition, setDarkTransition] = useState(false),
-    [pitches, setPitches] = useState<any[]>([
-      {
-        id: 'pitch-clean-code',
-        name: 'Ayo',
-        title: 'CodeBridge Lagos',
-        text: 'A mobile-first peer learning hub connecting beginner developers with practical projects.',
-        likes: 18,
-        interested: false,
-      },
-      {
-        id: 'pitch-market-tools',
-        name: 'Zainab',
-        title: 'MarketMate',
-        text: 'Simple inventory and payment tools for neighbourhood shops.',
-        likes: 12,
-        interested: false,
-      },
-    ]),
     [notice, setNotice] = useState('You arrived in Lagos Developer District.'),
     [chat, setChat] = useState(false),
     [chatText, setChatText] = useState(''),
@@ -157,6 +160,7 @@ export default function App() {
     [serverError, setServerError] = useState(''),
     [reports, setReports] = useState<any[]>([]),
     [reportsOpen, setReportsOpen] = useState(false),
+    [adminOpen, setAdminOpen] = useState(false),
     [jobsOpen, setJobsOpen] = useState(false),
     [crewOpen, setCrewOpen] = useState(false),
     [crewRound, setCrewRound] = useState<any>(null),
@@ -383,8 +387,15 @@ export default function App() {
   useEffect(() => {
     const authReturn = new URLSearchParams(location.search).get('github');
     if (authReturn) {
-      setLaptopOpen(true);
-      setLaptopView('github');
+      const returnToPhone = sessionStorage.getItem('startup-github-return') === 'phone';
+      sessionStorage.removeItem('startup-github-return');
+      if (returnToPhone) {
+        setPhoneOpen(true);
+        setPhoneView('github');
+      } else {
+        setLaptopOpen(true);
+        setLaptopView('github');
+      }
       history.replaceState({}, '', location.pathname);
       setNotice(
         authReturn === 'connected'
@@ -393,6 +404,29 @@ export default function App() {
       );
     }
   }, []);
+  useEffect(() => {
+    const update = (event) => setGameSettings(event.detail);
+    window.addEventListener('admin-settings-updated', update);
+    api('/api/game-settings')
+      .then(setGameSettings)
+      .catch(() => {});
+    return () => window.removeEventListener('admin-settings-updated', update);
+  }, []);
+  useEffect(() => {
+    if (!user || !phoneOpen || phoneView !== 'placements') return;
+    let live = true;
+    setStartupFeedError('');
+    api('/api/startup/posts')
+      .then((data) => live && setStartupPosts(data.posts || []))
+      .catch((error) => live && setStartupFeedError(error.message));
+    if (startupTab === 'investor')
+      api('/api/investors')
+        .then((data) => live && setInvestors(data.investors || []))
+        .catch((error) => live && setStartupFeedError(error.message));
+    return () => {
+      live = false;
+    };
+  }, [user?.id, phoneOpen, phoneView, startupTab]);
   useEffect(() => {
     const offer = (e) => {
       e.preventDefault();
@@ -439,16 +473,25 @@ export default function App() {
         setHomes(b);
         setJobs(d);
         setItems(e);
+        const entryParams = new URLSearchParams(window.location.search);
+        if (c.user?.isAdmin && !entryParams.has('play')) {
+          window.location.replace('/?admin=1');
+          return;
+        }
+        if (entryParams.has('play')) history.replaceState({}, '', location.pathname);
         if (c.user) {
           setUser(c.user);
           updatePlayer(c.player);
           setOwned(c.homes.map((h) => h.id));
         }
         setServerError('');
+        setAuthReady(true);
       })
-      .catch(
-        () => live && setServerError('Backend is offline. Run npm run dev to start the server.'),
-      );
+      .catch(() => {
+        if (!live) return;
+        setServerError('The game server is unavailable. Please try again in a moment.');
+        setAuthReady(true);
+      });
     return () => {
       live = false;
     };
@@ -821,6 +864,18 @@ export default function App() {
           method: 'PATCH',
           body: JSON.stringify({ name: f.get('displayName'), avatar: Number(f.get('avatar')) }),
         });
+        const photo = f.get('profilePhoto');
+        if (photo instanceof File && photo.size) {
+          const response = await fetch('/api/player/profile-photo', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': photo.type },
+            body: photo,
+          });
+          const photoData = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(photoData.error || 'Profile photo upload failed.');
+          d.player = photoData.player;
+        }
         updatePlayer(d.player);
         setNotice('Your Sim has been updated.');
       } else if (mode === 'signup') {
@@ -844,6 +899,10 @@ export default function App() {
           method: 'POST',
           body: JSON.stringify({ username: f.get('username'), password: f.get('password') }),
         });
+        if (d.user.isAdmin) {
+          window.location.replace('/?admin=1');
+          return;
+        }
         setUser(d.user);
         updatePlayer(d.player);
         setOwned(d.homes.map((h) => h.id));
@@ -942,6 +1001,9 @@ export default function App() {
       energy: 82,
     });
     setOwned([]);
+    setPhoneOpen(false);
+    setLaptopOpen(false);
+    setChat(false);
     setMenu(false);
     setNotice('You are exploring the Dev District as a guest.');
   };
@@ -1171,11 +1233,17 @@ export default function App() {
     e.preventDefault();
     const query = webQuery.trim();
     if (!query) return;
-    window.open(
-      `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-      '_blank',
-      'noopener,noreferrer',
-    );
+    let destination = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    try {
+      const candidate = new URL(/^https?:\/\//i.test(query) ? query : `https://${query}`);
+      if (
+        /^https?:$/.test(candidate.protocol) &&
+        candidate.hostname.includes('.') &&
+        !/\s/.test(query)
+      )
+        destination = candidate.toString();
+    } catch {}
+    window.open(destination, '_blank', 'noopener,noreferrer');
   };
   const report = async (id) => {
     try {
@@ -1337,6 +1405,120 @@ export default function App() {
       setInstallPrompt(null);
     } else setInstallHelp(true);
   };
+  if (!user) {
+    return (
+      <div className="signed-out-shell">
+        <div className="signed-out-orbit signed-out-orbit-one" aria-hidden="true" />
+        <div className="signed-out-orbit signed-out-orbit-two" aria-hidden="true" />
+        <div className="signed-out-city" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <span />
+        </div>
+        <header className="signed-out-header">
+          <div className="signed-out-brand">
+            <StartupMark size={42} />
+            <span>
+              startup<span>.</span>life
+            </span>
+          </div>
+          <div className="signed-out-location">
+            <span /> LAGOS DEVELOPER CITY
+          </div>
+        </header>
+        <main className="signed-out-main" aria-busy={!authReady}>
+          <section className="signed-out-copy">
+            <div className="signed-out-eyebrow">
+              <Sparkles size={14} /> YOUR NEXT CHAPTER STARTS HERE
+            </div>
+            <h1>
+              Build your career.
+              <br />
+              <em>Live the story.</em>
+            </h1>
+            <p>
+              Step into a living developer world. Choose your path, take on real skills quests, and
+              grow alongside a community of builders.
+            </p>
+            <div className="signed-out-actions">
+              <button className="signed-out-primary" onClick={() => openAuth('signup')}>
+                Create account <ArrowRight size={17} />
+              </button>
+              <button className="signed-out-secondary" onClick={() => openAuth('login')}>
+                <LogIn size={16} /> Sign in
+              </button>
+            </div>
+            <div className="signed-out-note">
+              <span /> Your phone, laptop, and city unlock after sign in.
+            </div>
+            {serverError && (
+              <div className="signed-out-error" role="status">
+                {serverError}
+              </div>
+            )}
+          </section>
+          <aside className="signed-out-preview" aria-label="Startup.life world preview">
+            <div className="preview-stars">
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+            <div className="preview-window">
+              <div className="preview-window-top">
+                <span />
+                <span />
+                <span />
+                <b>LIAN YU · 06:42 PM</b>
+              </div>
+              <div className="preview-skyline">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <span />
+              </div>
+              <div className="preview-window-caption">
+                <b>Find your place in the city.</b>
+                <span>EXPLORE · LEARN · BUILD</span>
+              </div>
+            </div>
+            <div className="preview-float-card">
+              <span>✦</span>
+              <div>
+                <b>One world. Many paths.</b>
+                <small>Start yours today</small>
+              </div>
+            </div>
+          </aside>
+        </main>
+        <footer className="signed-out-footer">
+          <span>startup.life</span>
+          <i /> A little Lagos, wherever you are
+        </footer>
+        {modal && (
+          <AuthModal
+            mode={mode}
+            player={player}
+            avatars={avatars}
+            jobs={jobs}
+            error={error}
+            busy={busy}
+            onClose={() => setModal(false)}
+            onMode={openAuth}
+            onSubmit={auth}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={interior ? 'game-shell building-inside' : 'game-shell'}>
       <Suspense
@@ -1493,7 +1675,12 @@ export default function App() {
           </button>
           {user ? (
             <button className="account-pill" onClick={() => setMenu(!menu)}>
-              <span>{avatars[player.avatar]}</span> {player.name} <ChevronDown size={14} />
+              {player.profileImage ? (
+                <img className="profile-avatar-photo" src={player.profileImage} alt="" />
+              ) : (
+                <span>{avatars[player.avatar]}</span>
+              )}{' '}
+              {player.name} <ChevronDown size={14} />
             </button>
           ) : (
             <>
@@ -1755,7 +1942,11 @@ export default function App() {
             className="player-avatar"
             onClick={() => (user ? openAuth('edit') : openAuth('signup'))}
           >
-            {avatars[player.avatar]}
+            {player.profileImage ? (
+              <img className="profile-avatar-photo" src={player.profileImage} alt="" />
+            ) : (
+              avatars[player.avatar]
+            )}
           </div>
           <div className="player-id">
             <small>{user ? 'YOUR DEVELOPER' : 'GUEST MODE'}</small>
@@ -2319,7 +2510,7 @@ export default function App() {
                     />
                   </div>
                 ) : laptopView === 'gameup' ? (
-                  <GameUpApp />
+                  <GameUpApp enabled={gameSettings.features.gamePass} games={gameSettings.games} />
                 ) : laptopView === 'studio' ? (
                   <DemoAndFilesApp
                     accountType={player.accountType}
@@ -2376,8 +2567,7 @@ export default function App() {
               {new Intl.DateTimeFormat(undefined, {
                 hour: 'numeric',
                 minute: '2-digit',
-                timeZone: 'UTC',
-              }).format(new Date(worldClock + 10 * 60 * 60 * 1000))}
+              }).format(new Date(worldClock))}
             </span>
             <button onClick={() => setPhoneOpen(false)} aria-label="Close phone">
               <X size={16} />
@@ -2386,9 +2576,18 @@ export default function App() {
           <div className="phone-screen">
             {phoneView === 'home' ? (
               <>
-                <p className="phone-greeting">
-                  Hi, {player.name} <small>Your island at a glance</small>
-                </p>
+                <div className="phone-greeting">
+                  {player.profileImage ? (
+                    <img className="profile-avatar-photo" src={player.profileImage} alt="" />
+                  ) : (
+                    <span className="profile-avatar-photo profile-avatar-fallback">
+                      {avatars[player.avatar]}
+                    </span>
+                  )}
+                  <span>
+                    Hi, {player.name} <small>Your island at a glance</small>
+                  </span>
+                </div>
                 {!user && (
                   <div className="phone-auth-actions">
                     <button onClick={() => openAuth('login')}>Sign in</button>
@@ -2424,14 +2623,20 @@ export default function App() {
                     <b>GameUp</b>
                   </button>
                   {player.accountType !== 'beginner' && (
-                    <button onClick={() => setPhoneView('studio')}>
-                      <Video />
-                      <b>{player.accountType === 'grower' ? 'Demo feed' : 'Demos & files'}</b>
-                    </button>
+                    <>
+                      <button onClick={() => setPhoneView('demos')}>
+                        <Video />
+                        <b>Demo feed</b>
+                      </button>
+                      <button onClick={() => setPhoneView('files')}>
+                        <BriefcaseBusiness />
+                        <b>Files</b>
+                      </button>
+                    </>
                   )}
                   <button onClick={() => setPhoneView('web')}>
                     <Search />
-                    <b>Search web</b>
+                    <b>Google</b>
                   </button>
                   <button onClick={() => setPhoneView('inventory')}>
                     <BriefcaseBusiness />
@@ -2466,8 +2671,10 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => {
-                      setPhoneOpen(false);
-                      user ? setChat(true) : openAuth('signup');
+                      if (user) {
+                        setMessageTarget('');
+                        setPhoneView('messages');
+                      } else openAuth('signup');
                     }}
                   >
                     <MessageCircle />
@@ -2548,28 +2755,42 @@ export default function App() {
                       <>
                         <p className="phone-helper">
                           {phoneGithub?.error ||
-                            'Link your GitHub account from the laptop’s GitHub tab. The phone shows a limited repository view.'}
+                            'Connect GitHub here, then browse your repositories from the phone.'}
                         </p>
-                        <button
-                          className="phone-open-learning"
-                          onClick={() => {
-                            setPhoneOpen(false);
-                            setLaptopView('github');
-                            setLaptopOpen(true);
-                          }}
-                        >
-                          <Github size={15} /> Open GitHub on laptop <ArrowRight size={14} />
-                        </button>
+                        {user && phoneGithub?.configured !== false ? (
+                          <button
+                            className="phone-open-learning"
+                            onClick={() => {
+                              sessionStorage.setItem('startup-github-return', 'phone');
+                              window.location.assign('/api/github/link');
+                            }}
+                          >
+                            <Github size={15} /> Connect GitHub <ArrowRight size={14} />
+                          </button>
+                        ) : phoneGithub?.configured === false ? (
+                          <p className="phone-helper">
+                            GitHub sign-in is not configured on this game server yet.
+                          </p>
+                        ) : (
+                          <button className="phone-open-learning" onClick={() => openAuth('login')}>
+                            Sign in to Startup.life
+                          </button>
+                        )}
                       </>
                     )}
                   </>
+                ) : phoneView === 'messages' ? (
+                  <PhoneMessages userId={user?.id || ''} initialContactId={messageTarget} />
                 ) : phoneView === 'gameup' ? (
-                  <GameUpApp />
-                ) : phoneView === 'studio' ? (
+                  <GameUpApp enabled={gameSettings.features.gamePass} games={gameSettings.games} />
+                ) : ['studio', 'demos', 'files'].includes(phoneView) ? (
                   <DemoAndFilesApp
                     accountType={player.accountType}
                     username={user?.username || ''}
                     compact
+                    section={
+                      phoneView === 'files' ? 'files' : phoneView === 'demos' ? 'demos' : 'all'
+                    }
                   />
                 ) : phoneView === 'map' ? (
                   <>
@@ -2660,11 +2881,10 @@ export default function App() {
                 ) : phoneView === 'placements' ? (
                   <>
                     <div className="placement-head">
-                      <span>STARTUP STUDIO · COMMUNITY DEMO</span>
-                      <h3>Pitch your idea</h3>
+                      <span>STARTUP COMMUNITY</span>
+                      <h3>Startup feed</h3>
                       <p>
-                        Post a short concept, get community reactions, and signal interest in a
-                        pitch.
+                        Share what you are building, meet Growers, and keep the conversation going.
                       </p>
                       <div className="startup-tabs">
                         <button
@@ -2679,134 +2899,275 @@ export default function App() {
                           className={startupTab === 'investor' ? 'active' : ''}
                           onClick={() => setStartupTab('investor')}
                         >
-                          Growers
+                          Investor directory
                         </button>
                       </div>
                     </div>
-                    {startupTab === 'founder' && (
-                      <form
-                        className="startup-compose"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const text = pitchDraft.trim();
-                          if (!text) return;
-                          setPitches((q) => [
-                            {
-                              id: `pitch-${Date.now()}`,
-                              name: player.name || 'Guest',
-                              title: 'New island idea',
-                              text,
-                              videoUrl: pitchVideo,
-                              likes: 0,
-                              interested: false,
-                            },
-                            ...q,
-                          ]);
-                          setPitchDraft('');
-                          setPitchVideo('');
-                          setNotice('Pitch posted to this local demo feed.');
-                        }}
-                      >
-                        <label htmlFor="pitch-draft">YOUR PITCH</label>
-                        <textarea
-                          id="pitch-draft"
-                          maxLength={280}
-                          value={pitchDraft}
-                          onChange={(e) => setPitchDraft(e.target.value)}
-                          placeholder="What are you building, and who will it help?"
-                        />
-                        <label className="pitch-video-label">
-                          Add a local video clip
+                    {startupFeedError && (
+                      <div className="phone-message-error">{startupFeedError}</div>
+                    )}
+                    {!user ? (
+                      <div className="startup-signin-card">
+                        <b>Join the founder community</b>
+                        <p>Sign in to post ideas, comment, and contact Growers.</p>
+                        <button onClick={() => openAuth('login')}>Sign in</button>
+                      </div>
+                    ) : startupTab === 'founder' ? (
+                      <>
+                        <form
+                          className="startup-compose startup-social-compose"
+                          onSubmit={async (event) => {
+                            event.preventDefault();
+                            try {
+                              const data = await api('/api/startup/posts', {
+                                method: 'POST',
+                                body: JSON.stringify({ title: pitchTitle, body: pitchDraft }),
+                              });
+                              setStartupPosts((posts) => [data.post, ...posts]);
+                              setPitchTitle('');
+                              setPitchDraft('');
+                              setNotice('Your post is live in the founder feed.');
+                            } catch (reason: any) {
+                              setStartupFeedError(reason.message);
+                            }
+                          }}
+                        >
+                          <div className="startup-compose-user">
+                            {player.profileImage ? (
+                              <img
+                                className="startup-avatar-photo"
+                                src={player.profileImage}
+                                alt=""
+                              />
+                            ) : (
+                              <span className="startup-avatar">
+                                {player.name.slice(0, 1).toUpperCase()}
+                              </span>
+                            )}
+                            <b>Share an update</b>
+                          </div>
                           <input
-                            type="file"
-                            accept="video/*"
-                            capture="user"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) setPitchVideo(URL.createObjectURL(file));
-                            }}
+                            value={pitchTitle}
+                            onChange={(event) => setPitchTitle(event.target.value)}
+                            maxLength={80}
+                            placeholder="Post title or startup name"
+                            required
+                          />
+                          <textarea
+                            id="pitch-draft"
+                            maxLength={1000}
+                            value={pitchDraft}
+                            onChange={(event) => setPitchDraft(event.target.value)}
+                            placeholder="What are you building, and who will it help?"
+                            required
+                          />
+                          <div>
+                            <small>{pitchDraft.length}/1000 · visible to the community</small>
+                            <button disabled={!pitchTitle.trim() || !pitchDraft.trim()}>
+                              Post
+                            </button>
+                          </div>
+                        </form>
+                        <div className="startup-feed-heading">
+                          <b>Founder feed</b>
+                          <small>{startupPosts.length} posts</small>
+                        </div>
+                        <div className="startup-feed startup-social-feed">
+                          {startupPosts.map((post) => (
+                            <article className="startup-pitch startup-social-post" key={post.id}>
+                              <header>
+                                {post.authorImage ? (
+                                  <img
+                                    className="startup-avatar-photo"
+                                    src={post.authorImage}
+                                    alt=""
+                                  />
+                                ) : (
+                                  <span className="startup-avatar">
+                                    {post.authorName.slice(0, 1).toUpperCase()}
+                                  </span>
+                                )}
+                                <div>
+                                  <b>{post.authorName}</b>
+                                  <small>
+                                    @{post.authorUsername} ·{' '}
+                                    {new Date(post.createdAt).toLocaleString()}
+                                  </small>
+                                </div>
+                              </header>
+                              <div className="startup-pitch-body">
+                                <b>{post.title}</b>
+                                <p>{post.body}</p>
+                                <div className="startup-social-actions">
+                                  <button
+                                    className={post.liked ? 'liked' : ''}
+                                    onClick={async () => {
+                                      try {
+                                        const d = await api(`/api/startup/posts/${post.id}/like`, {
+                                          method: 'POST',
+                                          body: '{}',
+                                        });
+                                        setStartupPosts((items) =>
+                                          items.map((item) =>
+                                            item.id === post.id
+                                              ? { ...item, liked: d.liked, likeCount: d.likeCount }
+                                              : item,
+                                          ),
+                                        );
+                                      } catch (reason: any) {
+                                        setStartupFeedError(reason.message);
+                                      }
+                                    }}
+                                  >
+                                    ♥ {post.likeCount} · Like
+                                  </button>
+                                  <span>💬 {post.commentCount} comments</span>
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        if (navigator.share)
+                                          await navigator.share({
+                                            title: post.title,
+                                            text: post.body,
+                                          });
+                                        else {
+                                          await navigator.clipboard.writeText(
+                                            `${post.title}: ${post.body}`,
+                                          );
+                                          setNotice('Post copied to clipboard.');
+                                        }
+                                      } catch {}
+                                    }}
+                                  >
+                                    Share
+                                  </button>
+                                </div>
+                                <div className="startup-comments">
+                                  {post.comments.map((comment) => (
+                                    <p key={comment.id}>
+                                      <b>{comment.authorName}</b> {comment.body}
+                                    </p>
+                                  ))}
+                                  <form
+                                    onSubmit={async (event) => {
+                                      event.preventDefault();
+                                      const body = startupCommentDrafts[post.id]?.trim();
+                                      if (!body) return;
+                                      try {
+                                        const d = await api(
+                                          `/api/startup/posts/${post.id}/comments`,
+                                          { method: 'POST', body: JSON.stringify({ body }) },
+                                        );
+                                        setStartupPosts((items) =>
+                                          items.map((item) =>
+                                            item.id === post.id
+                                              ? {
+                                                  ...item,
+                                                  comments: [...item.comments, d.comment].slice(-5),
+                                                  commentCount: item.commentCount + 1,
+                                                }
+                                              : item,
+                                          ),
+                                        );
+                                        setStartupCommentDrafts((items) => ({
+                                          ...items,
+                                          [post.id]: '',
+                                        }));
+                                      } catch (reason: any) {
+                                        setStartupFeedError(reason.message);
+                                      }
+                                    }}
+                                  >
+                                    <input
+                                      value={startupCommentDrafts[post.id] || ''}
+                                      onChange={(event) =>
+                                        setStartupCommentDrafts((items) => ({
+                                          ...items,
+                                          [post.id]: event.target.value,
+                                        }))
+                                      }
+                                      maxLength={500}
+                                      placeholder="Write a comment…"
+                                    />
+                                    <button
+                                      disabled={!startupCommentDrafts[post.id]?.trim()}
+                                      aria-label="Post comment"
+                                    >
+                                      <ArrowRight size={14} />
+                                    </button>
+                                  </form>
+                                </div>
+                              </div>
+                            </article>
+                          ))}
+                          {!startupPosts.length && (
+                            <p className="device-app-empty">
+                              No posts yet. Share the first update with the founder community.
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="phone-helper">
+                          Growers are the investor community. Browse their public game profiles and
+                          message them one-on-one.
+                        </p>
+                        <label className="phone-investor-search">
+                          <Search size={14} />
+                          <input
+                            value={investorQuery}
+                            onChange={(event) => setInvestorQuery(event.target.value)}
+                            placeholder="Find a Grower"
                           />
                         </label>
-                        {pitchVideo && (
-                          <video
-                            className="pitch-video-preview"
-                            src={pitchVideo}
-                            controls
-                            playsInline
-                          />
-                        )}
-                        <div>
-                          <small>{pitchDraft.length}/280 · demo feed only</small>
-                          <button disabled={!pitchDraft.trim()}>Post pitch</button>
+                        <div className="startup-investors">
+                          {investors
+                            .filter((investor) =>
+                              `${investor.name} ${investor.username} ${investor.career}`
+                                .toLowerCase()
+                                .includes(investorQuery.toLowerCase()),
+                            )
+                            .map((investor) => (
+                              <article key={investor.id}>
+                                {investor.profileImage ? (
+                                  <img
+                                    className="startup-avatar-photo"
+                                    src={investor.profileImage}
+                                    alt=""
+                                  />
+                                ) : (
+                                  <span className="startup-avatar">
+                                    {investor.name.slice(0, 1).toUpperCase()}
+                                  </span>
+                                )}
+                                <div>
+                                  <b>{investor.name}</b>
+                                  <small>@{investor.username} · Grower</small>
+                                  <small>
+                                    {investor.career || 'Startup mentor'} · {investor.xp} XP ·{' '}
+                                    {investor.projects} projects
+                                  </small>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setMessageTarget(investor.id);
+                                    setPhoneView('messages');
+                                  }}
+                                >
+                                  Message
+                                </button>
+                              </article>
+                            ))}
+                          {!investors.length && (
+                            <p className="device-app-empty">
+                              No Grower profiles yet. Players who join with a Grower account will
+                              appear here.
+                            </p>
+                          )}
                         </div>
-                      </form>
+                      </>
                     )}
-                    <div className="startup-feed-heading">
-                      <b>Island pitch feed</b>
-                      <small>{pitches.length} ideas</small>
-                    </div>
-                    <div className="startup-feed">
-                      {(startupTab === 'investor'
-                        ? [...pitches].sort((a, b) => b.likes - a.likes)
-                        : pitches
-                      ).map((q) => (
-                        <article className="startup-pitch" key={q.id}>
-                          <span className="startup-avatar">{q.name.slice(0, 1).toUpperCase()}</span>
-                          <div className="startup-pitch-body">
-                            <small>{q.name} · founder</small>
-                            <b>{q.title}</b>
-                            <p>{q.text}</p>
-                            {q.videoUrl && (
-                              <video
-                                className="pitch-video-preview"
-                                src={q.videoUrl}
-                                controls
-                                playsInline
-                              />
-                            )}
-                            <div>
-                              <button
-                                onClick={() =>
-                                  setPitches((a) =>
-                                    a.map((x) =>
-                                      x.id === q.id ? { ...x, likes: x.likes + 1 } : x,
-                                    ),
-                                  )
-                                }
-                              >
-                                ♥ {q.likes} · Like
-                              </button>
-                              <button
-                                className={q.interested ? 'interested' : ''}
-                                onClick={() => {
-                                  setPitches((a) =>
-                                    a.map((x) =>
-                                      x.id === q.id ? { ...x, interested: !x.interested } : x,
-                                    ),
-                                  );
-                                  setNotice(
-                                    'Investor interest is a local demo interaction; no funds or contact details were sent.',
-                                  );
-                                }}
-                              >
-                                {q.interested ? 'Interest noted' : 'I’m interested'}
-                              </button>
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                    {startupTab === 'investor' && (
-                      <div className="placement-note">
-                        Growers can browse pitches and signal interest. Investment, outreach, and
-                        calls are not wired to real financial or communication services.
-                      </div>
-                    )}
-                    <div className="placement-note">
-                      Demo only: text, reactions, and selected video stay in this browser session.
-                      Publishing clips, investor contact, payments, and calls need secured backend
-                      services and user consent.
-                    </div>
                   </>
                 ) : phoneView === 'learn' ? (
                   <>
@@ -2950,16 +3311,16 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    <h3>Search the web</h3>
+                    <h3>Google Browser</h3>
                     <p className="phone-helper">
-                      Look up developer guides and other public websites.
+                      Search with Google or enter a website address to open it in a new browser tab.
                     </p>
                     <form className="phone-search-form" onSubmit={searchWeb}>
                       <input
                         aria-label="Web search"
                         value={webQuery}
                         onChange={(e) => setWebQuery(e.target.value)}
-                        placeholder="Search the web…"
+                        placeholder="Search Google or enter a URL…"
                       />
                       <button aria-label="Search">
                         <Search size={16} />
@@ -3063,6 +3424,16 @@ export default function App() {
           >
             <Heart /> Homes & plots
           </button>
+          {user?.isAdmin && (
+            <button
+              onClick={() => {
+                setAdminOpen(true);
+                setMenu(false);
+              }}
+            >
+              <ShieldAlert /> Admin control room
+            </button>
+          )}
           {user?.isAdmin && (
             <button onClick={loadReports}>
               <ShieldAlert /> Moderation queue
@@ -3207,6 +3578,13 @@ export default function App() {
             <p>No open reports. Nice one.</p>
           )}
         </div>
+      )}
+      {adminOpen && (
+        <AdminDashboard
+          onClose={() => setAdminOpen(false)}
+          onNotice={setNotice}
+          onSettingsChange={setGameSettings}
+        />
       )}
       {modal && (
         <AuthModal
@@ -3521,6 +3899,13 @@ function AuthModal({ mode, player, avatars, jobs, error, busy, onClose, onMode, 
                 maxLength={20}
                 defaultValue={player.name}
               />
+            </label>
+          )}
+          {edit && (
+            <label className="profile-photo-upload">
+              Profile photo
+              <input name="profilePhoto" type="file" accept="image/jpeg,image/png,image/webp" />
+              <small>Optional · JPG, PNG, or WebP · up to 5 MB</small>
             </label>
           )}
           {mode === 'signup' && (

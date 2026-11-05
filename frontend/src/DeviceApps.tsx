@@ -15,10 +15,34 @@ import {
 const GAMEUP_URL = 'https://startup-life-games.onrender.com';
 const installedGames = [
   { id: 'chess', name: 'Chess', detail: 'Two-player strategy', players: '2 players', mark: '♞' },
-  { id: 'checkers', name: 'Checkers', detail: 'Quick tactical matches', players: '2 players', mark: '◉' },
-  { id: 'scrabble', name: 'Word Tiles', detail: 'Build words and score', players: '2–4 players', mark: 'Aa' },
-  { id: 'property-trading', name: 'Property Trading', detail: 'Build your city portfolio', players: '2–6 players', mark: '⌂' },
-  { id: 'ludo', name: 'Ludo Royale', detail: 'Race your pieces home', players: '2–4 players', mark: '✦' },
+  {
+    id: 'checkers',
+    name: 'Checkers',
+    detail: 'Quick tactical matches',
+    players: '2 players',
+    mark: '◉',
+  },
+  {
+    id: 'scrabble',
+    name: 'Word Tiles',
+    detail: 'Build words and score',
+    players: '2–4 players',
+    mark: 'Aa',
+  },
+  {
+    id: 'property-trading',
+    name: 'Property Trading',
+    detail: 'Build your city portfolio',
+    players: '2–6 players',
+    mark: '⌂',
+  },
+  {
+    id: 'ludo',
+    name: 'Ludo Royale',
+    detail: 'Race your pieces home',
+    players: '2–4 players',
+    mark: '✦',
+  },
 ];
 const request = async (path: string, options: RequestInit = {}) => {
   const headers = new Headers(options.headers);
@@ -30,24 +54,60 @@ const request = async (path: string, options: RequestInit = {}) => {
   return data;
 };
 
-export function GameUpApp() {
+export function GameUpApp({
+  enabled = true,
+  games = {},
+}: {
+  enabled?: boolean;
+  games?: Record<string, boolean>;
+}) {
+  const gameIds = {
+    chess: 'chess',
+    checkers: 'checkers',
+    scrabble: 'wordTiles',
+    'property-trading': 'propertyMarket',
+    ludo: 'ludo',
+  };
+  const availableGames = installedGames.filter((game) => games[gameIds[game.id]] !== false);
   return (
     <section className="device-app-page gameup-app">
       <div className="gameup-heading">
-        <div><span className="gameup-kicker">GAMEUP · INSTALLED</span><h2>Your game library</h2></div>
-        <span className="gameup-count">{installedGames.length} games</span>
+        <div>
+          <span className="gameup-kicker">GAMEUP · INSTALLED</span>
+          <h2>Your game library</h2>
+        </div>
+        <span className="gameup-count">{availableGames.length} games</span>
       </div>
-      <p>Choose a game to open its page in the GameUp hub.</p>
+      {!enabled ? (
+        <p>Game Pass is temporarily unavailable. Please check back later.</p>
+      ) : (
+        <p>Choose a game to open its page in the GameUp hub.</p>
+      )}
       <div className="gameup-installed-list">
-        {installedGames.map((game) => (
-          <a key={game.id} className="gameup-installed-game" href={`${GAMEUP_URL}/?game=${game.id}#library`} target="_blank" rel="noreferrer">
-            <span className={`gameup-game-mark gameup-${game.id}`}>{game.mark}</span>
-            <span className="gameup-game-copy"><b>{game.name}</b><small>{game.detail} · {game.players}</small></span>
-            <ArrowUpRight size={15} aria-hidden="true" />
-          </a>
-        ))}
+        {enabled &&
+          availableGames.map((game) => (
+            <a
+              key={game.id}
+              className="gameup-installed-game"
+              href={`${GAMEUP_URL}/?game=${game.id}#library`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span className={`gameup-game-mark gameup-${game.id}`}>{game.mark}</span>
+              <span className="gameup-game-copy">
+                <b>{game.name}</b>
+                <small>
+                  {game.detail} · {game.players}
+                </small>
+              </span>
+              <ArrowUpRight size={15} aria-hidden="true" />
+            </a>
+          ))}
       </div>
-      <small>Games open in a separate hub. Local practice is available; live multiplayer is not connected yet.</small>
+      <small>
+        Games open in a separate hub. Local practice is available; live multiplayer is not connected
+        yet.
+      </small>
     </section>
   );
 }
@@ -56,9 +116,15 @@ type DeviceAppsProps = {
   accountType: 'beginner' | 'developer' | 'grower' | string;
   username?: string;
   compact?: boolean;
+  section?: 'all' | 'demos' | 'files';
 };
 
-export function DemoAndFilesApp({ accountType, username = '', compact = false }: DeviceAppsProps) {
+export function DemoAndFilesApp({
+  accountType,
+  username = '',
+  compact = false,
+  section = 'all',
+}: DeviceAppsProps) {
   const [feed, setFeed] = useState<any[]>([]);
   const [files, setFiles] = useState<any[]>([]);
   const [people, setPeople] = useState<any[]>([]);
@@ -68,7 +134,9 @@ export function DemoAndFilesApp({ accountType, username = '', compact = false }:
   const [recording, setRecording] = useState(false);
   const [clip, setClip] = useState<Blob | null>(null);
   const [clipUrl, setClipUrl] = useState('');
-  const [activeTab, setActiveTab] = useState<'demos' | 'files'>('demos');
+  const [activeTab, setActiveTab] = useState<'demos' | 'files'>(
+    section === 'files' ? 'files' : 'demos',
+  );
   const [recipientId, setRecipientId] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -99,6 +167,9 @@ export function DemoAndFilesApp({ accountType, username = '', compact = false }:
   useEffect(() => {
     void load();
   }, [load]);
+  useEffect(() => {
+    if (section !== 'all') setActiveTab(section);
+  }, [section]);
   useEffect(
     () => () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -237,24 +308,32 @@ export function DemoAndFilesApp({ accountType, username = '', compact = false }:
 
   return (
     <section className={`device-app-page demo-app ${compact ? 'compact' : ''}`}>
-      <h2>{role === 'grower' ? 'Developer demo feed' : 'Developer studio'}</h2>
-      <div className="device-app-tabs">
-        <button
-          className={activeTab === 'demos' ? 'active' : ''}
-          onClick={() => setActiveTab('demos')}
-        >
-          <Video size={14} /> Demo feed
-        </button>
-        <button
-          className={activeTab === 'files' ? 'active' : ''}
-          onClick={() => setActiveTab('files')}
-        >
-          <FileUp size={14} /> Files
-        </button>
-        <button onClick={() => void load()} aria-label="Refresh">
-          <RefreshCw size={14} />
-        </button>
-      </div>
+      <h2>
+        {section === 'files'
+          ? 'File exchange'
+          : section === 'demos' || role === 'grower'
+            ? 'Developer demo feed'
+            : 'Developer studio'}
+      </h2>
+      {section === 'all' && (
+        <div className="device-app-tabs">
+          <button
+            className={activeTab === 'demos' ? 'active' : ''}
+            onClick={() => setActiveTab('demos')}
+          >
+            <Video size={14} /> Demo feed
+          </button>
+          <button
+            className={activeTab === 'files' ? 'active' : ''}
+            onClick={() => setActiveTab('files')}
+          >
+            <FileUp size={14} /> Files
+          </button>
+          <button onClick={() => void load()} aria-label="Refresh">
+            <RefreshCw size={14} />
+          </button>
+        </div>
+      )}
       {message && <p className="device-app-message">{message}</p>}
       {error && (
         <p className="device-app-error" role="alert">
