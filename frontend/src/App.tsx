@@ -56,6 +56,7 @@ import seedItems from '../../shared/data/items.json';
 import lessons from '../../shared/data/learning.json';
 import { RIFT_ARENA } from './game/combat.ts';
 import { WORLD_BOUNDS, isOutsideCauseway } from '../../shared/world.ts';
+import { readGraphicsQuality, type GraphicsQuality } from './game/graphicsQuality.ts';
 const WORLD = {
   ...WORLD_BOUNDS,
   w: WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX,
@@ -141,6 +142,7 @@ export default function App() {
     [mapOpen, setMapOpen] = useState(false),
     [mapExplorerOpen, setMapExplorerOpen] = useState(false),
     [cameraMode, setCameraMode] = useState('walk'),
+    [graphicsQuality, setGraphicsQuality] = useState<GraphicsQuality>(readGraphicsQuality),
     [lightingPreset, setLightingPreset] = useState('day'),
     [homesOpen, setHomesOpen] = useState(false),
     [menu, setMenu] = useState(false),
@@ -203,6 +205,11 @@ export default function App() {
     [introOpen, setIntroOpen] = useState(true),
     [worldClock, setWorldClock] = useState(Date.now);
   const avatars = ['🧑🏾', '👩🏿', '🧔🏽', '👩🏾', '🧑🏿', '👨🏾'];
+  useEffect(() => {
+    try {
+      localStorage.setItem('startup-life-graphics', graphicsQuality);
+    } catch {}
+  }, [graphicsQuality]);
   const campusPlace = {
     id: 'generated-innovation-tower',
     name: 'Tech Place',
@@ -517,6 +524,7 @@ export default function App() {
       down = (e) => {
         const key = String(e?.key || '');
         if (!key) return;
+        if (document.activeElement?.tagName === 'SELECT') return;
         if (
           ['1', '2', '3'].includes(key) &&
           !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)
@@ -1336,6 +1344,7 @@ export default function App() {
           weather={weather}
           cameraMode={cameraMode}
           lightingPreset={lightingPreset}
+          graphicsQuality={graphicsQuality}
           onPickup={collectItem}
           onObstacles={(q) => (obstacles.current = q)}
           onPlace={travel}
@@ -2530,6 +2539,21 @@ export default function App() {
                         </button>
                       ))}
                     </div>
+                    <label className="phone-graphics-setting">
+                      <span>Graphics quality</span>
+                      <select
+                        aria-label="Graphics quality"
+                        value={graphicsQuality}
+                        onChange={(event) =>
+                          setGraphicsQuality(event.target.value as GraphicsQuality)
+                        }
+                      >
+                        <option value="auto">Auto · fit this device</option>
+                        <option value="low">Low · longer battery life</option>
+                        <option value="balanced">Balanced</option>
+                        <option value="high">High · richer shadows</option>
+                      </select>
+                    </label>
                     <div className="phone-districts">
                       {[
                         'Tech Place',

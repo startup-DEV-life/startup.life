@@ -8,9 +8,13 @@ Coordinates are in the existing ThreeCity local X/Z space before WORLD_SCALE.
 """
 
 import math
+import sys
 from pathlib import Path
 
 import bpy
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from architecture import curved_roof
+from terrain_art import paint_terrain
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -136,6 +140,7 @@ def build_terrain():
     for poly, index in zip(mesh.polygons, face_mats):
         poly.material_index = index
         poly.use_smooth = True
+    paint_terrain(mesh, vertices, 0, 0, rx, rz)
     export("island-terrain.glb")
 
 
@@ -161,16 +166,16 @@ def build_campus():
     cube("Main entrance frame", (x, z + 24, y + 17), (27, 3, 35), stone, 1)
     cube("Main entrance glass", (x, z + 26, y + 14), (19, 1, 27), blue)
     # Asian-inspired roof silhouette and open-air work terraces.
-    for width, height, depth, h in [(155, 76, 112, 7), (167, 83, 120, 5), (179, 87, 128, 4)]:
-        cube("Tiered blue roof", (x, z - 24, y + height), (width, depth, h), dark, 2)
+    curved_roof("Swept blue roof", x, z - 24, y + 72, 179, 128, 21, dark)
+    cube("Gold ridge", (x, z - 24, y + 94), (53, 5, 2), gold)
     for side in (-1, 1):
         px = x + side * 91
         cylinder("Courtyard pavilion base", (px, z - 35, y + 2), 26, 4, stone, 16)
         for angle in range(0, 360, 90):
             a = math.radians(angle)
             cylinder("Pavilion column", (px + math.cos(a) * 17, z - 35 + math.sin(a) * 17, y + 14), 2.4, 24, stone)
-        cube("Pavilion roof", (px, z - 35, y + 29), (59, 59, 7), dark, 2)
-        cube("Pavilion roof accent", (px, z - 35, y + 33), (45, 45, 2), gold)
+        curved_roof("Pavilion swept roof", px, z - 35, y + 26, 59, 59, 12, dark)
+        cube("Pavilion roof accent", (px, z - 35, y + 39), (18, 3, 2), gold)
     # Reusable lanterns and garden trees provide an anime skyline without extra NPCs.
     for i, px in enumerate((x - 108, x - 73, x + 73, x + 108)):
         for pz in (z + 67, z - 35):

@@ -4,5 +4,7 @@ dist/
 backend/data/*.sqlite*
 .env
 .DS_Store
+__pycache__/
+*.pyc
 /backend/data/learning-library/
 /backend/data/private-uploads/

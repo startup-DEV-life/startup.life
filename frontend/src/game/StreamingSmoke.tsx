@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import ThreeCity from '../ThreeCity.tsx';
 import { isOutsideCauseway } from '../../../shared/world.ts';
+import { type GraphicsQuality } from './graphicsQuality.ts';
 import '../style.css';
 
 const START = 1000 / 0.98 + 525;
@@ -13,6 +14,11 @@ const empty = [];
 function StreamingSmoke() {
   const player = useRef<any>({ x: START, y: ROAD_Y, tx: START, ty: ROAD_Y, heading: -Math.PI / 2 });
   const obstacles = useRef<any[]>([]);
+  const captureFrame = useRef<((blob: Blob | null) => void) | null>(null);
+  const [quality, setQuality] = useState<GraphicsQuality>('auto');
+  const [lighting, setLighting] = useState('day');
+  const [camera, setCamera] = useState('drone');
+  const [testInterior, setTestInterior] = useState<any>(null);
   const [running, setRunning] = useState(false);
   const [report, setReport] = useState<any>({ status: 'ready' });
   useEffect(() => {
@@ -65,6 +71,9 @@ function StreamingSmoke() {
         lodTransitions: transitions,
         prefetchedBeforeArrival: predictedLoad,
         chunkRequests: Number(host?.dataset.streamLoadCount || 0),
+        graphicsQuality: host?.dataset.graphicsQuality,
+        shadows: host?.dataset.graphicsShadows,
+        worldArt: host?.dataset.worldArt,
         maxCoordinateStep: maxStep,
         errors: [...errors],
       };
@@ -118,8 +127,12 @@ function StreamingSmoke() {
         onCombatEvent={() => {}}
         onPickup={() => {}}
         active={null}
-        enteredBuildingId={null}
-        cameraMode="drone"
+        enteredBuildingId={testInterior?.id || null}
+        enteredBuilding={testInterior}
+        cameraMode={camera}
+        graphicsQuality={quality}
+        lightingPreset={lighting}
+        captureFrameRef={captureFrame}
       />
       <section
         style={{
@@ -136,6 +149,76 @@ function StreamingSmoke() {
       >
         <button onClick={() => setRunning(true)} disabled={running}>
           Run crossing smoke test
+        </button>
+        <label>
+          Quality{' '}
+          <select
+            aria-label="Test graphics quality"
+            value={quality}
+            onChange={(event) => setQuality(event.target.value as GraphicsQuality)}
+          >
+            {['auto', 'low', 'balanced', 'high'].map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Lighting{' '}
+          <select
+            aria-label="Test lighting"
+            value={lighting}
+            onChange={(event) => setLighting(event.target.value)}
+          >
+            {['day', 'sunset', 'night', 'dynamic'].map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Camera{' '}
+          <select
+            aria-label="Test camera"
+            value={camera}
+            onChange={(event) => setCamera(event.target.value)}
+          >
+            {['drone', 'walk', 'orbit'].map((value) => (
+              <option key={value}>{value}</option>
+            ))}
+          </select>
+        </label>
+        <button
+          onClick={() =>
+            setTestInterior(
+              testInterior
+                ? null
+                : {
+                    id: 'generated-innovation-tower',
+                    name: 'Tech Place',
+                    companyName: 'Tech Place',
+                    kind: 'Developer campus',
+                    industry: 'Software & technology',
+                    color: '#258b9b',
+                    floor: 0,
+                  },
+            )
+          }
+        >
+          {testInterior ? 'Exit office test' : 'Enter office test'}
+        </button>
+        <button
+          onClick={() => {
+            captureFrame.current = (blob) => {
+              if (!blob) return;
+              const url = URL.createObjectURL(blob);
+              const anchor = document.createElement('a');
+              anchor.href = url;
+              anchor.download = `startup-life-${quality}-${lighting}.png`;
+              anchor.click();
+              setTimeout(() => URL.revokeObjectURL(url), 10000);
+            };
+          }}
+        >
+          Export rendered frame
         </button>
         <pre id="smoke-report" style={{ whiteSpace: 'pre-wrap' }}>
           {JSON.stringify(report, null, 2)}

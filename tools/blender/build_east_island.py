@@ -8,9 +8,13 @@ ThreeCity coordinate frame so the player and Socket.IO coordinates do not jump.
 """
 
 import math
+import sys
 from pathlib import Path
 
 import bpy
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from architecture import curved_roof
+from terrain_art import paint_terrain
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -74,6 +78,7 @@ def build_land(detail, grass, sand, cliff):
     for poly, index in zip(mesh.polygons, mats):
         poly.material_index = index
         poly.use_smooth = detail
+    paint_terrain(mesh, verts, CX, CZ, RX, RZ)
     # A simple cliff skirt makes the shoreline read as an island from the bridge.
     wall_verts, wall_faces = [], []
     for i in range(segments + 1):
@@ -130,8 +135,8 @@ def build(detail):
     cube("Signal tower", CX + 90, CZ - 190, 78, 88, 88, 150, jade)
     for level in range(4):
         cube("Signal tower band", CX + 90, CZ - 190, 33 + level * 35, 98, 98, 5, pearl)
-    cube("Crowned roof", CX + 90, CZ - 190, 159, 120, 116, 12, ink)
-    cube("Crowned roof gold cap", CX + 90, CZ - 190, 167, 90, 88, 3, gold)
+    curved_roof("Crowned roof", CX + 90, CZ - 190, 154, 120, 116, 22, ink)
+    cube("Crowned roof gold cap", CX + 90, CZ - 190, 177, 36, 5, 3, gold)
     if detail:
         # A compact ancient-meets-tech district with open walks between buildings.
         for side in (-1, 1):
@@ -140,12 +145,12 @@ def build(detail):
                 z = CZ + side * (145 + (index % 2) * 34)
                 height = 35 + (index % 3) * 20
                 cube("Guild workspace", x, z, 3.0 + height / 2, 100, 82, height, jade if index % 2 else pearl)
-                cube("Guild roof", x, z, 5 + height, 116, 98, 8, ink)
-                cube("Guild roof trim", x, z, 10 + height, 92, 76, 2, gold)
+                curved_roof("Guild swept roof", x, z, 4 + height, 116, 98, 14, ink)
+                cube("Guild roof trim", x, z, 19 + height, 32, 4, 2, gold)
         for x in (CX - 360, CX - 120, CX + 120, CX + 360):
             cube("Avenue marker", x, CZ, 3.5, 18, 1.5, 0.6, gold)
         cube("Garden arcade", CX - 180, CZ - 360, 23, 240, 22, 40, pearl)
-        cube("Garden arcade roof", CX - 180, CZ - 360, 48, 260, 35, 8, ink)
+        curved_roof("Garden arcade roof", CX - 180, CZ - 360, 44, 260, 35, 12, ink)
     merge_by_material()
     save("near" if detail else "far")
 
