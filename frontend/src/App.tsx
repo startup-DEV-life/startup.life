@@ -98,6 +98,7 @@ export default function App() {
     [homes, setHomes] = useState<any[]>(seedHomes),
     [jobs, setJobs] = useState<any[]>(seedJobs),
     [user, setUser] = useState<any>(null),
+    [authReady, setAuthReady] = useState(false),
     [gameSettings, setGameSettings] = useState<any>(INITIAL_GAME_SETTINGS),
     [player, setPlayer] = useState<any>({
       name: 'Guest',
@@ -482,10 +483,13 @@ export default function App() {
           setOwned(c.homes.map((h) => h.id));
         }
         setServerError('');
+        setAuthReady(true);
       })
-      .catch(
-        () => live && setServerError('Backend is offline. Run npm run dev to start the server.'),
-      );
+      .catch(() => {
+        if (!live) return;
+        setServerError('The game server is unavailable. Please try again in a moment.');
+        setAuthReady(true);
+      });
     return () => {
       live = false;
     };
@@ -982,6 +986,9 @@ export default function App() {
       energy: 82,
     });
     setOwned([]);
+    setPhoneOpen(false);
+    setLaptopOpen(false);
+    setChat(false);
     setMenu(false);
     setNotice('You are exploring the Dev District as a guest.');
   };
@@ -1383,6 +1390,120 @@ export default function App() {
       setInstallPrompt(null);
     } else setInstallHelp(true);
   };
+  if (!user) {
+    return (
+      <div className="signed-out-shell">
+        <div className="signed-out-orbit signed-out-orbit-one" aria-hidden="true" />
+        <div className="signed-out-orbit signed-out-orbit-two" aria-hidden="true" />
+        <div className="signed-out-city" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+          <span />
+        </div>
+        <header className="signed-out-header">
+          <div className="signed-out-brand">
+            <StartupMark size={42} />
+            <span>
+              startup<span>.</span>life
+            </span>
+          </div>
+          <div className="signed-out-location">
+            <span /> LAGOS DEVELOPER CITY
+          </div>
+        </header>
+        <main className="signed-out-main" aria-busy={!authReady}>
+          <section className="signed-out-copy">
+            <div className="signed-out-eyebrow">
+              <Sparkles size={14} /> YOUR NEXT CHAPTER STARTS HERE
+            </div>
+            <h1>
+              Build your career.
+              <br />
+              <em>Live the story.</em>
+            </h1>
+            <p>
+              Step into a living developer world. Choose your path, take on real skills quests, and
+              grow alongside a community of builders.
+            </p>
+            <div className="signed-out-actions">
+              <button className="signed-out-primary" onClick={() => openAuth('signup')}>
+                Create account <ArrowRight size={17} />
+              </button>
+              <button className="signed-out-secondary" onClick={() => openAuth('login')}>
+                <LogIn size={16} /> Sign in
+              </button>
+            </div>
+            <div className="signed-out-note">
+              <span /> Your phone, laptop, and city unlock after sign in.
+            </div>
+            {serverError && (
+              <div className="signed-out-error" role="status">
+                {serverError}
+              </div>
+            )}
+          </section>
+          <aside className="signed-out-preview" aria-label="Startup.life world preview">
+            <div className="preview-stars">
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+            <div className="preview-window">
+              <div className="preview-window-top">
+                <span />
+                <span />
+                <span />
+                <b>LIAN YU · 06:42 PM</b>
+              </div>
+              <div className="preview-skyline">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <span />
+              </div>
+              <div className="preview-window-caption">
+                <b>Find your place in the city.</b>
+                <span>EXPLORE · LEARN · BUILD</span>
+              </div>
+            </div>
+            <div className="preview-float-card">
+              <span>✦</span>
+              <div>
+                <b>One world. Many paths.</b>
+                <small>Start yours today</small>
+              </div>
+            </div>
+          </aside>
+        </main>
+        <footer className="signed-out-footer">
+          <span>startup.life</span>
+          <i /> A little Lagos, wherever you are
+        </footer>
+        {modal && (
+          <AuthModal
+            mode={mode}
+            player={player}
+            avatars={avatars}
+            jobs={jobs}
+            error={error}
+            busy={busy}
+            onClose={() => setModal(false)}
+            onMode={openAuth}
+            onSubmit={auth}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={interior ? 'game-shell building-inside' : 'game-shell'}>
       <Suspense
