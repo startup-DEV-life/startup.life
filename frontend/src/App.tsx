@@ -1,3 +1,4 @@
+import { StartupWork } from './StartupWork.tsx';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import StartupWelcome, { StartupMark } from './StartupWelcome.tsx';
 import { io } from 'socket.io-client';
@@ -473,6 +474,7 @@ export default function App() {
     );
     s.on('player:left', (q) => setOnline((a) => a.filter((x) => x.id !== q.id)));
     s.on('chat:history', setMessages);
+    s.on('work:greeting', (q) => setNotice(`${q.from} welcomes you: ${q.body}`));
     s.on('chat:message', (q) => setMessages((a) => [...a.slice(-39), q]));
     s.on('chat:hidden', (q) => setMessages((a) => a.filter((x) => x.id !== q.id)));
     s.on('crew:lobby', setCrewLobby);
@@ -621,6 +623,8 @@ export default function App() {
             heading: p.current.heading,
             inVehicle: false,
             inBuilding: true,
+            buildingId: p.current.buildingId || '',
+            floor: p.current.buildingFloor || 0,
           });
         }
         return;
@@ -740,6 +744,8 @@ export default function App() {
       p.current.x = p.current.tx;
       p.current.y = p.current.ty;
       p.current.inBuilding = true;
+      p.current.buildingId = active.id;
+      p.current.buildingFloor = active.floor || 0;
       p.current.inVehicle = false;
       setInVehicle(false);
       setCampusSecurity(false);
@@ -974,12 +980,18 @@ export default function App() {
     setVisitedBuildings(seen);
     localStorage.setItem('blank-life-visited', JSON.stringify(seen));
     p.current.inBuilding = true;
+    p.current.buildingId = active.id;
+    p.current.buildingFloor = active.floor || 0;
     p.current.inVehicle = false;
     setInVehicle(false);
     setInterior(active);
     setActivityNotice('');
     setNotice(`You entered ${active.companyName || active.name}.`);
   };
+  useEffect(() => {
+    p.current.buildingId = interior?.id || '';
+    p.current.buildingFloor = interior?.floor || 0;
+  }, [interior?.id, interior?.floor]);
   const exitBuilding = () => {
     if (!interior) return;
     const leaving = interior;
@@ -1014,8 +1026,8 @@ export default function App() {
       if (player.accountType !== 'developer') {
         setActivityNotice(
           player.accountType === 'beginner'
-            ? 'Beginner accounts can explore career paths and learning drills. Developer work assignments unlock with a Developer profile.'
-            : 'Growers can browse developer demos and career paths. Work assignments are for Developer profiles.',
+            ? 'Beginner accounts can explore career paths and learning drills. Role assignments unlock with a Startup professional profile.'
+            : 'Growers can browse developer demos and career paths. Work assignments are for Startup professional profiles.',
         );
         return;
       }
@@ -1033,9 +1045,7 @@ export default function App() {
         return;
       }
       await completeJob();
-      setActivityNotice(
-        `Task complete · +${jobs.find((j) => j.id === player.jobId)?.reward || 0} Startup coins and career XP`,
-      );
+      setActivityNotice('Complete and submit your assignment in Role tasks to earn rewards.');
       return;
     }
     if (interior.generated) {
@@ -1196,7 +1206,10 @@ export default function App() {
         body: JSON.stringify({ jobId: q.id }),
       });
       updatePlayer(d.player);
-      travel({ ...q, job: true });
+      if (q.virtual) {
+        setLaptopOpen(true);
+        setLaptopView('work');
+      } else travel({ ...q, job: true });
       setJobsOpen(false);
       setNotice(`${q.title} selected · head to ${q.studio}`);
     } catch (err) {
@@ -1204,16 +1217,8 @@ export default function App() {
     }
   };
   const completeJob = async () => {
-    setBusy(true);
-    try {
-      const d = await api('/api/jobs/complete', { method: 'POST', body: JSON.stringify({}) });
-      updatePlayer(d.player);
-      setNotice(`${d.task} · +₦${d.reward} · ${d.player.xp} XP`);
-    } catch (err) {
-      setNotice(err.message);
-    } finally {
-      setBusy(false);
-    }
+    setLaptopOpen(true);
+    setLaptopView('work');
   };
   const startCrew = () => {
     if (!user) {
@@ -1252,7 +1257,7 @@ export default function App() {
   const quests = [
       {
         id: 'career',
-        title: player.jobId ? 'Developer path chosen' : 'Choose your developer path',
+        title: player.jobId ? 'Startup path chosen' : 'Choose your startup path',
         detail: player.jobId
           ? jobs.find((j) => j.id === player.jobId)?.title || 'Career selected'
           : 'Select a role at the career board',
@@ -1279,13 +1284,13 @@ export default function App() {
         : [
             {
               id: 'task',
-              title: 'Complete your first developer task',
+              title: 'Complete your first role assignment',
               detail: `${player.tasksDone || 0} task${player.tasksDone === 1 ? '' : 's'} shipped`,
               done: (player.tasksDone || 0) > 0,
               action: () => {
                 if (player.jobId) {
-                  const job = jobs.find((j) => j.id === player.jobId);
-                  if (job) travel({ ...job, job: true });
+                  setLaptopView('work');
+                  setLaptopOpen(true);
                 } else setJobsOpen(true);
               },
             },
@@ -1332,7 +1337,7 @@ export default function App() {
           playerName={player.name}
           online={online}
           places={visiblePlaces}
-          jobs={jobs}
+          jobs={jobs.filter((job) => !job.virtual)}
           active={active}
           enteredBuildingId={interior?.id || null}
           enteredBuilding={interior}
@@ -1639,7 +1644,7 @@ export default function App() {
         <aside className="career-board">
           <div className="career-board-head">
             <div>
-              <span>DEV DISTRICT · CAREERS</span>
+              <span>STARTUP TEAM · CAREERS</span>
               <b>
                 {player.accountType === 'beginner' ? 'Explore career paths' : 'Choose your path'}
               </b>
@@ -1686,7 +1691,7 @@ export default function App() {
           <p className="career-tip">
             {player.accountType !== 'developer'
               ? 'Choose a path to shape your learning journey.'
-              : 'Walk to your studio. Finish a task to earn cash and XP.'}
+              : 'Open Role tasks on your laptop or phone to complete a matching assignment.'}
           </p>
         </aside>
       )}
@@ -2073,7 +2078,7 @@ export default function App() {
                 const selected = player.jobId === career?.id;
                 return (
                   <div className="developer-task">
-                    <span>DEVELOPER WORK</span>
+                    <span>ROLE ASSIGNMENT</span>
                     <h3>
                       {career?.title} · {career?.studio}
                     </h3>
@@ -2087,7 +2092,7 @@ export default function App() {
                         ? 'Create an account to start'
                         : selected
                           ? 'Start this task'
-                          : 'Choose this developer role'}{' '}
+                          : 'Choose this startup role'}{' '}
                       <span>+{career?.reward} coins</span>
                     </button>
                   </div>
@@ -2152,6 +2157,13 @@ export default function App() {
             <div className="laptop-workspace">
               <nav className="laptop-apps" aria-label="Laptop apps">
                 <button
+                  className={laptopView === 'work' ? 'active' : ''}
+                  onClick={() => setLaptopView('work')}
+                >
+                  <BriefcaseBusiness size={16} />
+                  Role tasks
+                </button>
+                <button
                   className={laptopView === 'quests' ? 'active' : ''}
                   onClick={() => setLaptopView('quests')}
                 >
@@ -2204,12 +2216,19 @@ export default function App() {
                 )}
               </nav>
               <main className="laptop-screen">
-                {laptopView === 'quests' ? (
+                {laptopView === 'work' ? (
+                  <StartupWork
+                    player={player}
+                    signedIn={!!user}
+                    onPlayer={updatePlayer}
+                    onSignIn={() => openAuth('login')}
+                  />
+                ) : laptopView === 'quests' ? (
                   <div className="laptop-quests">
                     <div className="laptop-page-heading">
                       <span>SYSTEM · DAILY OBJECTIVES</span>
                       <h2>Your quest log</h2>
-                      <p>Build your developer life one step at a time.</p>
+                      <p>Build your startup life one contribution at a time.</p>
                     </div>
                     <div className="laptop-quest-progress">
                       <span style={{ width: `${(questDone / quests.length) * 100}%` }} />
@@ -2280,11 +2299,11 @@ export default function App() {
                 ) : (
                   <div className="laptop-careers">
                     <div className="laptop-page-heading">
-                      <span>DEV DISTRICT · CAREERS</span>
+                      <span>STARTUP TEAM · CAREERS</span>
                       <h2>Choose your path</h2>
                       <p>
                         {player.accountType !== 'developer'
-                          ? 'Explore career paths and find the kind of development you want to learn.'
+                          ? 'Explore career paths and discover how you want to contribute to a startup.'
                           : 'Select a role to unlock matching tasks around the island.'}
                       </p>
                     </div>
@@ -2350,6 +2369,10 @@ export default function App() {
                   </div>
                 )}
                 <div className="phone-apps">
+                  <button onClick={() => setPhoneView('work')}>
+                    <BriefcaseBusiness />
+                    <b>Role tasks</b>
+                  </button>
                   <button onClick={() => setPhoneView('map')}>
                     <Map />
                     <b>Island map</b>
@@ -2444,7 +2467,7 @@ export default function App() {
                         ' XP · ' +
                         String(player.tasksDone || 0) +
                         ' tasks shipped'
-                      : 'Frontend · Backend · Full-Stack'}
+                      : 'Developer · Marketing · HR · Management'}
                   </span>
                 </div>
               </>
@@ -2453,7 +2476,14 @@ export default function App() {
                 <button className="phone-back" onClick={() => setPhoneView('home')}>
                   ‹ &nbsp; Apps
                 </button>
-                {phoneView === 'github' ? (
+                {phoneView === 'work' ? (
+                  <StartupWork
+                    player={player}
+                    signedIn={!!user}
+                    onPlayer={updatePlayer}
+                    onSignIn={() => openAuth('login')}
+                  />
+                ) : phoneView === 'github' ? (
                   <>
                     <h3>GitHub</h3>
                     <p className="phone-helper">
@@ -3154,7 +3184,7 @@ export default function App() {
           mode={mode}
           player={player}
           avatars={avatars}
-          jobs={jobs}
+          jobs={jobs.filter((job) => !job.virtual)}
           error={error}
           busy={busy}
           onClose={() => setModal(false)}
@@ -3396,7 +3426,7 @@ function AuthModal({ mode, player, avatars, jobs, error, busy, onClose, onMode, 
             ? 'Update your name and look.'
             : mode === 'login'
               ? 'Sign in and pick up your story.'
-              : 'Create your account and choose the developer life you want.'}
+              : 'Create your account and choose your role in a startup.'}
         </p>
         <form onSubmit={onSubmit}>
           {mode === 'signup' && (
@@ -3416,7 +3446,9 @@ function AuthModal({ mode, player, avatars, jobs, error, busy, onClose, onMode, 
               CHOOSE YOUR CAMPUS PATH
               <select name="accountType" defaultValue={player.accountType || 'developer'}>
                 <option value="beginner">Beginner · tutorials and guided quests</option>
-                <option value="developer">Developer · build and pitch a startup</option>
+                <option value="developer">
+                  Startup professional · build, market, manage or support
+                </option>
                 <option value="grower">Grower · mentor and support founders</option>
               </select>
               <small>Grower accounts can visit the leadership floor in this demo.</small>
@@ -3464,7 +3496,7 @@ function AuthModal({ mode, player, avatars, jobs, error, busy, onClose, onMode, 
           )}
           {mode === 'signup' && (
             <label className="career-select-label">
-              OPTIONAL DEVELOPER CAREER
+              STARTUP CAREER
               <select name="jobId" required defaultValue={player.jobId || 'frontend-engineer'}>
                 {jobs.map((job) => (
                   <option value={job.id} key={job.id}>

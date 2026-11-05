@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { installStartupWork } from './startup-work.ts';
 import express from 'express';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
@@ -371,7 +372,9 @@ const requireAdminApiKey = (req, res, next) => {
 app.get('/api/internal/admin/users', requireAdminApiKey, (req, res) => {
   const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
   const offset = Math.max(0, Number(req.query.offset) || 0);
-  const users = db.prepare(`
+  const users = db
+    .prepare(
+      `
     SELECT u.id, u.username, u.display_name AS displayName, u.created_at AS createdAt,
       p.account_type AS accountType, p.job_id AS jobId, p.xp, p.coins,
       p.tasks_done AS tasksDone, p.updated_at AS lastSeen,
@@ -381,14 +384,18 @@ app.get('/api/internal/admin/users', requireAdminApiKey, (req, res) => {
       (SELECT COUNT(*) FROM learning_completions WHERE user_id=u.id) AS lessonsCompleted
     FROM users u JOIN players p ON p.user_id=u.id
     ORDER BY u.created_at DESC LIMIT ? OFFSET ?
-  `).all(limit, offset);
+  `,
+    )
+    .all(limit, offset);
   const total = db.prepare('SELECT COUNT(*) AS count FROM users').get().count;
   res.json({ users, total, limit, offset });
 });
 app.get('/api/internal/admin/activity', requireAdminApiKey, (req, res) => {
   const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 100));
   const offset = Math.max(0, Number(req.query.offset) || 0);
-  const activity = db.prepare(`
+  const activity = db
+    .prepare(
+      `
     SELECT * FROM (
       SELECT 'account_created' AS type, u.username, u.display_name AS displayName,
         'Created an account' AS summary, u.created_at AS occurredAt FROM users u
@@ -411,14 +418,20 @@ app.get('/api/internal/admin/activity', requireAdminApiKey, (req, res) => {
       UNION ALL SELECT 'chat_message', u.username, u.display_name, 'Posted in community chat', c.created_at
         FROM chat_messages c JOIN users u ON u.id=c.user_id
     ) ORDER BY occurredAt DESC LIMIT ? OFFSET ?
-  `).all(limit, offset);
-  const total = db.prepare(`
+  `,
+    )
+    .all(limit, offset);
+  const total = db
+    .prepare(
+      `
     SELECT (SELECT COUNT(*) FROM users) + (SELECT COUNT(*) FROM sessions) +
       (SELECT COUNT(*) FROM visits) + (SELECT COUNT(*) FROM job_completions) +
       (SELECT COUNT(*) FROM learning_completions) + (SELECT COUNT(*) FROM coding_quest_completions) +
       (SELECT COUNT(*) FROM developer_demos) + (SELECT COUNT(*) FROM player_files) +
       (SELECT COUNT(*) FROM learning_book_purchases) + (SELECT COUNT(*) FROM chat_messages) AS count
-  `).get().count;
+  `,
+    )
+    .get().count;
   res.json({ activity, total, limit, offset });
 });
 app.get('/api/places', (_req, res) => res.json(places));
@@ -716,7 +729,7 @@ app.post('/api/auth/signup', authLimit, async (req, res) => {
   if (req.body?.adultConfirmed !== true)
     return res.status(400).json({ error: 'You must confirm you are 18 or older.' });
   if (!jobs.some((j) => j.id === jobId))
-    return res.status(400).json({ error: 'Choose a developer career.' });
+    return res.status(400).json({ error: 'Choose a startup career.' });
   if (db.prepare('SELECT 1 FROM users WHERE username=?').get(username))
     return res.status(409).json({ error: 'That username is already taken.' });
   try {
@@ -781,7 +794,7 @@ app.patch('/api/player', auth, (req, res) => {
 });
 app.post('/api/jobs/select', auth, (req, res) => {
   const job = jobs.find((x) => x.id === req.body?.jobId);
-  if (!job) return res.status(404).json({ error: 'Choose a listed developer career.' });
+  if (!job) return res.status(404).json({ error: 'Choose a listed startup career.' });
   db.prepare('UPDATE players SET job_id=?,updated_at=? WHERE user_id=?').run(
     job.id,
     stamp(),
@@ -791,34 +804,23 @@ app.post('/api/jobs/select', auth, (req, res) => {
   io.emit('player:update', p);
   res.json({ player: p, job });
 });
-app.post('/api/jobs/complete', auth, requireRole('developer'), (req, res) => {
-  const id = req.account.user_id,
-    p = playerQuery.get(id),
-    job = jobs.find((x) => x.id === p.jobId);
-  if (!job) return res.status(400).json({ error: 'Pick a developer career first.' });
-  if (Math.hypot(p.x - job.x, p.y - job.y) > 145)
-    return res.status(400).json({ error: `Walk over to ${job.studio} to work.` });
-  const last = db
-    .prepare(
-      'SELECT completed_at AS completedAt FROM job_completions WHERE user_id=? ORDER BY id DESC LIMIT 1',
-    )
-    .get(id);
-  if (last && Date.now() - Date.parse(last.completedAt) < 30000)
-    return res.status(429).json({ error: 'Take a short break before starting the next task.' });
-  const t = stamp();
-  db.transaction(() => {
-    db.prepare(
-      'UPDATE players SET coins=coins+?,xp=xp+?,tasks_done=tasks_done+1,energy=MAX(8,energy-4),updated_at=? WHERE user_id=?',
-    ).run(job.reward, job.reward, t, id);
-    db.prepare('INSERT INTO job_completions(user_id,job_id,completed_at) VALUES(?,?,?)').run(
-      id,
-      job.id,
-      t,
-    );
-  })();
-  const updated = publicPlayer(playerQuery.get(id));
-  io.emit('player:update', updated);
-  res.json({ player: updated, reward: job.reward, task: job.task });
+// Rewards require a validated role assignment; the former click-to-complete path is closed.
+app.post('/api/jobs/complete', auth, (_req, res) => {
+  res
+    .status(409)
+    .json({ error: 'Open Role tasks on your phone or laptop and submit the assignment.' });
+});
+installStartupWork({
+  app,
+  db,
+  auth,
+  requireRole,
+  jobs,
+  playerQuery,
+  publicPlayer,
+  io,
+  online: () => online,
+  uploadPath: privateUploadFiles,
 });
 app.post('/api/homes/:id/buy', auth, (req, res) => {
   const h = homes.find((x) => x.id === req.params.id);
@@ -1763,6 +1765,9 @@ io.on('connection', (s) => {
     q.heading = Number.isFinite(Number(v?.heading)) ? Number(v.heading) : q.heading || 0;
     q.inVehicle = !!v?.inVehicle;
     q.inBuilding = !!v?.inBuilding;
+    q.buildingId =
+      q.inBuilding && typeof v?.buildingId === 'string' ? v.buildingId.slice(0, 100) : '';
+    q.floor = q.inBuilding ? Math.max(0, Math.min(5, Number(v?.floor) || 0)) : 0;
     const nextCell = worldCell(x, y, !!q.inRift);
     if (nextCell !== s.data.worldCell) {
       const oldRooms = s.data.worldRooms,

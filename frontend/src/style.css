@@ -2440,7 +2440,9 @@ button:not(:disabled):active {
   border-radius: 11px;
   background: #151e36;
   color: #d8e7f4;
-  font: 700 12px 'DM Sans', sans-serif;
+  font:
+    700 12px 'DM Sans',
+    sans-serif;
 }
 .phone-auth-actions .phone-auth-primary {
   border-color: #70dce3;
@@ -2462,17 +2464,23 @@ button:not(:disabled):active {
   display: block;
   margin-bottom: 5px;
   color: #82dfdf;
-  font: 800 9px 'DM Sans', sans-serif;
-  letter-spacing: .14em;
+  font:
+    800 9px 'DM Sans',
+    sans-serif;
+  letter-spacing: 0.14em;
 }
-.gameup-heading h2 { margin-bottom: 0; }
+.gameup-heading h2 {
+  margin-bottom: 0;
+}
 .gameup-count {
   flex: 0 0 auto;
   padding: 5px 8px;
   border: 1px solid #3b4b69;
   border-radius: 999px;
   color: #c2d5ea;
-  font: 700 10px 'DM Sans', sans-serif;
+  font:
+    700 10px 'DM Sans',
+    sans-serif;
 }
 .gameup-installed-list {
   display: grid;
@@ -2491,7 +2499,10 @@ button:not(:disabled):active {
   background: #111a30;
   color: #e9f1fa;
   text-decoration: none;
-  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    transform 0.16s ease;
 }
 .gameup-installed-game:hover {
   transform: translateY(-1px);
@@ -2506,24 +2517,51 @@ button:not(:disabled):active {
   border-radius: 10px;
   background: #183a50;
   color: #8de9ed;
-  font: 800 18px 'Manrope', sans-serif;
+  font:
+    800 18px 'Manrope',
+    sans-serif;
 }
-.gameup-checkers { background: #482e45; color: #ffaaa0; }
-.gameup-scrabble { background: #4c4129; color: #f4d88e; }
-.gameup-property-trading { background: #30324f; color: #c4b9ff; }
-.gameup-ludo { background: #234938; color: #8de5b1; }
-.gameup-game-copy { min-width: 0; }
-.gameup-game-copy b, .gameup-game-copy small { display: block; }
-.gameup-game-copy b { font: 750 12px 'Manrope', sans-serif; }
+.gameup-checkers {
+  background: #482e45;
+  color: #ffaaa0;
+}
+.gameup-scrabble {
+  background: #4c4129;
+  color: #f4d88e;
+}
+.gameup-property-trading {
+  background: #30324f;
+  color: #c4b9ff;
+}
+.gameup-ludo {
+  background: #234938;
+  color: #8de5b1;
+}
+.gameup-game-copy {
+  min-width: 0;
+}
+.gameup-game-copy b,
+.gameup-game-copy small {
+  display: block;
+}
+.gameup-game-copy b {
+  font:
+    750 12px 'Manrope',
+    sans-serif;
+}
 .gameup-game-copy small {
   overflow: hidden;
   margin-top: 2px;
   color: #a8bbd3;
-  font: 500 9px 'DM Sans', sans-serif;
+  font:
+    500 9px 'DM Sans',
+    sans-serif;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.gameup-installed-game > svg { color: #91dfe8; }
+.gameup-installed-game > svg {
+  color: #91dfe8;
+}
 .phone-apps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -10321,4 +10359,85 @@ button:not(:disabled):active {
 .phone-graphics-setting select:focus-visible {
   outline: 2px solid #7bd5ce;
   outline-offset: 3px;
+}
+
+.startup-work {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px;
+  color: #e0eafa;
+}
+.startup-work h3 {
+  margin: 24px 0 8px;
+}
+.startup-work p {
+  line-height: 1.6;
+}
+.startup-work label {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  font-size: 13px;
+}
+.startup-work textarea,
+.startup-work input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #425672;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0b1627;
+  color: #f1f6ff;
+}
+.startup-work textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+.startup-work button {
+  border: 1px solid #56738e;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: #19334a;
+  color: #e7f6ff;
+  cursor: pointer;
+}
+.startup-work button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.startup-work .visit-button {
+  margin-top: 18px;
+}
+.work-code {
+  overflow-x: auto;
+  padding: 18px;
+  border-radius: 10px;
+  background: #050c16;
+  color: #a8e6cd;
+  white-space: pre;
+  font: 14px/1.8 monospace;
+}
+.work-colleague {
+  margin: 12px 0;
+  border: 1px solid #365269;
+  border-radius: 10px;
+  padding: 16px;
+}
+.work-campaign {
+  display: block;
+  max-width: 100%;
+  max-height: 260px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+.work-error {
+  color: #ffb4b4;
+}
+.player-phone .startup-work {
+  padding: 4px;
+}
+.startup-work small {
+  display: block;
+  color: #a7bdcf;
+  line-height: 1.5;
 }
