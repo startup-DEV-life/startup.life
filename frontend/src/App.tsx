@@ -108,6 +108,7 @@ export default function App() {
     [phoneView, setPhoneView] = useState('home'),
     [laptopOpen, setLaptopOpen] = useState(false),
     [laptopView, setLaptopView] = useState('quests'),
+    [laptopExpanded, setLaptopExpanded] = useState(false),
     [dispatch, setDispatch] = useState<any>(null),
     [webQuery, setWebQuery] = useState(''),
     [placementQuery, setPlacementQuery] = useState(''),
@@ -2157,7 +2158,10 @@ export default function App() {
         </section>
       )}
       {laptopOpen && (
-        <section className="developer-laptop" aria-label="Developer laptop">
+        <section
+          className={`developer-laptop${laptopExpanded ? ' laptop-expanded' : ''}`}
+          aria-label="Developer laptop"
+        >
           <div className="laptop-window">
             <header className="laptop-titlebar">
               <div className="laptop-brand">
@@ -2166,9 +2170,18 @@ export default function App() {
                   FIELD TERMINAL <small>LIAN YU · DEV ENVIRONMENT</small>
                 </span>
               </div>
-              <button onClick={() => setLaptopOpen(false)} aria-label="Close laptop">
-                <X size={17} />
-              </button>
+              <div className="laptop-window-controls">
+                <button
+                  onClick={() => setLaptopExpanded((expanded) => !expanded)}
+                  aria-label={laptopExpanded ? 'Restore laptop size' : 'Expand laptop'}
+                  aria-pressed={laptopExpanded}
+                >
+                  {laptopExpanded ? 'Restore' : 'Expand'}
+                </button>
+                <button onClick={() => setLaptopOpen(false)} aria-label="Close laptop">
+                  <X size={20} />
+                </button>
+              </div>
             </header>
             <div className="laptop-workspace">
               <nav className="laptop-apps" aria-label="Laptop apps">
