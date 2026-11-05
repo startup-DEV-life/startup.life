@@ -80,7 +80,8 @@ export default function App() {
     keys = useRef<Record<string, any>>({}),
     last = useRef({ frame: 0, move: 0 }),
     audioRef = useRef<any>(null),
-    obstacles = useRef<any[]>([]);
+    obstacles = useRef<any[]>([]),
+    simulationFrame = useRef<any>(null);
   const [places, setPlaces] = useState<any[]>(seedPlaces),
     [homes, setHomes] = useState<any[]>(seedHomes),
     [jobs, setJobs] = useState<any[]>(seedJobs),
@@ -596,15 +597,20 @@ export default function App() {
   }, [user, dungeonActive]);
   useEffect(() => {
     let raf;
-    const frame = (t) => {
-      raf = requestAnimationFrame(frame);
+    const frame = (t, fromXR = false) => {
+      if (!fromXR) {
+        raf = requestAnimationFrame((time) => frame(time));
+        if (p.current.xrActive) return;
+      }
       const dt = Math.min((t - last.current.frame) / 1000, 0.05);
       last.current.frame = t;
       let dx = 0,
         dy = 0;
       const k = keys.current,
-        pad = navigator.getGamepads?.()?.find((g) => g && g.connected),
-        speed = inVehicle ? 280 : k.Shift ? 132 : 80;
+        pad =
+          !p.current.xrActive &&
+          navigator.getGamepads?.()?.find((g) => g && g.connected && g.mapping !== 'xr-standard'),
+        speed = p.current.xrActive ? 20 : inVehicle ? 280 : k.Shift ? 132 : 80;
       if (pad) {
         dx = pad.axes[0] || 0;
         dy = pad.axes[1] || 0;
@@ -636,7 +642,11 @@ export default function App() {
         p.current.ty = p.current.y;
         p.current.dodgeQueued = false;
       }
-      if (p.current.joystick) {
+      if (p.current.xrActive && p.current.xrJoystick) {
+        dx += p.current.xrJoystick.x;
+        dy += p.current.xrJoystick.y;
+      }
+      if (!p.current.xrActive && p.current.joystick) {
         dx += p.current.joystick.x;
         dy += p.current.joystick.y;
       }
@@ -655,7 +665,7 @@ export default function App() {
         const x = p.current.tx - p.current.x,
           y = p.current.ty - p.current.y,
           n = Math.hypot(x, y);
-        if (n > 4) {
+        if (n > 4 && !p.current.xrActive) {
           p.current.x += (x / n) * Math.min(n, (inVehicle ? 360 : 100) * dt);
           p.current.y += (y / n) * Math.min(n, (inVehicle ? 360 : 100) * dt);
           p.current.heading = Math.atan2(-x, -y);
@@ -702,8 +712,12 @@ export default function App() {
         setNear((q) => (q === n ? q : n));
       }
     };
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    simulationFrame.current = (time) => frame(time, true);
+    raf = requestAnimationFrame((time) => frame(time));
+    return () => {
+      cancelAnimationFrame(raf);
+      simulationFrame.current = null;
+    };
   }, [active, inVehicle]);
   useEffect(() => {
     p.current.inBuilding = !!interior;
@@ -1333,6 +1347,8 @@ export default function App() {
         }
       >
         <ThreeCity
+          simulationFrameRef={simulationFrame}
+          onExitBuilding={exitBuilding}
           playerRef={p}
           playerName={player.name}
           online={online}

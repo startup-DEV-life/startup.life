@@ -12,6 +12,8 @@ Use this page to find the right guide for the task at hand. These documents desc
 
 ## Feature-specific guides
 
+- [Meta Quest VR](META_QUEST_VR.md) — experimental WebXR entry, controls and headset verification limits.
+
 - [Startup roles and assignments](STARTUP_ROLES.md) — coding, marketing, HR, management, product, sales, support and finance tasks.
 
 - [Learning campus setup](learning-campus-setup.md) — setup and administration notes for learning content.

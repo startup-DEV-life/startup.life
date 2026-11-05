@@ -10441,3 +10441,47 @@ button:not(:disabled):active {
   color: #a7bdcf;
   line-height: 1.5;
 }
+
+.vr-entry {
+  position: fixed;
+  z-index: 35;
+  bottom: 92px;
+  right: 20px;
+  max-width: 280px;
+  color: #e4f4ff;
+  font-size: 12px;
+}
+.vr-entry > button {
+  border: 1px solid #7ad0df;
+  border-radius: 10px;
+  background: #10263b;
+  color: #e5f8ff;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.vr-entry > button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.vr-entry details {
+  margin-top: 7px;
+  background: #0b1729ed;
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+.vr-entry summary {
+  cursor: pointer;
+}
+.vr-entry p {
+  line-height: 1.6;
+}
+.immersive-vr .vr-entry {
+  display: none;
+}
+@media (max-width: 700px) {
+  .vr-entry {
+    bottom: 105px;
+    right: 12px;
+    max-width: 220px;
+  }
+}
