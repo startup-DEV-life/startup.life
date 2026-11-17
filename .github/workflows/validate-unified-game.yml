@@ -1,0 +1,31 @@
+name: Validate unified game
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:dev-life
+      - name: Check authenticated waygate integration
+        shell: bash
+        run: |
+          PORT=4015 DATABASE_PATH="$RUNNER_TEMP/dev-life-test.sqlite" NODE_ENV=test npm start > "$RUNNER_TEMP/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..40}; do
+            if curl --fail --silent http://localhost:4015/api/health > /dev/null; then break; fi
+            sleep 1
+          done
+          TEST_BASE_URL=http://localhost:4015 timeout 90 npx tsx scripts/test-dev-life-server.ts

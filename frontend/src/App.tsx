@@ -57,6 +57,8 @@ import seedHomes from '../../shared/data/homes.json';
 import seedJobs from '../../shared/data/jobs.json';
 import seedItems from '../../shared/data/items.json';
 import lessons from '../../shared/data/learning.json';
+import WaygateAtlas from './game/WaygateAtlas.tsx';
+import { cameraMovement, sweepMovement } from './game/movement.ts';
 import { RIFT_ARENA } from './game/combat.ts';
 import { WORLD_BOUNDS, isOutsideCauseway } from '../../shared/world.ts';
 import { readGraphicsQuality, type GraphicsQuality } from './game/graphicsQuality.ts';
@@ -312,11 +314,12 @@ export default function App() {
     ...places.filter((q) => ['beach', 'stadium'].includes(q.id)),
   ];
   const featuredPlaces = visiblePlaces;
-  const issueAttack = (kind: 'light' | 'heavy') => {
+  const issueAttack = (kind: 'light' | 'heavy' | 'pulse') => {
     if (!dungeonActive) return;
     const now = performance.now();
     if (now < (p.current.nextAttack || 0)) return;
-    p.current.nextAttack = now + (kind === 'heavy' ? 520 : 280);
+    if (kind === 'pulse' && !p.current.xrActive) p.current.heading = p.current.cameraYaw || 0;
+    p.current.nextAttack = now + (kind === 'heavy' ? 520 : kind === 'pulse' ? 230 : 280);
     p.current.combatCommand = { seq: (p.current.combatCommand?.seq || 0) + 1, kind };
   };
   const doDodge = () => {
@@ -567,6 +570,10 @@ export default function App() {
   useEffect(() => {
     const clear = () => {
         keys.current = {};
+        p.current.joystick = { x: 0, y: 0 };
+        p.current.lookStick = { x: 0, y: 0 };
+        p.current.fireHeld = false;
+        setJoystick({ x: 0, y: 0 });
       },
       down = (e) => {
         const key = String(e?.key || '');
@@ -604,6 +611,7 @@ export default function App() {
         }
         if (
           [
+            'Shift',
             'ArrowUp',
             'ArrowDown',
             'ArrowLeft',
@@ -664,6 +672,10 @@ export default function App() {
       }
       const oldX = p.current.x,
         oldY = p.current.y;
+      if (p.current.inputPaused) {
+        p.current.moving = false;
+        return;
+      }
       if (p.current.inBuilding) {
         if (sock.current?.connected && t - last.current.move > 120) {
           last.current.move = t;
@@ -680,8 +692,17 @@ export default function App() {
         return;
       }
       if (p.current.dodgeQueued) {
-        p.current.x -= Math.sin(p.current.heading || 0) * 66;
-        p.current.y -= Math.cos(p.current.heading || 0) * 66;
+        const dodge = sweepMovement(
+          p.current.x,
+          p.current.y,
+          -Math.sin(p.current.heading || 0) * 66,
+          -Math.cos(p.current.heading || 0) * 66,
+          obstacles.current,
+          isOutsideCauseway,
+          p.current.exitObstacle,
+        );
+        p.current.x = dodge.x;
+        p.current.y = dodge.y;
         p.current.tx = p.current.x;
         p.current.ty = p.current.y;
         p.current.dodgeQueued = false;
@@ -699,12 +720,17 @@ export default function App() {
       if (k.ArrowUp || k.w || k.W) dy--;
       if (k.ArrowDown || k.s || k.S) dy++;
       if (dx || dy) {
+        if (!p.current.xrActive) {
+          const movement = cameraMovement(dx, dy, p.current.cameraYaw || 0);
+          dx = movement.x;
+          dy = movement.y;
+        }
         const n = Math.hypot(dx, dy);
-        p.current.x += (dx / n) * speed * dt;
-        p.current.y += (dy / n) * speed * dt;
+        p.current.x += (dx / Math.max(1, n)) * speed * dt;
+        p.current.y += (dy / Math.max(1, n)) * speed * dt;
         p.current.tx = p.current.x;
         p.current.ty = p.current.y;
-        p.current.heading = Math.atan2(-dx, -dy);
+        p.current.heading = Math.atan2(-dx * 0.98, -dy * 0.75);
       } else {
         const x = p.current.tx - p.current.x,
           y = p.current.ty - p.current.y,
@@ -712,7 +738,7 @@ export default function App() {
         if (n > 4 && !p.current.xrActive) {
           p.current.x += (x / n) * Math.min(n, (inVehicle ? 360 : 100) * dt);
           p.current.y += (y / n) * Math.min(n, (inVehicle ? 360 : 100) * dt);
-          p.current.heading = Math.atan2(-x, -y);
+          p.current.heading = Math.atan2(-x * 0.98, -y * 0.75);
         }
       }
       if (p.current.x !== oldX || p.current.y !== oldY) {
@@ -722,20 +748,23 @@ export default function App() {
             Math.abs(p.current.y - p.current.exitObstacle.y) >= p.current.exitObstacle.ry)
         )
           p.current.exitObstacle = null;
-        const hit = obstacles.current.some(
-          (b) =>
-            b !== p.current.exitObstacle &&
-            Math.abs(p.current.x - b.x) < b.rx &&
-            Math.abs(p.current.y - b.y) < b.ry,
+        const moved = sweepMovement(
+          oldX,
+          oldY,
+          p.current.x - oldX,
+          p.current.y - oldY,
+          obstacles.current,
+          isOutsideCauseway,
+          p.current.exitObstacle,
         );
-        const outsideBridge = isOutsideCauseway(p.current.x, p.current.y);
-        if (hit || outsideBridge) {
-          p.current.x = oldX;
-          p.current.y = oldY;
-          p.current.tx = oldX;
-          p.current.ty = oldY;
+        p.current.x = moved.x;
+        p.current.y = moved.y;
+        if (Math.hypot(moved.x - oldX, moved.y - oldY) < 0.01) {
+          p.current.tx = moved.x;
+          p.current.ty = moved.y;
         }
       }
+      p.current.moving = Math.hypot(p.current.x - oldX, p.current.y - oldY) > 0.01;
       p.current.inVehicle = inVehicle;
       p.current.x = Math.max(WORLD.minX, Math.min(WORLD.maxX, p.current.x));
       p.current.y = Math.max(WORLD.minY, Math.min(WORLD.maxY, p.current.y));
@@ -1007,6 +1036,32 @@ export default function App() {
     setMenu(false);
     setNotice('You are exploring the Dev District as a guest.');
   };
+  const enterRift = () => {
+    const begin = (x = RIFT_ARENA.x, y = RIFT_ARENA.y) => {
+      p.current.x = x;
+      p.current.y = y;
+      p.current.tx = x;
+      p.current.ty = y;
+      p.current.heading = 0;
+      p.current.inVehicle = false;
+      keys.current = {};
+      stopJoystick();
+      p.current.lookStick = { x: 0, y: 0 };
+      p.current.fireHeld = false;
+      p.current.cameraSnap = true;
+      setDungeonActive(true);
+      setInVehicle(false);
+      setDungeonRun((run) => run + 1);
+      setActive(null);
+      setInterior(null);
+      setNotice('The Veil Gate opens. Clear three creatures to awaken the Rift Regent.');
+    };
+    if (sock.current?.connected) {
+      sock.current.emit('rift:enter', (reply) =>
+        reply?.error ? setNotice(reply.error) : begin(reply.x, reply.y),
+      );
+    } else begin();
+  };
   const enterBuilding = () => {
     if (!active || active.navigationOnly) return;
     if (!near) {
@@ -1014,25 +1069,7 @@ export default function App() {
       return;
     }
     if (active.id === 'shadow-gate') {
-      const begin = (x = RIFT_ARENA.x, y = RIFT_ARENA.y) => {
-        p.current.x = x;
-        p.current.y = y;
-        p.current.tx = x;
-        p.current.ty = y;
-        p.current.heading = 0;
-        p.current.inVehicle = false;
-        setDungeonActive(true);
-        setInVehicle(false);
-        setDungeonRun((run) => run + 1);
-        setActive(null);
-        setInterior(null);
-        setNotice('The Veil Gate opens. Clear three creatures to awaken the Rift Regent.');
-      };
-      if (sock.current?.connected) {
-        sock.current.emit('rift:enter', (reply) =>
-          reply?.error ? setNotice(reply.error) : begin(reply.x, reply.y),
-        );
-      } else begin();
+      enterRift();
       return;
     }
     if (active.id === 'rift-exit') {
@@ -1042,6 +1079,11 @@ export default function App() {
         p.current.tx = x;
         p.current.ty = y;
         p.current.heading = 0;
+        keys.current = {};
+        stopJoystick();
+        p.current.lookStick = { x: 0, y: 0 };
+        p.current.fireHeld = false;
+        p.current.cameraSnap = true;
         setDungeonActive(false);
         setActive(null);
         setNotice('You escaped the Shatterline and returned to Lian Yu.');
@@ -1380,6 +1422,32 @@ export default function App() {
           ]),
     ],
     questDone = quests.filter((q) => q.done).length;
+  const waygateTravel = async (id: string): Promise<boolean> => {
+    if (!sock.current?.connected || interior || dungeonActive || inVehicle) return false;
+    keys.current = {};
+    stopJoystick();
+    p.current.lookStick = { x: 0, y: 0 };
+    p.current.fireHeld = false;
+    p.current.tx = p.current.x;
+    p.current.ty = p.current.y;
+    return new Promise((resolve) => {
+      sock.current.timeout(7000).emit('waygate:travel', id, (error, reply) => {
+        if (error || !reply?.ok) {
+          setNotice(reply?.error || 'Waygate connection timed out.');
+          resolve(false);
+          return;
+        }
+        p.current.x = p.current.tx = reply.x;
+        p.current.y = p.current.ty = reply.y;
+        p.current.travelUntil = performance.now() + 2200;
+        p.current.cameraSnap = true;
+        setActive(null);
+        setNear(false);
+        setNotice('Waygate arrival · explore the current island and attune its rune with E.');
+        resolve(true);
+      });
+    });
+  };
   const moveJoystick = (e) => {
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect(),
@@ -1543,6 +1611,7 @@ export default function App() {
           dungeonActive={dungeonActive}
           dungeonRun={dungeonRun}
           onCombatEvent={handleCombatEvent}
+          onFire={() => issueAttack('pulse')}
           inVehicle={inVehicle}
           items={items}
           weather={weather}
@@ -1555,6 +1624,63 @@ export default function App() {
           onMapMove={mapMove}
         />
       </Suspense>
+      <WaygateAtlas
+        playerRef={p}
+        identity={user.id}
+        disabled={!!interior || dungeonActive || inVehicle}
+        onTravel={waygateTravel}
+        onEnterTrial={enterRift}
+      />
+      {!interior && (
+        <button
+          className="dev-life-look"
+          aria-label="Camera look joystick"
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }}
+          onPointerMove={(e) => {
+            if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+            const r = e.currentTarget.getBoundingClientRect();
+            p.current.lookStick = {
+              x: Math.max(-1, Math.min(1, (e.clientX - r.left - r.width / 2) / (r.width / 2))),
+              y: Math.max(-1, Math.min(1, (e.clientY - r.top - r.height / 2) / (r.height / 2))),
+            };
+          }}
+          onPointerUp={() => {
+            p.current.lookStick = { x: 0, y: 0 };
+          }}
+          onPointerCancel={() => {
+            p.current.lookStick = { x: 0, y: 0 };
+          }}
+          onLostPointerCapture={() => {
+            p.current.lookStick = { x: 0, y: 0 };
+          }}
+        >
+          LOOK<small>drag</small>
+        </button>
+      )}
+      {dungeonActive && (
+        <button
+          className="dev-life-fire"
+          aria-label="Fire pulse rifle"
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            p.current.fireHeld = true;
+            issueAttack('pulse');
+          }}
+          onPointerUp={() => {
+            p.current.fireHeld = false;
+          }}
+          onPointerCancel={() => {
+            p.current.fireHeld = false;
+          }}
+          onLostPointerCapture={() => {
+            p.current.fireHeld = false;
+          }}
+        >
+          FIRE
+        </button>
+      )}
       <div className="map-grain" />
       <>
         {dungeonActive && (

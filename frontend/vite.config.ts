@@ -11,8 +11,8 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     proxy: {
-      '/api': 'http://localhost:4000',
-      '/socket.io': { target: 'http://localhost:4000', ws: true },
+      '/api': process.env.STARTUP_API_URL || 'http://localhost:4000',
+      '/socket.io': { target: process.env.STARTUP_API_URL || 'http://localhost:4000', ws: true },
     },
   },
   build: {

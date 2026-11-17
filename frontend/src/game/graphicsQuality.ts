@@ -34,6 +34,8 @@ export function resolveGraphicsQuality(
 
 export function readGraphicsQuality(): GraphicsQuality {
   try {
+    const requested = new URLSearchParams(location.search).get('quality');
+    if (requested === 'low' || requested === 'balanced' || requested === 'high') return requested;
     const value = localStorage.getItem('startup-life-graphics');
     if (value === 'low' || value === 'balanced' || value === 'high') return value;
   } catch {}

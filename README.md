@@ -1,5 +1,17 @@
 # dev-life — Startup.life · Dev District
 
+## Unified Dev. Life game
+
+This repository is now the main game: Startup.life's current Three.js city and East Island, accounts, careers and multiplayer, with Dev. Life's exploration mechanics adapted into the same runtime. There is no Godot iframe, second game process or download required to play this version.
+
+- Camera-relative arrow keys/WASD, Shift sprint, Space jump; drag to look in Walk camera mode.
+- Left touch stick moves; right LOOK stick turns the camera.
+- Seven waygate destinations on the existing islands, automatic next-destination travel, M atlas and E rune attunement. Rune progress is scoped to the signed-in player on this device.
+- Right-hand pulse rifle in the Shatterline encounter: left mouse/FIRE shoots; J/K melee and Q dodge remain available.
+
+See [the merge guide](docs/DEV_LIFE_MERGE.md) for architecture, commands, limitations and migration status. The previous Godot APK/Linux release is a historical prototype, not the current browser game.
+
+
 An independent browser game prototype: a multiplayer Lagos-inspired city rebuilt as a block-built 3D developer district. It is not the proprietary source code for lagoslife.app or Minecraft.
 
 ## Main engine and world pipeline

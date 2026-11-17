@@ -12,7 +12,8 @@
     "preview": "vite preview frontend --config frontend/vite.config.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"frontend/src/**/*.{ts,tsx,css}\" \"backend/server/**/*.ts\" \"frontend/vite.config.ts\" \"frontend/index.html\" \"package.json\"",
-    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\" \"backend/server/**/*.ts\" \"frontend/vite.config.ts\" \"frontend/index.html\" \"package.json\""
+    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\" \"backend/server/**/*.ts\" \"frontend/vite.config.ts\" \"frontend/index.html\" \"package.json\"",
+    "test:dev-life": "tsx scripts/test-dev-life.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

@@ -3,9 +3,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { WAYGATES, waygateSpawn } from '../../shared/waygates.ts';
 import { EAST_ISLAND, WORLD_BOUNDS } from '../../shared/world.ts';
 import { createPhoneVR } from './game/phoneVR.ts';
 import { createQuestVR } from './game/questVR.ts';
+import { createWaygateArt, attachPulseRifle } from './game/devLifeArt.ts';
 import { createWorldArt } from './game/worldArt.ts';
 import {
   GRAPHICS_PROFILES,
@@ -14,6 +16,7 @@ import {
 } from './game/graphicsQuality.ts';
 import {
   advanceEnemy,
+  firePulse,
   attackEnemy,
   createRiftEncounter,
   RIFT_ARENA,
@@ -50,7 +53,8 @@ function terrainHeightAt(x, z) {
     smoothstep((edge - 0.82) / 0.18) * 0.9
   );
 }
-const keysMove = (player) => Math.hypot(player.tx - player.x, player.ty - player.y) > 1;
+const keysMove = (player) =>
+  !!player.moving || Math.hypot(player.tx - player.x, player.ty - player.y) > 1;
 const wx = (x) => (x - W / 2) * SX;
 const wz = (y) => (y - H / 2) * SZ;
 const ROAD_ROW_CENTERS = [247.5, 516, 784.5, 1053.5, 1322.5, 1591.5, 1849].map(wz);
@@ -1275,18 +1279,23 @@ function avatar(name, index = 0, key = 'guest') {
   limb(armL, -1.2, -17, -0.5, 2.1, 8, skinMat);
   limb(armR, 0.6, -7, 0, 2.7, 11, jacket);
   limb(armR, 1.2, -17, -0.5, 2.1, 8, skinMat);
-  const legs = [];
+  const legs = [],
+    knees = [];
   for (const side of [-1, 1]) {
-    legs.push(
-      limb(root, side * 2.9, 13, 0, feminine ? 2.5 : 2.7, 11, pants),
-      limb(root, side * 2.9, 5, 0, 2, 8, pants),
-    );
-    const boot = box(root, side * 2.9, 1, -1.8, 4.8, 6, 8, bootMat);
-    boot.position.z = -1.8;
+    const hip = new THREE.Group(),
+      knee = new THREE.Group();
+    hip.position.set(side * 2.9, 19, 0);
+    root.add(hip);
+    limb(hip, 0, -6, 0, feminine ? 2.5 : 2.7, 11, pants);
+    knee.position.y = -11;
+    hip.add(knee);
+    limb(knee, 0, -4, 0, 2, 8, pants);
+    box(knee, 0, -7, -1.8, 4.8, 6, 8, bootMat);
     const cuff = new THREE.Mesh(new THREE.TorusGeometry(2.15, 0.45, 5, 12), trim);
-    cuff.position.set(side * 2.9, 8, 0);
     cuff.rotation.x = Math.PI / 2;
-    root.add(cuff);
+    knee.add(cuff);
+    legs.push(hip);
+    knees.push(knee);
   }
   const strap = new THREE.Mesh(new THREE.BoxGeometry(2.2, 19, 0.9), trim);
   strap.position.set(-3, 35, -5.65);
@@ -1298,6 +1307,7 @@ function avatar(name, index = 0, key = 'guest') {
   root.add(tag);
   root.userData.arms = [armL, armR];
   root.userData.legs = legs;
+  root.userData.knees = knees;
   return root;
 }
 
@@ -3061,6 +3071,7 @@ export default function ThreeCity({
   dungeonActive = false,
   dungeonRun = 0,
   onCombatEvent,
+  onFire = null,
   onPlace,
   onMapMove,
   onPickup,
@@ -3082,6 +3093,7 @@ export default function ThreeCity({
       onPickup,
       onObstacles,
       onCombatEvent,
+      onFire,
       onExitBuilding,
     }),
     onlineRef = useRef(online),
@@ -3096,7 +3108,15 @@ export default function ThreeCity({
     qualityRef = useRef(graphicsQuality),
     avatarRefresh = useRef(0),
     visiblePeople = useRef([]);
-  callbacks.current = { onPlace, onMapMove, onPickup, onObstacles, onCombatEvent, onExitBuilding };
+  callbacks.current = {
+    onPlace,
+    onMapMove,
+    onPickup,
+    onObstacles,
+    onCombatEvent,
+    onExitBuilding,
+    onFire,
+  };
   onlineRef.current = online;
   activeRef.current = active;
   enteredRef.current = enteredBuildingId;
@@ -3116,530 +3136,607 @@ export default function ThreeCity({
     'For phone VR cases · Android and iPhone browsers.',
   );
   useEffect(() => {
-    const el = host.current;
-    if (!el) return;
-    let disposed = false;
-    const mobileGPU = matchMedia('(max-width: 700px), (pointer: coarse)').matches;
-    const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
-    const lowEndGPU =
-      mobileGPU ||
-      (memory !== undefined && memory <= 4) ||
-      (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4);
-    let appliedQuality = resolveGraphicsQuality(qualityRef.current, lowEndGPU);
-    const initialProfile = GRAPHICS_PROFILES[appliedQuality];
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#8bcfdf');
-    scene.fog = new THREE.Fog('#a8dbe0', 2500, 6400);
-    const camera = new THREE.PerspectiveCamera(47, 1, 1, 5200),
-      renderer = new THREE.WebGLRenderer({
-        antialias: appliedQuality !== 'low',
-        alpha: false,
-        powerPreference: 'high-performance',
-      });
-    // Avoid rendering below native CSS resolution on phones; sub-1x pixel ratios
-    // made the scene look visibly pixelated on modern high-density displays.
-    const pixelRatioCap = initialProfile.pixelRatio;
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, pixelRatioCap));
-    renderer.shadowMap.enabled = initialProfile.shadows;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.94;
-    el.appendChild(renderer.domElement);
-    if (import.meta.env.DEV) el.dataset.rendererId = crypto.randomUUID();
-    const ambient = new THREE.HemisphereLight('#cde9f6', '#596c7c', 1.15);
-    scene.add(ambient);
-    const sun = new THREE.DirectionalLight('#ffe5b3', 1.8);
-    sun.position.set(-430, 720, -350);
-    sun.castShadow = initialProfile.shadows;
-    sun.shadow.mapSize.set(initialProfile.shadowSize, initialProfile.shadowSize);
-    sun.shadow.camera.left = -950;
-    sun.shadow.camera.right = 950;
-    sun.shadow.camera.top = 950;
-    sun.shadow.camera.bottom = -950;
-    sun.shadow.camera.near = 10;
-    sun.shadow.camera.far = 2400;
-    sun.shadow.bias = -0.005;
-    sun.shadow.normalBias = 3;
-    scene.add(sun);
-    scene.add(sun.target);
-    const fill = new THREE.DirectionalLight('#8ec6df', 0.38);
-    fill.position.set(560, 280, 460);
-    scene.add(fill);
-    const city = buildCity(scene, places, jobs, items),
-      q = playerRef.current,
-      self = avatar(playerName, q.avatar, q.username || 'self'),
-      selfCar = carModel(),
-      others = new Map(),
-      collected = new Set(),
-      fx = makeAmbientVfx(scene, false),
-      clouds = createSunnyClouds(scene, mobileGPU);
-    city.scale.setScalar(WORLD_SCALE);
-    const art = createWorldArt(scene, city, appliedQuality);
-    el.dataset.worldArt = 'painted-v1';
-    art.styleRoot(self);
-    art.styleRoot(selfCar);
-    const applyQuality = (next) => {
-      const profile = GRAPHICS_PROFILES[next];
-      if (!renderer.xr.isPresenting)
-        renderer.setPixelRatio(Math.min(devicePixelRatio || 1, profile.pixelRatio));
-      renderer.shadowMap.enabled = profile.shadows;
-      sun.castShadow = profile.shadows;
-      if (sun.shadow.mapSize.x !== profile.shadowSize) {
-        sun.shadow.map?.dispose();
-        sun.shadow.map = null;
-        sun.shadow.mapSize.set(profile.shadowSize, profile.shadowSize);
-      }
-      renderer.shadowMap.needsUpdate = true;
-      clouds.children.forEach((cloud, index) => {
-        cloud.visible = index < profile.clouds;
-      });
-      fx.geometry.setDrawRange(0, profile.particles);
-      art.setQuality(next);
-      el.dataset.graphicsQuality = next;
-      el.dataset.graphicsShadows = String(profile.shadows);
-      el.dataset.graphicsClouds = String(profile.clouds);
-      el.dataset.graphicsParticles = String(profile.particles);
-      appliedQuality = next;
-    };
-    applyQuality(appliedQuality);
-    const obstacles = [
-      ...city.children
-        .filter(
-          (o) =>
-            (o.userData.buildingData || o.userData.placeId || o.userData.jobId) &&
-            o.geometry?.parameters?.width &&
-            o.geometry?.parameters?.depth,
-        )
-        .map((o) => ({
-          x: o.position.x / SX + W / 2,
-          y: o.position.z / SZ + H / 2,
-          rx: o.geometry.parameters.width / SX / 2 + 12,
-          ry: o.geometry.parameters.depth / SZ / 2 + 12,
-        })),
-      ...(city.userData.buildingObstacles || []),
-    ];
-    callbacks.current.onObstacles?.(obstacles);
-    const importedPlaceMeshes = [];
-    const islandLoader = new GLTFLoader();
-    const islandCache = new Map();
-    const eastFallback = buildEastFallback(city);
-    art.styleRoot(eastFallback);
-    const lastStreamPosition = new THREE.Vector2(wx(q.x), wz(q.y));
-    let eastFar = null,
-      eastNear = null,
-      eastFoliage = null,
-      eastNearActive = false,
-      lastStreamCheck = 0;
-    const loadEastChunk = (level) => {
-      if (islandCache.has(level)) return islandCache.get(level);
-      const promise = islandLoader
-        .loadAsync(`/models/east-island/${level}.glb`)
-        .then((asset) => {
+    let disposeScene: (() => void) | null = null;
+    // Cancel the first development StrictMode mount before allocating a second WebGL world.
+    const initializeFrame = requestAnimationFrame(() => {
+      const el = host.current;
+      if (!el) return;
+      let disposed = false;
+      const diagnostics =
+        import.meta.env.DEV || new URLSearchParams(location.search).has('diagnostics');
+      const mobileGPU = matchMedia('(max-width: 700px), (pointer: coarse)').matches;
+      const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+      const lowEndGPU =
+        mobileGPU ||
+        (memory !== undefined && memory <= 4) ||
+        (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4);
+      let appliedQuality = resolveGraphicsQuality(qualityRef.current, lowEndGPU);
+      const initialProfile = GRAPHICS_PROFILES[appliedQuality];
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color('#8bcfdf');
+      scene.fog = new THREE.Fog('#a8dbe0', 2500, 6400);
+      const camera = new THREE.PerspectiveCamera(47, 1, 1, 5200),
+        renderer = new THREE.WebGLRenderer({
+          antialias: appliedQuality !== 'low',
+          alpha: false,
+          powerPreference: 'high-performance',
+        });
+      // Avoid rendering below native CSS resolution on phones; sub-1x pixel ratios
+      // made the scene look visibly pixelated on modern high-density displays.
+      const pixelRatioCap = initialProfile.pixelRatio;
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, pixelRatioCap));
+      renderer.shadowMap.enabled = initialProfile.shadows;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 0.94;
+      el.appendChild(renderer.domElement);
+      if (import.meta.env.DEV) el.dataset.rendererId = crypto.randomUUID();
+      const ambient = new THREE.HemisphereLight('#cde9f6', '#596c7c', 1.15);
+      scene.add(ambient);
+      const sun = new THREE.DirectionalLight('#ffe5b3', 1.8);
+      sun.position.set(-430, 720, -350);
+      sun.castShadow = initialProfile.shadows;
+      sun.shadow.mapSize.set(initialProfile.shadowSize, initialProfile.shadowSize);
+      sun.shadow.camera.left = -950;
+      sun.shadow.camera.right = 950;
+      sun.shadow.camera.top = 950;
+      sun.shadow.camera.bottom = -950;
+      sun.shadow.camera.near = 10;
+      sun.shadow.camera.far = 2400;
+      sun.shadow.bias = -0.005;
+      sun.shadow.normalBias = 3;
+      scene.add(sun);
+      scene.add(sun.target);
+      const fill = new THREE.DirectionalLight('#8ec6df', 0.38);
+      fill.position.set(560, 280, 460);
+      scene.add(fill);
+      const city = buildCity(scene, places, jobs, items),
+        q = playerRef.current,
+        self = avatar(playerName, q.avatar, q.username || 'self'),
+        selfCar = carModel(),
+        others = new Map(),
+        collected = new Set(),
+        fx = makeAmbientVfx(scene, false),
+        clouds = createSunnyClouds(scene, mobileGPU);
+      const pulseRifle = attachPulseRifle(self);
+      const waygateArt = createWaygateArt(city);
+      city.scale.setScalar(WORLD_SCALE);
+      const art = createWorldArt(scene, city, appliedQuality);
+      el.dataset.worldArt = 'painted-v1';
+      art.styleRoot(self);
+      art.styleRoot(selfCar);
+      const applyQuality = (next) => {
+        const profile = GRAPHICS_PROFILES[next];
+        if (!renderer.xr.isPresenting)
+          renderer.setPixelRatio(Math.min(devicePixelRatio || 1, profile.pixelRatio));
+        renderer.shadowMap.enabled = profile.shadows;
+        sun.castShadow = profile.shadows;
+        if (sun.shadow.mapSize.x !== profile.shadowSize) {
+          sun.shadow.map?.dispose();
+          sun.shadow.map = null;
+          sun.shadow.mapSize.set(profile.shadowSize, profile.shadowSize);
+        }
+        renderer.shadowMap.needsUpdate = true;
+        clouds.children.forEach((cloud, index) => {
+          cloud.visible = index < profile.clouds;
+        });
+        fx.geometry.setDrawRange(0, profile.particles);
+        art.setQuality(next);
+        el.dataset.graphicsQuality = next;
+        el.dataset.graphicsShadows = String(profile.shadows);
+        el.dataset.graphicsClouds = String(profile.clouds);
+        el.dataset.graphicsParticles = String(profile.particles);
+        appliedQuality = next;
+      };
+      applyQuality(appliedQuality);
+      const obstacles = [
+        ...city.children
+          .filter(
+            (o) =>
+              (o.userData.buildingData || o.userData.placeId || o.userData.jobId) &&
+              o.geometry?.parameters?.width &&
+              o.geometry?.parameters?.depth,
+          )
+          .map((o) => ({
+            x: o.position.x / SX + W / 2,
+            y: o.position.z / SZ + H / 2,
+            rx: o.geometry.parameters.width / SX / 2 + 12,
+            ry: o.geometry.parameters.depth / SZ / 2 + 12,
+          })),
+        ...(city.userData.buildingObstacles || []),
+      ];
+      callbacks.current.onObstacles?.(obstacles);
+      const importedPlaceMeshes = [];
+      const islandLoader = new GLTFLoader();
+      const islandCache = new Map();
+      const eastFallback = buildEastFallback(city);
+      art.styleRoot(eastFallback);
+      const lastStreamPosition = new THREE.Vector2(wx(q.x), wz(q.y));
+      let eastFar = null,
+        eastNear = null,
+        eastFoliage = null,
+        eastNearActive = false,
+        lastStreamCheck = 0;
+      const loadEastChunk = (level) => {
+        if (islandCache.has(level)) return islandCache.get(level);
+        const promise = islandLoader
+          .loadAsync(`/models/east-island/${level}.glb`)
+          .then((asset) => {
+            if (disposed) return;
+            const root = asset.scene;
+            root.name = `East island ${level} LOD`;
+            root.visible = false;
+            root.traverse((node) => {
+              if (node.isMesh) {
+                node.receiveShadow = true;
+                node.castShadow = level === 'near';
+                node.material.side = THREE.DoubleSide;
+              }
+            });
+            city.add(root);
+            art.styleRoot(root);
+            if (level === 'far') eastFar = root;
+            else {
+              eastNear = root;
+              eastFoliage = buildEastFoliage(false);
+              eastFoliage.visible = false;
+              city.add(eastFoliage);
+              art.styleRoot(eastFoliage);
+              const tower = root.getObjectByName('Signal tower');
+              if (tower) {
+                tower.userData.buildingData = generatedBuilding(
+                  'east-signal-tower',
+                  'Jade Signal Tower',
+                  'Technology office',
+                  'An island workspace with a signal lab and shared development desks.',
+                  EAST_ISLAND.x + 90,
+                  EAST_ISLAND.z - 190,
+                  '#258e91',
+                  '🏢',
+                );
+                importedPlaceMeshes.push(tower);
+              }
+              const blocking = [{ x: EAST_ISLAND.x + 90, z: EAST_ISLAND.z - 190, w: 94, d: 94 }];
+              for (const side of [-1, 1])
+                for (let index = 0; index < 5; index++)
+                  blocking.push({
+                    x: EAST_ISLAND.x - 465 + index * 225,
+                    z: EAST_ISLAND.z + side * (145 + (index % 2) * 34),
+                    w: 104,
+                    d: 86,
+                  });
+              obstacles.push(
+                ...blocking.map((b) => ({
+                  x: b.x / SX + W / 2,
+                  y: b.z / SZ + H / 2,
+                  rx: b.w / (2 * SX) + 3,
+                  ry: b.d / (2 * SZ) + 3,
+                })),
+              );
+              callbacks.current.onObstacles?.(obstacles);
+            }
+            return root;
+          })
+          .catch((reason) => {
+            console.warn(`East island ${level} asset unavailable`, reason);
+            return null;
+          });
+        islandCache.set(level, promise);
+        return promise;
+      };
+      // Blender supplies the new visual island in local city coordinates. Keep the
+      // procedural city and its interaction state alive as the loading fallback.
+      Promise.all([
+        islandLoader.loadAsync('/models/developer-metropolis/island-terrain.glb'),
+        islandLoader.loadAsync('/models/developer-metropolis/campus.glb'),
+      ])
+        .then(([terrainChunk, campusChunk]) => {
           if (disposed) return;
-          const root = asset.scene;
-          root.name = `East island ${level} LOD`;
-          root.visible = false;
-          root.traverse((node) => {
+          const legacyTerrain = city.getObjectByName('legacy-island-surface');
+          const campusData = generatedBuilding(
+            'developer-metropolis-campus',
+            'Developer Metropolis',
+            'Developer campus',
+            'A glass-and-jade work hall with an open courtyard and shared coding space.',
+            -960,
+            535,
+            '#258b9b',
+            '🏛️',
+          );
+          terrainChunk.scene.name = 'Blender Developer Metropolis terrain';
+          terrainChunk.scene.position.y = -0.85;
+          campusChunk.scene.name = 'Blender Developer Metropolis campus';
+          terrainChunk.scene.traverse((node) => {
             if (node.isMesh) {
               node.receiveShadow = true;
-              node.castShadow = level === 'near';
               node.material.side = THREE.DoubleSide;
             }
           });
-          city.add(root);
-          art.styleRoot(root);
-          if (level === 'far') eastFar = root;
-          else {
-            eastNear = root;
-            eastFoliage = buildEastFoliage(false);
-            eastFoliage.visible = false;
-            city.add(eastFoliage);
-            art.styleRoot(eastFoliage);
-            const tower = root.getObjectByName('Signal tower');
-            if (tower) {
-              tower.userData.buildingData = generatedBuilding(
-                'east-signal-tower',
-                'Jade Signal Tower',
-                'Technology office',
-                'An island workspace with a signal lab and shared development desks.',
-                EAST_ISLAND.x + 90,
-                EAST_ISLAND.z - 190,
-                '#258e91',
-                '🏢',
-              );
-              importedPlaceMeshes.push(tower);
+          campusChunk.scene.traverse((node) => {
+            if (node.isMesh) {
+              node.castShadow = true;
+              node.receiveShadow = true;
+              if (
+                node.name === 'Developer Metropolis Hall' ||
+                node.name === 'Main entrance glass'
+              ) {
+                node.userData.buildingData = campusData;
+                importedPlaceMeshes.push(node);
+              }
             }
-            const blocking = [{ x: EAST_ISLAND.x + 90, z: EAST_ISLAND.z - 190, w: 94, d: 94 }];
-            for (const side of [-1, 1])
-              for (let index = 0; index < 5; index++)
-                blocking.push({
-                  x: EAST_ISLAND.x - 465 + index * 225,
-                  z: EAST_ISLAND.z + side * (145 + (index % 2) * 34),
-                  w: 104,
-                  d: 86,
-                });
-            obstacles.push(
-              ...blocking.map((b) => ({
-                x: b.x / SX + W / 2,
-                y: b.z / SZ + H / 2,
-                rx: b.w / (2 * SX) + 3,
-                ry: b.d / (2 * SZ) + 3,
-              })),
-            );
-            callbacks.current.onObstacles?.(obstacles);
-          }
-          return root;
+          });
+          city.add(terrainChunk.scene, campusChunk.scene);
+          art.styleRoot(terrainChunk.scene);
+          art.styleRoot(campusChunk.scene);
+          if (legacyTerrain) legacyTerrain.visible = false;
+          obstacles.push({
+            x: -960 / SX + W / 2,
+            y: 511 / SZ + H / 2,
+            rx: 70 / SX,
+            ry: 49 / SZ,
+          });
+          callbacks.current.onObstacles?.(obstacles);
+          el.dataset.worldChunk = 'blender';
         })
         .catch((reason) => {
-          console.warn(`East island ${level} asset unavailable`, reason);
-          return null;
+          // A missing GLB must never block login, movement, or the existing city.
+          console.warn('Developer Metropolis asset unavailable; using procedural island.', reason);
+          el.dataset.worldChunk = 'procedural';
         });
-      islandCache.set(level, promise);
-      return promise;
-    };
-    // Blender supplies the new visual island in local city coordinates. Keep the
-    // procedural city and its interaction state alive as the loading fallback.
-    Promise.all([
-      islandLoader.loadAsync('/models/developer-metropolis/island-terrain.glb'),
-      islandLoader.loadAsync('/models/developer-metropolis/campus.glb'),
-    ])
-      .then(([terrainChunk, campusChunk]) => {
-        if (disposed) return;
-        const legacyTerrain = city.getObjectByName('legacy-island-surface');
-        const campusData = generatedBuilding(
-          'developer-metropolis-campus',
-          'Developer Metropolis',
-          'Developer campus',
-          'A glass-and-jade work hall with an open courtyard and shared coding space.',
-          -960,
-          535,
-          '#258b9b',
-          '🏛️',
+      scene.add(self, selfCar);
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.075;
+      controls.enablePan = false;
+      controls.minDistance = 95;
+      controls.maxDistance = 2400;
+      controls.minPolarAngle = 0.22;
+      controls.maxPolarAngle = 1.4;
+      const spawn = new THREE.Vector3(
+        wx(q.x) * WORLD_SCALE,
+        terrainHeightAt(wx(q.x), wz(q.y)) + 12,
+        wz(q.y) * WORLD_SCALE,
+      );
+      controls.target.copy(spawn);
+      camera.position.set(spawn.x + 540, spawn.y + 1200, spawn.z + 690);
+      camera.lookAt(controls.target);
+      let appliedCameraMode = 'orbit',
+        interiorRoot = null,
+        activeInteriorId = null;
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(11000, 3500),
+        new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }),
+      );
+      ground.scale.set(WORLD_SCALE, 1, WORLD_SCALE);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = 3.4;
+      scene.add(ground);
+      const ray = new THREE.Raycaster(),
+        pointer = new THREE.Vector2(),
+        jobsMeshes = city.children.filter((x) => x.userData.jobId),
+        placeMeshes = city.children.filter(
+          (x) =>
+            x.userData.placeId ||
+            x.userData.buildingData ||
+            x.userData.buildingEntries ||
+            x.userData.doorBuildingId ||
+            x.userData.riftArena,
+        ),
+        doorMeshes = city.children.filter((x) => x.userData.doorBuildingId);
+      let down = null,
+        lastLabelRefresh = 0;
+      const pick = (e) => {
+        const r = renderer.domElement.getBoundingClientRect();
+        pointer.set(
+          ((e.clientX - r.left) / r.width) * 2 - 1,
+          (-(e.clientY - r.top) / r.height) * 2 + 1,
         );
-        terrainChunk.scene.name = 'Blender Developer Metropolis terrain';
-        terrainChunk.scene.position.y = -0.85;
-        campusChunk.scene.name = 'Blender Developer Metropolis campus';
-        terrainChunk.scene.traverse((node) => {
-          if (node.isMesh) {
-            node.receiveShadow = true;
-            node.material.side = THREE.DoubleSide;
-          }
+        ray.setFromCamera(pointer, camera);
+        selectRay();
+      };
+      const selectRay = (controllerRay = null, preview = false) => {
+        if (controllerRay) ray.ray.copy(controllerRay.ray);
+        const visibleImportedMeshes = importedPlaceMeshes.filter((mesh) => {
+          for (let node = mesh; node; node = node.parent) if (!node.visible) return false;
+          return true;
         });
-        campusChunk.scene.traverse((node) => {
-          if (node.isMesh) {
-            node.castShadow = true;
-            node.receiveShadow = true;
-            if (node.name === 'Developer Metropolis Hall' || node.name === 'Main entrance glass') {
-              node.userData.buildingData = campusData;
-              importedPlaceMeshes.push(node);
+        const hit = ray.intersectObjects(
+          [...jobsMeshes, ...placeMeshes, ...visibleImportedMeshes],
+          true,
+        )[0];
+        if (hit && ((!renderer.xr.isPresenting && !phone.active) || hit.distance < 280)) {
+          if (preview) return `${hit.object.uuid}:${hit.instanceId ?? ''}`;
+          if (hit.instanceId !== undefined) {
+            const entry = hit.object.userData.buildingEntries?.[hit.instanceId];
+            if (entry) {
+              callbacks.current.onPlace({ ...entry, autoEnter: true });
+              return;
             }
           }
-        });
-        city.add(terrainChunk.scene, campusChunk.scene);
-        art.styleRoot(terrainChunk.scene);
-        art.styleRoot(campusChunk.scene);
-        if (legacyTerrain) legacyTerrain.visible = false;
-        obstacles.push({
-          x: -960 / SX + W / 2,
-          y: 511 / SZ + H / 2,
-          rx: 70 / SX,
-          ry: 49 / SZ,
-        });
-        callbacks.current.onObstacles?.(obstacles);
-        el.dataset.worldChunk = 'blender';
-      })
-      .catch((reason) => {
-        // A missing GLB must never block login, movement, or the existing city.
-        console.warn('Developer Metropolis asset unavailable; using procedural island.', reason);
-        el.dataset.worldChunk = 'procedural';
-      });
-    scene.add(self, selfCar);
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.075;
-    controls.enablePan = false;
-    controls.minDistance = 95;
-    controls.maxDistance = 2400;
-    controls.minPolarAngle = 0.22;
-    controls.maxPolarAngle = 1.4;
-    const spawn = new THREE.Vector3(
-      wx(q.x) * WORLD_SCALE,
-      terrainHeightAt(wx(q.x), wz(q.y)) + 12,
-      wz(q.y) * WORLD_SCALE,
-    );
-    controls.target.copy(spawn);
-    camera.position.set(spawn.x + 540, spawn.y + 1200, spawn.z + 690);
-    camera.lookAt(controls.target);
-    let appliedCameraMode = 'orbit',
-      interiorRoot = null,
-      activeInteriorId = null;
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(11000, 3500),
-      new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }),
-    );
-    ground.scale.set(WORLD_SCALE, 1, WORLD_SCALE);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = 3.4;
-    scene.add(ground);
-    const ray = new THREE.Raycaster(),
-      pointer = new THREE.Vector2(),
-      jobsMeshes = city.children.filter((x) => x.userData.jobId),
-      placeMeshes = city.children.filter(
-        (x) =>
-          x.userData.placeId ||
-          x.userData.buildingData ||
-          x.userData.buildingEntries ||
-          x.userData.doorBuildingId ||
-          x.userData.riftArena,
-      ),
-      doorMeshes = city.children.filter((x) => x.userData.doorBuildingId);
-    let down = null,
-      lastLabelRefresh = 0;
-    const pick = (e) => {
-      const r = renderer.domElement.getBoundingClientRect();
-      pointer.set(
-        ((e.clientX - r.left) / r.width) * 2 - 1,
-        (-(e.clientY - r.top) / r.height) * 2 + 1,
-      );
-      ray.setFromCamera(pointer, camera);
-      selectRay();
-    };
-    const selectRay = (controllerRay = null, preview = false) => {
-      if (controllerRay) ray.ray.copy(controllerRay.ray);
-      const visibleImportedMeshes = importedPlaceMeshes.filter((mesh) => {
-        for (let node = mesh; node; node = node.parent) if (!node.visible) return false;
-        return true;
-      });
-      const hit = ray.intersectObjects(
-        [...jobsMeshes, ...placeMeshes, ...visibleImportedMeshes],
-        true,
-      )[0];
-      if (hit && ((!renderer.xr.isPresenting && !phone.active) || hit.distance < 280)) {
-        if (preview) return `${hit.object.uuid}:${hit.instanceId ?? ''}`;
-        if (hit.instanceId !== undefined) {
-          const entry = hit.object.userData.buildingEntries?.[hit.instanceId];
-          if (entry) {
-            callbacks.current.onPlace({ ...entry, autoEnter: true });
-            return;
+          let target = hit.object;
+          while (
+            target?.parent &&
+            !target.userData.jobId &&
+            !target.userData.placeId &&
+            !target.userData.buildingData &&
+            !target.userData.doorBuildingId &&
+            !target.userData.riftArena
+          )
+            target = target.parent;
+          const doorway = target?.userData.doorBuildingId;
+          if (doorway) {
+            const job = jobs.find((x) => x.id === doorway);
+            if (job) {
+              callbacks.current.onPlace({ ...job, job: true, autoEnter: true });
+              return;
+            }
+            const place = places.find((x) => x.id === doorway);
+            if (place) {
+              callbacks.current.onPlace({
+                ...place,
+                autoEnter: place.kind !== 'Outdoors' && place.id !== 'shadow-gate',
+              });
+              return;
+            }
+            if (target.userData.buildingData) {
+              callbacks.current.onPlace({ ...target.userData.buildingData, autoEnter: true });
+              return;
+            }
           }
-        }
-        let target = hit.object;
-        while (
-          target?.parent &&
-          !target.userData.jobId &&
-          !target.userData.placeId &&
-          !target.userData.buildingData &&
-          !target.userData.doorBuildingId &&
-          !target.userData.riftArena
-        )
-          target = target.parent;
-        const doorway = target?.userData.doorBuildingId;
-        if (doorway) {
-          const job = jobs.find((x) => x.id === doorway);
-          if (job) {
-            callbacks.current.onPlace({ ...job, job: true, autoEnter: true });
-            return;
+          if (target?.userData.jobId) {
+            const j = jobs.find((x) => x.id === target.userData.jobId);
+            if (j) {
+              callbacks.current.onPlace({ ...j, job: true, autoEnter: true });
+              return;
+            }
           }
-          const place = places.find((x) => x.id === doorway);
-          if (place) {
+          if (target?.userData.placeId === 'rift-exit') {
             callbacks.current.onPlace({
-              ...place,
-              autoEnter: place.kind !== 'Outdoors' && place.id !== 'shadow-gate',
+              id: 'rift-exit',
+              name: 'Leave the Shatterline',
+              emoji: '↩',
+              kind: 'Dungeon Gate',
+              district: 'The Shatterline',
+              x: RIFT_ARENA.x,
+              y: RIFT_ARENA.y,
+              color: '#8d6ad5',
+              uses: 'Return through the gate to the island.',
+              description: 'Return through the gate to the island.',
             });
             return;
           }
-          if (target.userData.buildingData) {
+          if (target?.userData.placeId) {
+            const place = places.find((x) => x.id === target.userData.placeId);
+            if (place) {
+              callbacks.current.onPlace({
+                ...place,
+                autoEnter: place.kind !== 'Outdoors' && place.id !== 'shadow-gate',
+              });
+              return;
+            }
+          }
+          if (target?.userData.buildingData) {
             callbacks.current.onPlace({ ...target.userData.buildingData, autoEnter: true });
             return;
           }
         }
-        if (target?.userData.jobId) {
-          const j = jobs.find((x) => x.id === target.userData.jobId);
-          if (j) {
-            callbacks.current.onPlace({ ...j, job: true, autoEnter: true });
-            return;
+        if (renderer.xr.isPresenting || phone.active || preview) return null;
+        const floor = ray.intersectObject(ground, false)[0];
+        if (floor) {
+          const x = Math.max(
+              MAP_LIMITS.minX,
+              Math.min(MAP_LIMITS.maxX, floor.point.x / (SX * WORLD_SCALE) + W / 2),
+            ),
+            y = Math.max(
+              MAP_LIMITS.minY,
+              Math.min(MAP_LIMITS.maxY, floor.point.z / (SZ * WORLD_SCALE) + H / 2),
+            );
+          callbacks.current.onMapMove({ x, y });
+        }
+      };
+      let lookPointer: number | null = null,
+        lookX = 0,
+        lookY = 0;
+      const onDown = (e) => {
+        down = { x: e.clientX, y: e.clientY };
+        if (
+          cameraModeRef.current === 'walk' &&
+          !interiorRef.current &&
+          !phone.active &&
+          !vrRef.current?.active
+        ) {
+          if (e.button === 0 && dungeonRef.current) {
+            playerRef.current.fireHeld = true;
+            callbacks.current.onFire?.();
+          } else if (e.button === 0 || e.button === 2) {
+            lookPointer = e.pointerId;
+            lookX = e.clientX;
+            lookY = e.clientY;
+            renderer.domElement.setPointerCapture(e.pointerId);
           }
         }
-        if (target?.userData.placeId === 'rift-exit') {
-          callbacks.current.onPlace({
-            id: 'rift-exit',
-            name: 'Leave the Shatterline',
-            emoji: '↩',
-            kind: 'Dungeon Gate',
-            district: 'The Shatterline',
-            x: RIFT_ARENA.x,
-            y: RIFT_ARENA.y,
-            color: '#8d6ad5',
-            uses: 'Return through the gate to the island.',
-            description: 'Return through the gate to the island.',
-          });
-          return;
-        }
-        if (target?.userData.placeId) {
-          const place = places.find((x) => x.id === target.userData.placeId);
-          if (place) {
-            callbacks.current.onPlace({
-              ...place,
-              autoEnter: place.kind !== 'Outdoors' && place.id !== 'shadow-gate',
-            });
-            return;
-          }
-        }
-        if (target?.userData.buildingData) {
-          callbacks.current.onPlace({ ...target.userData.buildingData, autoEnter: true });
-          return;
-        }
-      }
-      if (renderer.xr.isPresenting || phone.active || preview) return null;
-      const floor = ray.intersectObject(ground, false)[0];
-      if (floor) {
-        const x = Math.max(
-            MAP_LIMITS.minX,
-            Math.min(MAP_LIMITS.maxX, floor.point.x / (SX * WORLD_SCALE) + W / 2),
-          ),
-          y = Math.max(
-            MAP_LIMITS.minY,
-            Math.min(MAP_LIMITS.maxY, floor.point.z / (SZ * WORLD_SCALE) + H / 2),
-          );
-        callbacks.current.onMapMove({ x, y });
-      }
-    };
-    const onDown = (e) => (down = { x: e.clientX, y: e.clientY }),
-      onUp = (e) => {
-        if (!phone.active && down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5)
+      };
+      const onLookMove = (e) => {
+        if (lookPointer !== e.pointerId) return;
+        const p = playerRef.current;
+        p.cameraYaw = (p.cameraYaw || 0) - (e.clientX - lookX) * 0.005;
+        p.cameraPitch = Math.max(
+          -0.15,
+          Math.min(1.05, (p.cameraPitch ?? 0.48) + (e.clientY - lookY) * 0.004),
+        );
+        lookX = e.clientX;
+        lookY = e.clientY;
+      };
+      const clearPointer = () => {
+        lookPointer = null;
+        playerRef.current.fireHeld = false;
+      };
+      const onUp = (e) => {
+        clearPointer();
+        if (
+          e.button === 0 &&
+          !dungeonRef.current &&
+          !phone.active &&
+          down &&
+          Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5
+        )
           pick(e);
         down = null;
       };
-    renderer.domElement.addEventListener('pointerdown', onDown);
-    renderer.domElement.addEventListener('pointerup', onUp);
-    const vr = createQuestVR({
-      renderer,
-      scene,
-      camera,
-      controls,
-      playerRef,
-      onStatus: (state, message) => {
-        if (!disposed) setVrStatus({ state, message });
-      },
-      onSelect: (controllerRay) => {
-        if (!interiorRef.current && !dungeonRef.current) selectRay(controllerRay);
-      },
-      onLeave: () => callbacks.current.onExitBuilding?.(),
-    });
-    vrRef.current = vr;
-    const phone = createPhoneVR({
-      renderer,
-      scene,
-      camera,
-      controls,
-      playerRef,
-      onStatus: (active, message) => {
-        if (!disposed) {
-          setPhoneMode(active);
-          setPhoneMessage(message);
-        }
-      },
-      onProbe: (r) => (!dungeonRef.current ? selectRay(r, true) : ''),
-      onSelect: (r) => {
-        if (!interiorRef.current && !dungeonRef.current) selectRay(r);
-      },
-      onLeave: () => callbacks.current.onExitBuilding?.(),
-    });
-    phoneRef.current = phone;
-    const vrArtCamera = { position: new THREE.Vector3() };
-    const resize = () => {
-      if (renderer.xr.isPresenting) return;
-      const w = el.clientWidth || innerWidth,
-        h = el.clientHeight || innerHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-    const observer = new ResizeObserver(resize);
-    observer.observe(el);
-    resize();
-    let previous = spawn.clone(),
-      lastFrame = performance.now(),
-      lastEnemyTick = 0,
-      previousRun = dungeonRun;
-    let perfWindowStart = lastFrame,
-      perfFrames = 0;
-    const combatEffects = [],
-      cameraTarget = new THREE.Vector3(),
-      cameraFocus = new THREE.Vector3(),
-      cameraDelta = new THREE.Vector3();
-    const draw = () => {
-      if (disposed) return;
-      vr.input();
-      phone.input();
-      const immersive = vr.active || phone.active;
-      if (immersive) simulationFrameRef?.current?.(performance.now());
-      const player = playerRef.current,
-        selfX = wx(player.x) * WORLD_SCALE,
-        selfZ = wz(player.y) * WORLD_SCALE,
-        selfGround = Math.max(0, terrainHeightAt(wx(player.x), wz(player.y)) - 2),
-        time = performance.now(),
-        frameDelta = Math.min((time - lastFrame) / 1000, 0.05),
-        water = city.userData.waterMaterial,
-        mode = cameraModeRef.current;
-      lastFrame = time;
-      const requestedQuality = immersive
-        ? 'low'
-        : resolveGraphicsQuality(qualityRef.current, lowEndGPU);
-      if (requestedQuality !== appliedQuality) applyQuality(requestedQuality);
-      sun.position.set(selfX - 430, 720, selfZ - 350);
-      sun.target.position.set(selfX, 0, selfZ);
-      if (time - lastStreamCheck > 250) {
-        lastStreamCheck = time;
-        const currentX = wx(player.x),
-          currentZ = wz(player.y),
-          targetX = wx(player.tx),
-          targetZ = wz(player.ty),
-          targetDelta = Math.hypot(targetX - currentX, targetZ - currentZ),
-          lookAhead = Math.min(900, targetDelta),
-          motionX = currentX - lastStreamPosition.x,
-          motionZ = currentZ - lastStreamPosition.y,
-          motionDistance = Math.hypot(motionX, motionZ),
-          predictedX =
-            currentX +
-            (targetDelta > 8
-              ? ((targetX - currentX) / targetDelta) * lookAhead
-              : motionDistance > 0.3
-                ? (motionX / motionDistance) * 650
-                : 0),
-          predictedZ =
-            currentZ +
-            (targetDelta > 8
-              ? ((targetZ - currentZ) / targetDelta) * lookAhead
-              : motionDistance > 0.3
-                ? (motionZ / motionDistance) * 650
-                : 0),
-          distance = Math.hypot(currentX - EAST_ISLAND.x, currentZ - EAST_ISLAND.z),
-          predictedDistance = Math.hypot(predictedX - EAST_ISLAND.x, predictedZ - EAST_ISLAND.z);
-        lastStreamPosition.set(currentX, currentZ);
-        if (Math.min(distance, predictedDistance) < 3800) void loadEastChunk('far');
-        if (Math.min(distance, predictedDistance) < 1750) void loadEastChunk('near');
-        if (eastNear && distance < 1750) eastNearActive = true;
-        if (distance > 2050) eastNearActive = false;
-        const useNear = !!eastNear && eastNearActive;
-        if (eastNear) eastNear.visible = useNear;
-        if (eastFoliage) eastFoliage.visible = useNear;
-        if (eastFar) eastFar.visible = !useNear && distance < 4300;
-        eastFallback.visible = !useNear && !eastFar?.visible;
-        if (import.meta.env.DEV)
-          el.dataset.streamLod = useNear ? 'near' : eastFar?.visible ? 'far' : 'unloaded';
-        if (import.meta.env.DEV) el.dataset.streamLoadCount = String(islandCache.size);
-      }
-      clouds.children.forEach((cloud) => {
-        cloud.position.x += frameDelta * cloud.userData.drift;
-        if (cloud.position.x > 2450) cloud.position.x = -2450;
+      const noContext = (e) => {
+        if (cameraModeRef.current === 'walk') e.preventDefault();
+      };
+      renderer.domElement.addEventListener('pointerdown', onDown);
+      renderer.domElement.addEventListener('pointerup', onUp);
+      renderer.domElement.addEventListener('pointermove', onLookMove);
+      renderer.domElement.addEventListener('pointercancel', clearPointer);
+      renderer.domElement.addEventListener('lostpointercapture', clearPointer);
+      renderer.domElement.addEventListener('contextmenu', noContext);
+      window.addEventListener('blur', clearPointer);
+      const vr = createQuestVR({
+        renderer,
+        scene,
+        camera,
+        controls,
+        playerRef,
+        onStatus: (state, message) => {
+          if (!disposed) setVrStatus({ state, message });
+        },
+        onSelect: (controllerRay) => {
+          if (!interiorRef.current && !dungeonRef.current) selectRay(controllerRay);
+        },
+        onLeave: () => callbacks.current.onExitBuilding?.(),
       });
-      clouds.position.set(selfX, 0, selfZ);
-      const building = interiorRef.current,
-        buildingKey = building?.id ? `${building.id}:${building.floor || 0}` : null;
-      if (buildingKey && buildingKey !== activeInteriorId) {
-        if (interiorRoot) {
+      vrRef.current = vr;
+      const phone = createPhoneVR({
+        renderer,
+        scene,
+        camera,
+        controls,
+        playerRef,
+        onStatus: (active, message) => {
+          if (!disposed) {
+            setPhoneMode(active);
+            setPhoneMessage(message);
+          }
+        },
+        onProbe: (r) => (!dungeonRef.current ? selectRay(r, true) : ''),
+        onSelect: (r) => {
+          if (!interiorRef.current && !dungeonRef.current) selectRay(r);
+        },
+        onLeave: () => callbacks.current.onExitBuilding?.(),
+      });
+      phoneRef.current = phone;
+      const vrArtCamera = { position: new THREE.Vector3() };
+      const resize = () => {
+        if (renderer.xr.isPresenting) return;
+        const w = el.clientWidth || innerWidth,
+          h = el.clientHeight || innerHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      };
+      const observer = new ResizeObserver(resize);
+      observer.observe(el);
+      resize();
+      let previous = spawn.clone(),
+        lastFrame = performance.now(),
+        lastEnemyTick = 0,
+        previousRun = dungeonRun;
+      let perfWindowStart = lastFrame,
+        perfFrames = 0;
+      const combatEffects = [],
+        cameraTarget = new THREE.Vector3(),
+        cameraFocus = new THREE.Vector3(),
+        cameraDelta = new THREE.Vector3();
+      const draw = () => {
+        if (disposed) return;
+        vr.input();
+        phone.input();
+        const immersive = vr.active || phone.active;
+        if (immersive) simulationFrameRef?.current?.(performance.now());
+        const player = playerRef.current,
+          selfX = wx(player.x) * WORLD_SCALE,
+          selfZ = wz(player.y) * WORLD_SCALE,
+          selfGround = Math.max(0, terrainHeightAt(wx(player.x), wz(player.y)) - 2),
+          time = performance.now(),
+          frameDelta = Math.min((time - lastFrame) / 1000, 0.05),
+          water = city.userData.waterMaterial,
+          mode = cameraModeRef.current;
+        lastFrame = time;
+        const requestedQuality = immersive
+          ? 'low'
+          : resolveGraphicsQuality(qualityRef.current, lowEndGPU);
+        if (requestedQuality !== appliedQuality) applyQuality(requestedQuality);
+        sun.position.set(selfX - 430, 720, selfZ - 350);
+        sun.target.position.set(selfX, 0, selfZ);
+        if (time - lastStreamCheck > 250) {
+          lastStreamCheck = time;
+          const currentX = wx(player.x),
+            currentZ = wz(player.y),
+            targetX = wx(player.tx),
+            targetZ = wz(player.ty),
+            targetDelta = Math.hypot(targetX - currentX, targetZ - currentZ),
+            lookAhead = Math.min(900, targetDelta),
+            motionX = currentX - lastStreamPosition.x,
+            motionZ = currentZ - lastStreamPosition.y,
+            motionDistance = Math.hypot(motionX, motionZ),
+            predictedX =
+              currentX +
+              (targetDelta > 8
+                ? ((targetX - currentX) / targetDelta) * lookAhead
+                : motionDistance > 0.3
+                  ? (motionX / motionDistance) * 650
+                  : 0),
+            predictedZ =
+              currentZ +
+              (targetDelta > 8
+                ? ((targetZ - currentZ) / targetDelta) * lookAhead
+                : motionDistance > 0.3
+                  ? (motionZ / motionDistance) * 650
+                  : 0),
+            distance = Math.hypot(currentX - EAST_ISLAND.x, currentZ - EAST_ISLAND.z),
+            predictedDistance = Math.hypot(predictedX - EAST_ISLAND.x, predictedZ - EAST_ISLAND.z);
+          lastStreamPosition.set(currentX, currentZ);
+          if (Math.min(distance, predictedDistance) < 3800) void loadEastChunk('far');
+          if (Math.min(distance, predictedDistance) < 1750) void loadEastChunk('near');
+          if (eastNear && distance < 1750) eastNearActive = true;
+          if (distance > 2050) eastNearActive = false;
+          const useNear = !!eastNear && eastNearActive;
+          if (eastNear) eastNear.visible = useNear;
+          if (eastFoliage) eastFoliage.visible = useNear;
+          if (eastFar) eastFar.visible = !useNear && distance < 4300;
+          eastFallback.visible = !useNear && !eastFar?.visible;
+          if (import.meta.env.DEV)
+            el.dataset.streamLod = useNear ? 'near' : eastFar?.visible ? 'far' : 'unloaded';
+          if (import.meta.env.DEV) el.dataset.streamLoadCount = String(islandCache.size);
+        }
+        clouds.children.forEach((cloud) => {
+          cloud.position.x += frameDelta * cloud.userData.drift;
+          if (cloud.position.x > 2450) cloud.position.x = -2450;
+        });
+        clouds.position.set(selfX, 0, selfZ);
+        const building = interiorRef.current,
+          buildingKey = building?.id ? `${building.id}:${building.floor || 0}` : null;
+        if (buildingKey && buildingKey !== activeInteriorId) {
+          if (interiorRoot) {
+            scene.remove(interiorRoot);
+            interiorRoot.traverse((object) => {
+              object.geometry?.dispose?.();
+              if (Array.isArray(object.material))
+                object.material.forEach((material) => material.dispose());
+              else object.material?.dispose?.();
+            });
+          }
+          activeInteriorId = buildingKey;
+          interiorRoot = buildInteriorRoom(building, playerName);
+          art.styleRoot(interiorRoot);
+          scene.add(interiorRoot);
+          city.visible = false;
+          controls.enabled = false;
+        }
+        if (!building && activeInteriorId) {
           scene.remove(interiorRoot);
           interiorRoot.traverse((object) => {
             object.geometry?.dispose?.();
@@ -3647,449 +3744,538 @@ export default function ThreeCity({
               object.material.forEach((material) => material.dispose());
             else object.material?.dispose?.();
           });
+          interiorRoot = null;
+          activeInteriorId = null;
+          city.visible = true;
+          controls.enabled = true;
+          appliedCameraMode = '';
         }
-        activeInteriorId = buildingKey;
-        interiorRoot = buildInteriorRoom(building, playerName);
-        art.styleRoot(interiorRoot);
-        scene.add(interiorRoot);
-        city.visible = false;
-        controls.enabled = false;
-      }
-      if (!building && activeInteriorId) {
-        scene.remove(interiorRoot);
-        interiorRoot.traverse((object) => {
-          object.geometry?.dispose?.();
-          if (Array.isArray(object.material))
-            object.material.forEach((material) => material.dispose());
-          else object.material?.dispose?.();
-        });
-        interiorRoot = null;
-        activeInteriorId = null;
-        city.visible = true;
-        controls.enabled = true;
-        appliedCameraMode = '';
-      }
-      const particleAttribute = fx.geometry.attributes.position,
-        particlePositions = particleAttribute.array;
-      for (let i = 0; i < fx.phase.length; i++) {
-        const k = i * 3;
-        particlePositions[k] = fx.base[k] + Math.sin(time * 0.00035 + fx.phase[i]) * 4;
-        particlePositions[k + 1] = fx.base[k + 1] + Math.sin(time * 0.0008 + fx.phase[i]) * 7;
-        particlePositions[k + 2] = fx.base[k + 2] + Math.cos(time * 0.0003 + fx.phase[i]) * 4;
-      }
-      particleAttribute.needsUpdate = true;
-      fx.motes.position.set(selfX, 0, selfZ);
-      fx.motes.visible = !building && !dungeonRef.current;
-      clouds.visible = !building && !dungeonRef.current;
-      fx.playerRing.visible = !building && !player.inVehicle;
-      fx.playerRing.position.set(selfX, selfGround + 2, selfZ);
-      const pulse = 0.94 + Math.sin(time * 0.004) * 0.08;
-      fx.playerRing.scale.setScalar(pulse);
-      fx.playerRing.material.opacity = 0.28 + Math.sin(time * 0.003) * 0.08;
-      const selected = activeRef.current;
-      if (selected && !building) {
-        fx.beacon.visible = true;
-        fx.beacon.position.set(
-          wx(selected.x) * WORLD_SCALE,
-          terrainHeightAt(wx(selected.x), wz(selected.y)) * WORLD_SCALE,
-          wz(selected.y) * WORLD_SCALE,
-        );
-        fx.ring.rotation.z = time * 0.00045;
-        const markerPulse = 0.9 + Math.sin(time * 0.0045) * 0.13;
-        fx.ring.scale.setScalar(markerPulse);
-        fx.beamMaterial.opacity = 0.09 + Math.max(0, Math.sin(time * 0.002)) * 0.07;
-      } else fx.beacon.visible = false;
-      if (time - lastLabelRefresh > 80) {
-        if ((selected?.selectedAt || 0) !== city.userData.lastLabelSelection) {
-          city.userData.lastLabelSelection = selected?.selectedAt || 0;
-          city.userData.labelVisibleUntil = time + 2800;
+        const particleAttribute = fx.geometry.attributes.position,
+          particlePositions = particleAttribute.array;
+        for (let i = 0; i < fx.phase.length; i++) {
+          const k = i * 3;
+          particlePositions[k] = fx.base[k] + Math.sin(time * 0.00035 + fx.phase[i]) * 4;
+          particlePositions[k + 1] = fx.base[k + 1] + Math.sin(time * 0.0008 + fx.phase[i]) * 7;
+          particlePositions[k + 2] = fx.base[k + 2] + Math.cos(time * 0.0003 + fx.phase[i]) * 4;
         }
-        for (const entry of city.userData.companyLabels || [])
-          entry.label.visible =
-            !!selected && entry.id === selected.id && time < city.userData.labelVisibleUntil;
-        lastLabelRefresh = time;
-      }
-      for (const door of doorMeshes) {
-        const open = door.userData.doorBuildingId === enteredRef.current,
-          target = open ? -1.24 : 0;
-        door.rotation.y += (target - door.rotation.y) * 0.16;
-      }
-      const arena = city.userData.riftArena,
-        enemies = arena.userData.enemies,
-        enemyModels = arena.userData.enemyModels;
-      arena.visible = !!dungeonRef.current;
-      if (arena.visible && dungeonRunRef.current !== previousRun) {
-        const reset = createRiftEncounter();
-        enemies.forEach((enemy, i) => Object.assign(enemy, reset[i]));
-        previousRun = dungeonRunRef.current;
-        callbacks.current.onCombatEvent?.({
-          type: 'encounter-reset',
-          enemies: enemies.map((e) => ({
-            id: e.id,
-            name: e.name,
-            health: e.health,
-            maxHealth: e.maxHealth,
-            boss: e.boss,
-          })),
-        });
-      }
-      if (arena.visible) {
-        const boss = enemies.find((e) => e.boss),
-          minions = enemies.filter((e) => !e.boss),
-          bossUnlocked = minions.every((e) => e.state === 'defeated');
-        if (bossUnlocked && boss.state === 'dormant') {
-          boss.state = 'patrol';
-          callbacks.current.onCombatEvent?.({ type: 'boss-unlocked', name: boss.name });
-        }
-        for (let i = 0; i < enemies.length; i++) {
-          const enemy = enemies[i],
-            model = enemyModels[i];
-          model.visible = enemy.state !== 'defeated' && (!enemy.boss || bossUnlocked);
-          model.position.set(
-            wx(enemy.x) - wx(RIFT_ARENA.x),
-            5 + Math.sin(time * 0.004 + i) * 0.8,
-            wz(enemy.y) - wz(RIFT_ARENA.y),
+        particleAttribute.needsUpdate = true;
+        fx.motes.position.set(selfX, 0, selfZ);
+        fx.motes.visible = !building && !dungeonRef.current;
+        clouds.visible = !building && !dungeonRef.current;
+        fx.playerRing.visible = !building && !player.inVehicle;
+        fx.playerRing.position.set(selfX, selfGround + 2, selfZ);
+        const pulse = 0.94 + Math.sin(time * 0.004) * 0.08;
+        fx.playerRing.scale.setScalar(pulse);
+        fx.playerRing.material.opacity = 0.28 + Math.sin(time * 0.003) * 0.08;
+        const selected = activeRef.current;
+        if (selected && !building) {
+          fx.beacon.visible = true;
+          fx.beacon.position.set(
+            wx(selected.x) * WORLD_SCALE,
+            terrainHeightAt(wx(selected.x), wz(selected.y)) * WORLD_SCALE,
+            wz(selected.y) * WORLD_SCALE,
           );
-          model.rotation.y = Math.atan2(player.x - enemy.x, player.y - enemy.y);
-          if (model.userData.healthFill)
-            model.userData.healthFill.scale.x = Math.max(0.01, enemy.health / enemy.maxHealth);
-          if (lastEnemyTick === 0 || time - lastEnemyTick > 90) {
-            const hit = advanceEnemy(enemy, player.x, player.y, 0.09, time, bossUnlocked);
-            if (hit && time >= (player.dodgeUntil || 0))
-              callbacks.current.onCombatEvent?.({
-                type: 'player-hit',
-                damage: hit.damage,
-                enemy: enemy.name,
-                health: null,
-              });
+          fx.ring.rotation.z = time * 0.00045;
+          const markerPulse = 0.9 + Math.sin(time * 0.0045) * 0.13;
+          fx.ring.scale.setScalar(markerPulse);
+          fx.beamMaterial.opacity = 0.09 + Math.max(0, Math.sin(time * 0.002)) * 0.07;
+        } else fx.beacon.visible = false;
+        if (time - lastLabelRefresh > 80) {
+          if ((selected?.selectedAt || 0) !== city.userData.lastLabelSelection) {
+            city.userData.lastLabelSelection = selected?.selectedAt || 0;
+            city.userData.labelVisibleUntil = time + 2800;
           }
+          for (const entry of city.userData.companyLabels || [])
+            entry.label.visible =
+              !!selected && entry.id === selected.id && time < city.userData.labelVisibleUntil;
+          lastLabelRefresh = time;
         }
-        if (lastEnemyTick === 0 || time - lastEnemyTick > 90) lastEnemyTick = time;
-        const action = player.combatCommand;
-        if (action && action.seq !== player.lastCombatSeq) {
-          player.lastCombatSeq = action.seq;
-          const type = action.kind === 'heavy' ? 'heavy' : 'light',
-            minionClear = enemies.filter((e) => !e.boss).every((e) => e.state === 'defeated');
-          let total = 0;
-          for (const enemy of enemies) {
-            const damage = attackEnemy(
-              enemy,
-              player.x,
-              player.y,
-              player.heading || 0,
-              type,
-              minionClear,
+        for (const door of doorMeshes) {
+          const open = door.userData.doorBuildingId === enteredRef.current,
+            target = open ? -1.24 : 0;
+          door.rotation.y += (target - door.rotation.y) * 0.16;
+        }
+        const arena = city.userData.riftArena,
+          enemies = arena.userData.enemies,
+          enemyModels = arena.userData.enemyModels;
+        arena.visible = !!dungeonRef.current;
+        if (arena.visible && dungeonRunRef.current !== previousRun) {
+          const reset = createRiftEncounter();
+          enemies.forEach((enemy, i) => Object.assign(enemy, reset[i]));
+          previousRun = dungeonRunRef.current;
+          callbacks.current.onCombatEvent?.({
+            type: 'encounter-reset',
+            enemies: enemies.map((e) => ({
+              id: e.id,
+              name: e.name,
+              health: e.health,
+              maxHealth: e.maxHealth,
+              boss: e.boss,
+            })),
+          });
+        }
+        pulseRifle.socket.visible = !!dungeonRef.current;
+        waygateArt.update(time);
+        if (!immersive && !player.inputPaused && !interiorRef.current) {
+          const stick = player.lookStick;
+          if (stick) {
+            player.cameraYaw = (player.cameraYaw || 0) - stick.x * frameDelta * 1.8;
+            player.cameraPitch = Math.max(
+              -0.15,
+              Math.min(1.05, (player.cameraPitch ?? 0.48) + stick.y * frameDelta),
             );
-            if (damage) {
-              total += damage;
-              if (enemy.state === 'defeated')
+          }
+          if (player.fireHeld && arena.visible) callbacks.current.onFire?.();
+        }
+        if (arena.visible) {
+          const boss = enemies.find((e) => e.boss),
+            minions = enemies.filter((e) => !e.boss),
+            bossUnlocked = minions.every((e) => e.state === 'defeated');
+          if (bossUnlocked && boss.state === 'dormant') {
+            boss.state = 'patrol';
+            callbacks.current.onCombatEvent?.({ type: 'boss-unlocked', name: boss.name });
+          }
+          for (let i = 0; i < enemies.length; i++) {
+            const enemy = enemies[i],
+              model = enemyModels[i];
+            model.visible = enemy.state !== 'defeated' && (!enemy.boss || bossUnlocked);
+            model.position.set(
+              wx(enemy.x) - wx(RIFT_ARENA.x),
+              5 + Math.sin(time * 0.004 + i) * 0.8,
+              wz(enemy.y) - wz(RIFT_ARENA.y),
+            );
+            model.rotation.y = Math.atan2(player.x - enemy.x, player.y - enemy.y);
+            if (model.userData.healthFill)
+              model.userData.healthFill.scale.x = Math.max(0.01, enemy.health / enemy.maxHealth);
+            if (lastEnemyTick === 0 || time - lastEnemyTick > 90) {
+              const hit = advanceEnemy(enemy, player.x, player.y, 0.09, time, bossUnlocked);
+              if (hit && time >= (player.dodgeUntil || 0))
                 callbacks.current.onCombatEvent?.({
-                  type: 'enemy-defeated',
-                  id: enemy.id,
-                  name: enemy.name,
-                  boss: enemy.boss,
-                  enemyHealth: 0,
-                  maxHealth: enemy.maxHealth,
-                  reward: enemy.boss ? { xp: 300, coins: 500, shard: true } : { xp: 40, coins: 35 },
-                });
-              else
-                callbacks.current.onCombatEvent?.({
-                  type: 'enemy-hit',
-                  id: enemy.id,
-                  name: enemy.name,
-                  enemyHealth: enemy.health,
-                  maxHealth: enemy.maxHealth,
+                  type: 'player-hit',
+                  damage: hit.damage,
+                  enemy: enemy.name,
+                  health: null,
                 });
             }
           }
-          if (total) {
-            const slash = new THREE.Mesh(
-              new THREE.TorusGeometry(type === 'heavy' ? 45 : 34, 2.2, 5, 24, Math.PI * 0.82),
-              new THREE.MeshBasicMaterial({
-                color: type === 'heavy' ? '#ff537d' : '#74e7ff',
-                transparent: true,
-                opacity: 0.86,
-                depthWrite: false,
-              }),
+          if (lastEnemyTick === 0 || time - lastEnemyTick > 90) lastEnemyTick = time;
+          const action = player.combatCommand;
+          if (action && action.seq !== player.lastCombatSeq) {
+            player.lastCombatSeq = action.seq;
+            const type =
+                action.kind === 'heavy' ? 'heavy' : action.kind === 'pulse' ? 'pulse' : 'light',
+              minionClear = enemies.filter((e) => !e.boss).every((e) => e.state === 'defeated');
+            let total = 0;
+            const pulseHit =
+              type === 'pulse'
+                ? firePulse(
+                    enemies,
+                    player.x,
+                    player.y,
+                    player.heading || 0,
+                    minionClear,
+                    obstacles,
+                  )
+                : null;
+            if (type === 'pulse') {
+              self.rotation.y = player.heading || 0;
+              self.userData.arms[1].rotation.x = 1.1;
+              self.updateMatrixWorld(true);
+              const start = new THREE.Vector3();
+              pulseRifle.muzzle.getWorldPosition(start);
+              const end = new THREE.Vector3(
+                start.x - Math.sin(player.heading || 0) * 560,
+                start.y,
+                start.z - Math.cos(player.heading || 0) * 560,
+              );
+              if (pulseHit)
+                end.set(
+                  wx(pulseHit.enemy.x) * WORLD_SCALE,
+                  selfGround + 38,
+                  wz(pulseHit.enemy.y) * WORLD_SCALE,
+                );
+              const direction = end.clone().sub(start),
+                length = direction.length();
+              const beam = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.65, 0.65, length, 5),
+                new THREE.MeshBasicMaterial({ color: '#a9f4ff' }),
+              );
+              beam.position.copy(start).add(end).multiplyScalar(0.5);
+              beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+              scene.add(beam);
+              combatEffects.push({ mesh: beam, until: time + 85 });
+              player.recoilUntil = time + 100;
+            }
+            for (const enemy of enemies) {
+              const damage =
+                type === 'pulse'
+                  ? pulseHit?.enemy === enemy
+                    ? pulseHit.damage
+                    : 0
+                  : attackEnemy(enemy, player.x, player.y, player.heading || 0, type, minionClear);
+              if (damage) {
+                total += damage;
+                if (enemy.state === 'defeated')
+                  callbacks.current.onCombatEvent?.({
+                    type: 'enemy-defeated',
+                    id: enemy.id,
+                    name: enemy.name,
+                    boss: enemy.boss,
+                    enemyHealth: 0,
+                    maxHealth: enemy.maxHealth,
+                    reward: enemy.boss
+                      ? { xp: 300, coins: 500, shard: true }
+                      : { xp: 40, coins: 35 },
+                  });
+                else
+                  callbacks.current.onCombatEvent?.({
+                    type: 'enemy-hit',
+                    id: enemy.id,
+                    name: enemy.name,
+                    enemyHealth: enemy.health,
+                    maxHealth: enemy.maxHealth,
+                  });
+              }
+            }
+            if (total && type !== 'pulse') {
+              const slash = new THREE.Mesh(
+                new THREE.TorusGeometry(type === 'heavy' ? 45 : 34, 2.2, 5, 24, Math.PI * 0.82),
+                new THREE.MeshBasicMaterial({
+                  color: type === 'heavy' ? '#ff537d' : '#74e7ff',
+                  transparent: true,
+                  opacity: 0.86,
+                  depthWrite: false,
+                }),
+              );
+              slash.position.set(
+                selfX + -Math.sin(player.heading || 0) * 38,
+                selfGround + 40,
+                selfZ + -Math.cos(player.heading || 0) * 38,
+              );
+              slash.rotation.set(0.45, player.heading || 0, 0.2);
+              scene.add(slash);
+              combatEffects.push({ mesh: slash, until: time + 250 });
+              callbacks.current.onCombatEvent?.({ type: 'attack', kind: type, damage: total });
+            }
+          }
+        }
+        for (let i = combatEffects.length - 1; i >= 0; i--)
+          if (time > combatEffects[i].until) {
+            scene.remove(combatEffects[i].mesh);
+            combatEffects[i].mesh.geometry.dispose();
+            combatEffects[i].mesh.material.dispose();
+            combatEffects.splice(i, 1);
+          }
+        if (water) {
+          water.map.offset.x = time * 0.000006;
+          water.normalMap.offset.x = time * 0.000012;
+          water.normalMap.offset.y = time * 0.000008;
+        }
+        const towerBeacon = city.userData.towerBeacon;
+        if (towerBeacon) {
+          const pulse = 0.9 + Math.sin(time * 0.0022) * 0.14;
+          towerBeacon.scale.setScalar(pulse);
+          towerBeacon.material.emissiveIntensity = 1.7 + Math.sin(time * 0.003) * 0.6;
+        }
+        if (diagnostics) {
+          el.dataset.playerX = player.x.toFixed(2);
+          el.dataset.playerY = player.y.toFixed(2);
+          el.dataset.playerHeading = String(player.heading || 0);
+          el.dataset.cameraYaw = String(player.cameraYaw || 0);
+          el.dataset.handWeapon = String(pulseRifle.socket.parent === self.userData.arms[1]);
+          el.dataset.blockedWaygates = WAYGATES.filter((g) => {
+            const spawn = waygateSpawn(g);
+            return obstacles.some(
+              (b) => Math.abs(spawn.x - b.x) < b.rx + 3 && Math.abs(spawn.y - b.y) < b.ry + 3,
             );
-            slash.position.set(
-              selfX + -Math.sin(player.heading || 0) * 38,
-              selfGround + 40,
-              selfZ + -Math.cos(player.heading || 0) * 38,
-            );
-            slash.rotation.set(0.45, player.heading || 0, 0.2);
-            scene.add(slash);
-            combatEffects.push({ mesh: slash, until: time + 250 });
-            callbacks.current.onCombatEvent?.({ type: 'attack', kind: type, damage: total });
-          }
+          })
+            .map((g) => g.id)
+            .join(',');
         }
-      }
-      for (let i = combatEffects.length - 1; i >= 0; i--)
-        if (time > combatEffects[i].until) {
-          scene.remove(combatEffects[i].mesh);
-          combatEffects[i].mesh.geometry.dispose();
-          combatEffects[i].mesh.material.dispose();
-          combatEffects.splice(i, 1);
-        }
-      if (water) {
-        water.map.offset.x = time * 0.000006;
-        water.normalMap.offset.x = time * 0.000012;
-        water.normalMap.offset.y = time * 0.000008;
-      }
-      const towerBeacon = city.userData.towerBeacon;
-      if (towerBeacon) {
-        const pulse = 0.9 + Math.sin(time * 0.0022) * 0.14;
-        towerBeacon.scale.setScalar(pulse);
-        towerBeacon.material.emissiveIntensity = 1.7 + Math.sin(time * 0.003) * 0.6;
-      }
-      const driving = !!player.inVehicle;
-      self.visible = !driving;
-      selfCar.visible = driving;
-      const jumping =
-        player.jumpUntil > time
-          ? Math.sin(Math.PI * (1 - (player.jumpUntil - time) / 520)) * 34
-          : 0;
-      self.position.set(
-        selfX,
-        selfGround + jumping + Math.abs(Math.sin(time * 0.004)) * 1.4,
-        selfZ,
-      );
-      self.rotation.y = player.heading || 0;
-      self.userData.arms[0].rotation.x = Math.sin(time * 0.004) * 0.12;
-      self.userData.arms[1].rotation.x = -Math.sin(time * 0.004) * 0.12;
-      self.userData.legs.forEach(
-        (leg, i) =>
-          (leg.rotation.x = jumping
-            ? 0
-            : Math.sin(time * 0.01 + (i % 2) * Math.PI) * (keysMove(player) ? 0.42 : 0.025)),
-      );
-      selfCar.position.set(selfX, selfGround + 3, selfZ);
-      selfCar.rotation.y = player.heading || 0;
-      if (!immersive) {
-        if (mode !== appliedCameraMode) {
-          controls.enabled = mode !== 'walk';
-          controls.minPolarAngle = mode === 'drone' ? 0.08 : 0.22;
-          controls.maxPolarAngle = mode === 'drone' ? 0.58 : 1.4;
-          controls.minDistance = mode === 'drone' ? 300 : 95;
-          controls.maxDistance = mode === 'drone' ? 3600 : 2400;
-          if (mode === 'drone') {
-            controls.target.set(selfX, 8, selfZ);
-            camera.position.set(selfX + 260, 1120, selfZ + 360);
-          } else if (mode === 'orbit' && appliedCameraMode === 'walk') {
-            controls.target.set(selfX, 12, selfZ);
-            camera.position.set(selfX + 540, 1200, selfZ + 690);
-          }
-          previous.set(selfX, 12, selfZ);
-          appliedCameraMode = mode;
-        }
-        if (mode === 'walk') {
-          const yaw = player.heading || 0;
-          cameraTarget.set(selfX + Math.sin(yaw) * 250, 205 + jumping, selfZ + Math.cos(yaw) * 250);
-          camera.position.lerp(cameraTarget, 1 - Math.exp(-5.5 * frameDelta));
-          camera.lookAt(selfX, 62 + jumping, selfZ);
-          controls.target.set(selfX, 12, selfZ);
-          previous.set(selfX, 12, selfZ);
-        } else {
-          cameraFocus.set(selfX, 12, selfZ);
-          cameraDelta.copy(cameraFocus).sub(previous);
-          if (cameraDelta.lengthSq() > 0.002) {
-            controls.target.add(cameraDelta);
-            camera.position.add(cameraDelta);
-            previous.copy(cameraFocus);
-          }
-        }
-      }
-      for (const pickup of city.userData.collectibles) {
-        const item = pickup.userData.item,
-          dy = Math.hypot(item.x - player.x, item.y - player.y);
-        pickup.rotation.y = time * 0.001 + items.indexOf(item);
-        pickup.position.y = 18 + Math.sin(time * 0.002 + items.indexOf(item)) * 3;
-        if (dy < 25 && !collected.has(item.id)) {
-          collected.add(item.id);
-          pickup.visible = false;
-          callbacks.current.onPickup?.(item);
-        }
-      }
-      const cycle = (Math.sin(time * 0.000035) + 1) / 2,
-        preset = lightingRef.current;
-      ambient.intensity =
-        preset === 'night' ? 0.35 : preset === 'dynamic' ? 0.35 + cycle * 0.8 : 1.15;
-      clouds.children.forEach((cloud) =>
-        cloud.material.color.set(
-          preset === 'night' ? '#7d8cba' : preset === 'sunset' ? '#ffe0c0' : '#fff8e7',
-        ),
-      );
-      if (preset === 'sunset') {
-        scene.background.set('#ef9a79');
-        sun.color.set('#ffd0a2');
-        sun.intensity = 1.15;
-        scene.fog.color.set('#ef9a79');
-      } else if (preset === 'night') {
-        scene.background.set('#192448');
-        sun.color.set('#9ab9e8');
-        sun.intensity = 0.48;
-        scene.fog.color.set('#192448');
-      } else if (preset === 'dynamic') {
-        scene.background.setRGB(0.08 + cycle * 0.52, 0.13 + cycle * 0.57, 0.2 + cycle * 0.55);
-        sun.color.set('#fff0cf');
-        sun.intensity = 0.7 + cycle * 1.2;
-        scene.fog.color.copy(scene.background);
-      } else {
-        scene.background.set('#91c5d2');
-        sun.color.set('#fff0cf');
-        sun.intensity = 1.8;
-        scene.fog.color.set('#91c5d2');
-      }
-      if (dungeonRef.current) {
-        scene.background.set('#090b16');
-        scene.fog.color.set('#121126');
-        scene.fog.near = 420;
-        scene.fog.far = 2600;
-      } else {
-        scene.fog.near = weatherRef.current === 'mist' ? 850 : 2400;
-        scene.fog.far = weatherRef.current === 'mist' ? 3400 : 6200;
-      }
-      if (interiorRoot) {
-        scene.background.set('#151b20');
-        scene.fog.color.set('#151b20');
-        scene.fog.near = 2200;
-        scene.fog.far = 6200;
-      }
-      if (time - avatarRefresh.current > 500) {
-        visiblePeople.current = onlineRef.current
-          .map((p) => ({ ...p, distance: (p.x - player.x) ** 2 + (p.y - player.y) ** 2 }))
-          .sort((a, b) => a.distance - b.distance)
-          .slice(0, immersive || mobileGPU ? 20 : 55);
-        avatarRefresh.current = time;
-      }
-      const people = visiblePeople.current.filter((p) => !p.inBuilding),
-        present = new Set(people.map((p) => p.id));
-      for (const [id, a] of others)
-        if (!present.has(id)) {
-          scene.remove(a);
-          others.delete(id);
-        }
-      for (const p of people) {
-        let a = others.get(p.id);
-        if (a && !!a.userData.vehicleModel !== !!p.inVehicle) {
-          scene.remove(a);
-          a = undefined;
-          others.delete(p.id);
-        }
-        if (!a) {
-          a = p.inVehicle ? carModel() : avatar(p.name, p.avatar, p.id);
-          art.styleRoot(a);
-          a.position.set(
-            wx(p.x) * WORLD_SCALE,
-            Math.max(0, terrainHeightAt(wx(p.x), wz(p.y)) - 2) + (p.inVehicle ? 3 : 0),
-            wz(p.y) * WORLD_SCALE,
-          );
-          a.rotation.y = p.heading || 0;
-          scene.add(a);
-          others.set(p.id, a);
-        }
-        const targetY =
-            Math.max(0, terrainHeightAt(wx(p.x), wz(p.y)) - 2) +
-            (p.inVehicle ? 3 : Math.abs(Math.sin(time * 0.003 + (p.avatar || 0))) * 1.2),
-          targetPosition =
-            a.userData.smoothTarget || (a.userData.smoothTarget = new THREE.Vector3());
-        targetPosition.set(wx(p.x) * WORLD_SCALE, targetY, wz(p.y) * WORLD_SCALE);
-        a.position.lerp(targetPosition, 1 - Math.exp(-12 * frameDelta));
-        const turn = Math.atan2(
-          Math.sin((p.heading || 0) - a.rotation.y),
-          Math.cos((p.heading || 0) - a.rotation.y),
+        const driving = !!player.inVehicle;
+        self.visible = !driving;
+        selfCar.visible = driving;
+        const jumping =
+          player.jumpUntil > time
+            ? Math.sin(Math.PI * (1 - (player.jumpUntil - time) / 520)) * 34
+            : 0;
+        self.position.set(
+          selfX,
+          selfGround + jumping + Math.abs(Math.sin(time * 0.004)) * 1.4,
+          selfZ,
         );
-        a.rotation.y += turn * (1 - Math.exp(-10 * frameDelta));
-        if (!p.inVehicle) {
-          a.userData.arms[0].rotation.x = Math.sin(time * 0.003 + (p.avatar || 0)) * 0.1;
-          a.userData.arms[1].rotation.x = -Math.sin(time * 0.003 + (p.avatar || 0)) * 0.1;
+        self.rotation.y = player.heading || 0;
+        const stride = keysMove(player) ? 0.45 : 0.08;
+        self.userData.arms[0].rotation.x = dungeonRef.current
+          ? 0.65
+          : Math.sin(time * 0.01) * stride;
+        self.userData.arms[1].rotation.x = dungeonRef.current
+          ? 1.1 + (time < (player.recoilUntil || 0) ? 0.08 : 0)
+          : -Math.sin(time * 0.01) * stride;
+        self.userData.legs.forEach(
+          (leg, i) =>
+            (leg.rotation.x = jumping
+              ? 0
+              : Math.sin(time * 0.01 + (i % 2) * Math.PI) * (keysMove(player) ? 0.42 : 0.025)),
+        );
+        self.userData.knees.forEach((knee, i) => {
+          knee.rotation.x = jumping
+            ? -0.35
+            : keysMove(player)
+              ? -Math.max(0, Math.sin(time * 0.01 + i * Math.PI)) * 0.5
+              : 0;
+        });
+        selfCar.position.set(selfX, selfGround + 3, selfZ);
+        selfCar.rotation.y = player.heading || 0;
+        if (!immersive) {
+          if (mode !== appliedCameraMode) {
+            controls.enabled = mode !== 'walk';
+            controls.minPolarAngle = mode === 'drone' ? 0.08 : 0.22;
+            controls.maxPolarAngle = mode === 'drone' ? 0.58 : 1.4;
+            controls.minDistance = mode === 'drone' ? 300 : 95;
+            controls.maxDistance = mode === 'drone' ? 3600 : 2400;
+            if (mode === 'drone') {
+              controls.target.set(selfX, 8, selfZ);
+              camera.position.set(selfX + 260, 1120, selfZ + 360);
+            } else if (mode === 'orbit' && appliedCameraMode === 'walk') {
+              controls.target.set(selfX, 12, selfZ);
+              camera.position.set(selfX + 540, 1200, selfZ + 690);
+            }
+            previous.set(selfX, 12, selfZ);
+            appliedCameraMode = mode;
+          }
+          if (mode === 'walk') {
+            const yaw = player.cameraYaw || 0,
+              pitch = player.cameraPitch ?? 0.48;
+            cameraTarget.set(
+              selfX + Math.sin(yaw) * Math.cos(pitch) * 285,
+              selfGround + 62 + jumping + Math.sin(pitch) * 285,
+              selfZ + Math.cos(yaw) * Math.cos(pitch) * 285,
+            );
+            if (player.cameraSnap || camera.position.distanceTo(cameraTarget) > 1400) {
+              camera.position.copy(cameraTarget);
+              player.cameraSnap = false;
+            } else camera.position.lerp(cameraTarget, 1 - Math.exp(-8 * frameDelta));
+            camera.lookAt(selfX, selfGround + 62 + jumping, selfZ);
+            controls.target.set(selfX, 12, selfZ);
+            previous.set(selfX, 12, selfZ);
+          } else {
+            player.cameraYaw = Math.atan2(
+              camera.position.x - controls.target.x,
+              camera.position.z - controls.target.z,
+            );
+            cameraFocus.set(selfX, 12, selfZ);
+            cameraDelta.copy(cameraFocus).sub(previous);
+            if (cameraDelta.lengthSq() > 0.002) {
+              controls.target.add(cameraDelta);
+              camera.position.add(cameraDelta);
+              previous.copy(cameraFocus);
+            }
+          }
         }
-      }
-      if (!immersive && mode !== 'walk' && !interiorRoot) controls.update();
-      if (interiorRoot) {
-        self.visible = false;
-        selfCar.visible = false;
-        for (const person of interiorRoot.userData.interiorPeople || [])
-          person.node.position.y = person.base + Math.sin(time * 0.0014 + person.phase) * 1.6;
-        if (!immersive && activeInteriorId?.startsWith('generated-innovation-tower:')) {
-          const portrait =
-            renderer.domElement.clientWidth / renderer.domElement.clientHeight < 0.78;
-          interiorRoot.scale.set(portrait ? 0.58 : 1, portrait ? 0.82 : 1, portrait ? 0.58 : 1);
-          const focus = new THREE.Vector3(0, 38, 0);
-          camera.position.set(portrait ? 360 : 430, portrait ? 265 : 215, portrait ? 620 : 610);
-          controls.target.copy(focus);
-          camera.lookAt(focus);
-        } else if (!immersive) {
-          camera.position.set(238, 174, 270);
-          controls.target.set(0, 39, -10);
-          camera.lookAt(0, 39, -10);
+        for (const pickup of city.userData.collectibles) {
+          const item = pickup.userData.item,
+            dy = Math.hypot(item.x - player.x, item.y - player.y);
+          pickup.rotation.y = time * 0.001 + items.indexOf(item);
+          pickup.position.y = 18 + Math.sin(time * 0.002 + items.indexOf(item)) * 3;
+          if (dy < 25 && !collected.has(item.id)) {
+            collected.add(item.id);
+            pickup.visible = false;
+            callbacks.current.onPickup?.(item);
+          }
         }
-      }
-      if (immersive) {
-        controls.enabled = false;
-        self.visible = false;
-        selfCar.visible = false;
-        fx.playerRing.visible = false;
-        if (vr.active) vr.place(selfX, selfGround, selfZ, !!interiorRoot);
-        else phone.place(selfX, selfGround, selfZ, !!interiorRoot, time);
-        camera.getWorldPosition(vrArtCamera.position);
-      }
-      art.update(
-        time,
-        vr.active ? vrArtCamera : camera,
-        lightingRef.current,
-        !!interiorRoot || dungeonRef.current,
-      );
-      if (phone.active) phone.render();
-      else renderer.render(scene, camera);
-      if (import.meta.env.DEV && captureFrameRef?.current) {
-        const receiveFrame = captureFrameRef.current;
-        captureFrameRef.current = null;
-        renderer.domElement.toBlob(receiveFrame, 'image/png');
-      }
-      if (import.meta.env.DEV) {
-        perfFrames++;
-        if (time - perfWindowStart >= 1000) {
-          el.dataset.frameRate = String(Math.round((perfFrames * 1000) / (time - perfWindowStart)));
-          el.dataset.drawCalls = String(renderer.info.render.calls);
-          el.dataset.playerPosition = `${Math.round(player.x)},${Math.round(player.y)}`;
-          el.dataset.artSkyVisible = String(!interiorRoot && !dungeonRef.current);
-          el.dataset.artAnimationTime = String(Math.round(time));
-          perfWindowStart = time;
-          perfFrames = 0;
+        const cycle = (Math.sin(time * 0.000035) + 1) / 2,
+          preset = lightingRef.current;
+        ambient.intensity =
+          preset === 'night' ? 0.35 : preset === 'dynamic' ? 0.35 + cycle * 0.8 : 1.15;
+        clouds.children.forEach((cloud) =>
+          cloud.material.color.set(
+            preset === 'night' ? '#7d8cba' : preset === 'sunset' ? '#ffe0c0' : '#fff8e7',
+          ),
+        );
+        if (preset === 'sunset') {
+          scene.background.set('#ef9a79');
+          sun.color.set('#ffd0a2');
+          sun.intensity = 1.15;
+          scene.fog.color.set('#ef9a79');
+        } else if (preset === 'night') {
+          scene.background.set('#192448');
+          sun.color.set('#9ab9e8');
+          sun.intensity = 0.48;
+          scene.fog.color.set('#192448');
+        } else if (preset === 'dynamic') {
+          scene.background.setRGB(0.08 + cycle * 0.52, 0.13 + cycle * 0.57, 0.2 + cycle * 0.55);
+          sun.color.set('#fff0cf');
+          sun.intensity = 0.7 + cycle * 1.2;
+          scene.fog.color.copy(scene.background);
+        } else {
+          scene.background.set('#91c5d2');
+          sun.color.set('#fff0cf');
+          sun.intensity = 1.8;
+          scene.fog.color.set('#91c5d2');
         }
-      }
-    };
-    renderer.setAnimationLoop(draw);
-    const dispose = () => {
-      disposed = true;
-      renderer.setAnimationLoop(null);
-      phone.dispose();
-      phoneRef.current = null;
-      vr.dispose();
-      vrRef.current = null;
-      observer.disconnect();
-      controls.dispose();
-      renderer.domElement.removeEventListener('pointerdown', onDown);
-      renderer.domElement.removeEventListener('pointerup', onUp);
-      fx.motes.material.map?.dispose();
-      clouds.children[0]?.material.map?.dispose();
-      sun.shadow.map?.dispose();
-      renderer.dispose();
-      renderer.domElement.remove();
-      art.dispose();
-      scene.traverse((o) => {
-        if (o.isMesh || o.isSprite || o.isPoints) {
-          o.geometry?.dispose?.();
-          if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose());
-          else o.material?.dispose?.();
+        if (dungeonRef.current) {
+          scene.background.set('#090b16');
+          scene.fog.color.set('#121126');
+          scene.fog.near = 420;
+          scene.fog.far = 2600;
+        } else {
+          scene.fog.near = weatherRef.current === 'mist' ? 850 : 2400;
+          scene.fog.far = weatherRef.current === 'mist' ? 3400 : 6200;
         }
-      });
-    };
-    engine.current = { scene, self, dispose };
+        if (interiorRoot) {
+          scene.background.set('#151b20');
+          scene.fog.color.set('#151b20');
+          scene.fog.near = 2200;
+          scene.fog.far = 6200;
+        }
+        if (time - avatarRefresh.current > 500) {
+          visiblePeople.current = onlineRef.current
+            .map((p) => ({ ...p, distance: (p.x - player.x) ** 2 + (p.y - player.y) ** 2 }))
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, immersive || mobileGPU ? 20 : 55);
+          avatarRefresh.current = time;
+        }
+        const people = visiblePeople.current.filter((p) => !p.inBuilding),
+          present = new Set(people.map((p) => p.id));
+        for (const [id, a] of others)
+          if (!present.has(id)) {
+            scene.remove(a);
+            others.delete(id);
+          }
+        for (const p of people) {
+          let a = others.get(p.id);
+          if (a && !!a.userData.vehicleModel !== !!p.inVehicle) {
+            scene.remove(a);
+            a = undefined;
+            others.delete(p.id);
+          }
+          if (!a) {
+            a = p.inVehicle ? carModel() : avatar(p.name, p.avatar, p.id);
+            art.styleRoot(a);
+            a.position.set(
+              wx(p.x) * WORLD_SCALE,
+              Math.max(0, terrainHeightAt(wx(p.x), wz(p.y)) - 2) + (p.inVehicle ? 3 : 0),
+              wz(p.y) * WORLD_SCALE,
+            );
+            a.rotation.y = p.heading || 0;
+            scene.add(a);
+            others.set(p.id, a);
+          }
+          const targetY =
+              Math.max(0, terrainHeightAt(wx(p.x), wz(p.y)) - 2) +
+              (p.inVehicle ? 3 : Math.abs(Math.sin(time * 0.003 + (p.avatar || 0))) * 1.2),
+            targetPosition =
+              a.userData.smoothTarget || (a.userData.smoothTarget = new THREE.Vector3());
+          targetPosition.set(wx(p.x) * WORLD_SCALE, targetY, wz(p.y) * WORLD_SCALE);
+          a.position.lerp(targetPosition, 1 - Math.exp(-12 * frameDelta));
+          const turn = Math.atan2(
+            Math.sin((p.heading || 0) - a.rotation.y),
+            Math.cos((p.heading || 0) - a.rotation.y),
+          );
+          a.rotation.y += turn * (1 - Math.exp(-10 * frameDelta));
+          if (!p.inVehicle) {
+            a.userData.arms[0].rotation.x = Math.sin(time * 0.003 + (p.avatar || 0)) * 0.1;
+            a.userData.arms[1].rotation.x = -Math.sin(time * 0.003 + (p.avatar || 0)) * 0.1;
+          }
+        }
+        if (!immersive && mode !== 'walk' && !interiorRoot) controls.update();
+        if (interiorRoot) {
+          self.visible = false;
+          selfCar.visible = false;
+          for (const person of interiorRoot.userData.interiorPeople || [])
+            person.node.position.y = person.base + Math.sin(time * 0.0014 + person.phase) * 1.6;
+          if (!immersive && activeInteriorId?.startsWith('generated-innovation-tower:')) {
+            const portrait =
+              renderer.domElement.clientWidth / renderer.domElement.clientHeight < 0.78;
+            interiorRoot.scale.set(portrait ? 0.58 : 1, portrait ? 0.82 : 1, portrait ? 0.58 : 1);
+            const focus = new THREE.Vector3(0, 38, 0);
+            camera.position.set(portrait ? 360 : 430, portrait ? 265 : 215, portrait ? 620 : 610);
+            controls.target.copy(focus);
+            camera.lookAt(focus);
+          } else if (!immersive) {
+            camera.position.set(238, 174, 270);
+            controls.target.set(0, 39, -10);
+            camera.lookAt(0, 39, -10);
+          }
+        }
+        if (immersive) {
+          controls.enabled = false;
+          self.visible = false;
+          selfCar.visible = false;
+          fx.playerRing.visible = false;
+          if (vr.active) vr.place(selfX, selfGround, selfZ, !!interiorRoot);
+          else phone.place(selfX, selfGround, selfZ, !!interiorRoot, time);
+          camera.getWorldPosition(vrArtCamera.position);
+        }
+        art.update(
+          time,
+          vr.active ? vrArtCamera : camera,
+          lightingRef.current,
+          !!interiorRoot || dungeonRef.current,
+        );
+        if (phone.active) phone.render();
+        else renderer.render(scene, camera);
+        if (import.meta.env.DEV && captureFrameRef?.current) {
+          const receiveFrame = captureFrameRef.current;
+          captureFrameRef.current = null;
+          renderer.domElement.toBlob(receiveFrame, 'image/png');
+        }
+        if (import.meta.env.DEV) {
+          perfFrames++;
+          if (time - perfWindowStart >= 1000) {
+            el.dataset.frameRate = String(
+              Math.round((perfFrames * 1000) / (time - perfWindowStart)),
+            );
+            el.dataset.drawCalls = String(renderer.info.render.calls);
+            el.dataset.playerPosition = `${Math.round(player.x)},${Math.round(player.y)}`;
+            el.dataset.artSkyVisible = String(!interiorRoot && !dungeonRef.current);
+            el.dataset.artAnimationTime = String(Math.round(time));
+            perfWindowStart = time;
+            perfFrames = 0;
+          }
+        }
+      };
+      renderer.setAnimationLoop(draw);
+      const dispose = () => {
+        disposed = true;
+        renderer.setAnimationLoop(null);
+        phone.dispose();
+        phoneRef.current = null;
+        vr.dispose();
+        vrRef.current = null;
+        observer.disconnect();
+        controls.dispose();
+        renderer.domElement.removeEventListener('pointerdown', onDown);
+        renderer.domElement.removeEventListener('pointerup', onUp);
+        renderer.domElement.removeEventListener('pointermove', onLookMove);
+        renderer.domElement.removeEventListener('pointercancel', clearPointer);
+        renderer.domElement.removeEventListener('lostpointercapture', clearPointer);
+        renderer.domElement.removeEventListener('contextmenu', noContext);
+        window.removeEventListener('blur', clearPointer);
+        fx.motes.material.map?.dispose();
+        clouds.children[0]?.material.map?.dispose();
+        sun.shadow.map?.dispose();
+        renderer.dispose();
+        renderer.domElement.remove();
+        art.dispose();
+        scene.traverse((o) => {
+          if (o.isMesh || o.isSprite || o.isPoints) {
+            o.geometry?.dispose?.();
+            if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose());
+            else o.material?.dispose?.();
+          }
+        });
+      };
+      engine.current = { scene, self, dispose };
+      disposeScene = () => {
+        dispose();
+        engine.current = null;
+      };
+    });
     return () => {
-      engine.current?.dispose();
-      engine.current = null;
+      cancelAnimationFrame(initializeFrame);
+      disposeScene?.();
     };
   }, []);
   useEffect(() => {

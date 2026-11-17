@@ -1,3 +1,7 @@
+## Combined Dev. Life controls
+
+Use arrows/WASD relative to the camera, Shift to sprint, Space to jump. In Walk view, drag to look (right-drag while holding left mouse to fire in combat). Mobile uses the left movement stick and right LOOK stick. M opens the seven-destination atlas; E attunes nearby runes. Glowing gates automatically travel to the next destination. The hand-held pulse rifle is equipped in the Shatterline encounter; hold FIRE or left mouse to shoot. J/K melee and Q dodge remain available.
+
 # Startup.life — playable demo and game guide
 
 **Demo:** http://localhost:5173/  

@@ -1,0 +1,147 @@
+.waygate-status {
+  position: fixed;
+  top: 76px;
+  left: 16px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 260px;
+}
+.waygate-status button,
+.waygate-status span {
+  padding: 10px 14px;
+  border: 1px solid #527c89;
+  border-radius: 10px;
+  color: #e8faf5;
+  background: #10282eea;
+  font-size: 12px;
+}
+.waygate-shade {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  background: #07121ac9;
+  padding: 20px;
+}
+.waygate-atlas {
+  width: min(650px, 100%);
+  max-height: 85dvh;
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid #528881;
+  border-radius: 18px;
+  background: #102a30;
+  color: #e8f6ef;
+}
+.waygate-atlas p {
+  line-height: 1.6;
+}
+.atlas-close {
+  float: right;
+}
+.waygate-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+}
+.waygate-list button {
+  text-align: left;
+  padding: 16px;
+  background: #1d3c42;
+  color: #eefbf5;
+  border: 1px solid #50726d;
+  border-radius: 10px;
+}
+.waygate-list span {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #b8d8ce;
+}
+.dev-life-look {
+  position: fixed;
+  right: 20px;
+  bottom: 150px;
+  z-index: 30;
+  width: 94px;
+  height: 94px;
+  border-radius: 50%;
+  border: 1px solid #b2e6e4;
+  background: #17383f9c;
+  color: #fff;
+  touch-action: none;
+  user-select: none;
+}
+.dev-life-fire {
+  position: fixed;
+  right: 128px;
+  bottom: 162px;
+  z-index: 30;
+  padding: 18px;
+  border-radius: 50%;
+  color: #fff;
+  border: 1px solid #ffbc85;
+  background: #763c28d9;
+  touch-action: none;
+}
+.dev-life-look small {
+  display: block;
+  pointer-events: none;
+}
+.dev-life-look:active {
+  background: #38606be0;
+}
+@media (pointer: fine) {
+  .dev-life-look {
+    width: 68px;
+    height: 68px;
+    bottom: 160px;
+    opacity: 0.7;
+  }
+}
+
+/* Keep movement, aiming and optional VR controls in separate screen regions. */
+.game-shell .bottom-right {
+  left: 18px;
+  right: auto;
+  z-index: 30;
+}
+.game-shell .control-hint {
+  display: none;
+}
+.game-shell:not(.phone-viewer-vr):not(.immersive-vr) .vr-entry {
+  top: 76px;
+  bottom: auto;
+  right: 16px;
+  max-width: 220px;
+}
+.dev-life-look {
+  bottom: 24px;
+}
+.dev-life-fire {
+  bottom: 30px;
+  right: 130px;
+}
+@media (pointer: fine) {
+  .dev-life-look {
+    bottom: 30px;
+  }
+}
+@media (max-width: 700px) {
+  .game-shell:not(.phone-viewer-vr):not(.immersive-vr) .vr-entry {
+    top: 58px;
+    right: 10px;
+    max-width: 170px;
+  }
+  .waygate-status {
+    top: 58px;
+    left: 10px;
+    max-width: 190px;
+  }
+  .vr-entry .phone-vr-status {
+    display: none;
+  }
+}

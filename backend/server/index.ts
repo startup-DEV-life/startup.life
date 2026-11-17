@@ -19,6 +19,7 @@ import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
 import cookie from 'cookie';
+import { findWaygate, waygateSpawn } from '../../shared/waygates.ts';
 import { WORLD_BOUNDS, isOutsideCauseway } from '../../shared/world.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -2268,6 +2269,20 @@ io.on('connection', (s) => {
       if (crewRound?.active === false) crewRound = null;
       io.emit('crew:lobby', { online: online.size, active: false });
     }, 18000);
+  });
+  s.on('waygate:travel', (id: unknown, ack: any) => {
+    if (typeof ack !== 'function') return;
+    const q = online.get(me.id),
+      gate = findWaygate(id),
+      now = Date.now();
+    if (!q || !gate || q.inRift || q.inBuilding || q.inVehicle)
+      return ack({ error: 'Leave the building, vehicle or trial before travelling.' });
+    const key = `waygate:${me.id}`;
+    if (now - (limits.get(key) || 0) < 2000) return ack({ error: 'Waygate is recharging.' });
+    limits.set(key, now);
+    const spawn = waygateSpawn(gate);
+    relocatePlayer(s, q, spawn.x, spawn.y, false);
+    ack({ ok: true, x: q.x, y: q.y });
   });
   s.on('rift:enter', (ack: any) => {
     const q = online.get(me.id);
