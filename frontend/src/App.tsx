@@ -1062,6 +1062,28 @@ export default function App() {
       );
     } else begin();
   };
+  const leaveRift = () => {
+    const leave = (x = 1760, y = 1010) => {
+      p.current.x = x;
+      p.current.y = y;
+      p.current.tx = x;
+      p.current.ty = y;
+      p.current.heading = 0;
+      keys.current = {};
+      stopJoystick();
+      p.current.lookStick = { x: 0, y: 0 };
+      p.current.fireHeld = false;
+      p.current.cameraSnap = true;
+      setDungeonActive(false);
+      setActive(null);
+      setNotice('You escaped the Shatterline and returned to Lian Yu.');
+    };
+    if (sock.current?.connected)
+      sock.current.emit('rift:exit', (reply) =>
+        reply?.error ? setNotice(reply.error) : leave(reply.x, reply.y),
+      );
+    else leave();
+  };
   const enterBuilding = () => {
     if (!active || active.navigationOnly) return;
     if (!near) {
@@ -1073,26 +1095,7 @@ export default function App() {
       return;
     }
     if (active.id === 'rift-exit') {
-      const leave = (x = 1760, y = 1010) => {
-        p.current.x = x;
-        p.current.y = y;
-        p.current.tx = x;
-        p.current.ty = y;
-        p.current.heading = 0;
-        keys.current = {};
-        stopJoystick();
-        p.current.lookStick = { x: 0, y: 0 };
-        p.current.fireHeld = false;
-        p.current.cameraSnap = true;
-        setDungeonActive(false);
-        setActive(null);
-        setNotice('You escaped the Shatterline and returned to Lian Yu.');
-      };
-      if (sock.current?.connected)
-        sock.current.emit('rift:exit', (reply) =>
-          reply?.error ? setNotice(reply.error) : leave(reply.x, reply.y),
-        );
-      else leave();
+      leaveRift();
       return;
     }
     const seen = [...new Set([...visitedBuildings, active.id])];
@@ -1690,24 +1693,7 @@ export default function App() {
                 <span>
                   <i /> RIFT INSTANCE · SHATTERLINE
                 </span>
-                <button
-                  onClick={() => {
-                    setActive({
-                      id: 'rift-exit',
-                      name: 'Leave the Shatterline',
-                      emoji: '↩',
-                      kind: 'Dungeon Gate',
-                      district: 'Rift instance',
-                      x: RIFT_ARENA.x,
-                      y: RIFT_ARENA.y - 184,
-                      color: '#8d6ad5',
-                      uses: 'Return to Lian Yu.',
-                    });
-                    setNear(true);
-                  }}
-                >
-                  RETURN GATE
-                </button>
+                <button onClick={leaveRift}>RETURN GATE</button>
               </div>
               <div className="rift-player-health">
                 <span>HUNTER VITALS</span>
